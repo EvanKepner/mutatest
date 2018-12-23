@@ -13,7 +13,7 @@ from mutation.transformers import RewriteAddSub
 
 class Mutant(NamedTuple):
     mutant_code: Any
-    cfile: str
+    cfile: pathlib.PurePath
     loader: Any
     source_stats: Dict[str, Any]
     mode: int
@@ -28,7 +28,7 @@ def check_invalidation_mode():
     return PycInvalidationMode.TIMESTAMP
 
 
-def get_py_files(dir: Union[str, pathlib.PurePath]) -> List[pathlib.PurePath]:
+def get_py_files(pkg_dir: Union[str, pathlib.PurePath]) -> List[pathlib.PurePath]:
     """Return paths for all py files in the dir.
 
     Args:
@@ -37,39 +37,37 @@ def get_py_files(dir: Union[str, pathlib.PurePath]) -> List[pathlib.PurePath]:
     Returns:
         List of resolved absolute paths
     """
-    relative_list = list(Path(dir).rglob("*.py"))
+    relative_list = list(Path(pkg_dir).rglob("*.py"))
     return [p.resolve() for p in relative_list]
 
 
-def get_ast_tree(fn: str) -> ast.Module:
+def get_ast_tree(src_file: Union[str, pathlib.PurePath]) -> ast.Module:
 
-    with open(fn, "rb") as fn_stream:
-        source = fn_stream.read()
+    with open(src_file, "rb") as src_stream:
+        source = src_stream.read()
         return ast.parse(source)
 
 
-def get_cache_file_loc(fn: str) -> str:
+def get_cache_file_loc(src_file: Union[str, pathlib.PurePath]) -> pathlib.PurePath:
     #  https://github.com/python/cpython/blob/master/Lib/py_compile.py#L130
-    cfile = importlib.util.cache_from_source(fn)
-    if os.path.islink(cfile):
+    cache_file = importlib.util.cache_from_source(src_file)
+
+    if os.path.islink(cache_file):
         msg = ("{} is a symlink and will be changed into a regular file if "
                "import writes a byte-compiled file to it")
-        raise FileExistsError(msg.format(cfile))
-    elif os.path.exists(cfile) and not os.path.isfile(cfile):
+        raise FileExistsError(msg.format(cache_file))
+
+    elif os.path.exists(cache_file) and not os.path.isfile(cache_file):
         msg = ("{} is a non-regular file and will be changed into a regular "
                "one if import writes a byte-compiled file to it")
-        raise FileExistsError(msg.format(cfile))
-    return cfile
+        raise FileExistsError(msg.format(cache_file))
+
+    return Path(cache_file)
 
 
-def create_cache_dirs(cfile):
-    # https://github.com/python/cpython/blob/master/Lib/py_compile.py#L151
-    try:
-        dirname = os.path.dirname(cfile)
-        if dirname:
-            os.makedirs(dirname)
-    except FileExistsError:
-        pass
+def create_cache_dirs(cache_file: pathlib.PurePath) -> None:
+    if not cache_file.parent.exists():
+        Path.mkdir(cache_file.parent)
 
 
 def create_cache_file(mutant: Mutant) -> None:
@@ -84,25 +82,25 @@ def create_cache_file(mutant: Mutant) -> None:
     importlib._bootstrap_external._write_atomic(mutant.cfile, bytecode, mutant.mode)
 
 
-def mutation_pipeline(dir, no_mutation=False):
+def mutation_pipeline(pkg_dir):
 
     mutants = []
 
-    for fn in get_py_files(dir):
+    for src_file in get_py_files(pkg_dir):
 
-        tree = get_ast_tree(fn)
+        tree = get_ast_tree(src_file)
         mutant = RewriteAddSub().visit(tree)
 
-        mutant_code = compile(mutant, str(fn), "exec")
+        mutant_code = compile(mutant, str(src_file), "exec")
 
         # cache files
-        cfile = get_cache_file_loc(fn)
+        cfile = get_cache_file_loc(src_file)
         create_cache_dirs(cfile)
 
         # loaders
-        loader = importlib.machinery.SourceFileLoader("<py_compile>", fn)
-        source_stats = loader.path_stats(fn)
-        mode = importlib._bootstrap_external._calc_mode(fn)
+        loader = importlib.machinery.SourceFileLoader("<py_compile>", src_file)
+        source_stats = loader.path_stats(src_file)
+        mode = importlib._bootstrap_external._calc_mode(src_file)
 
         # create the cache files
         mutant = Mutant(mutant_code, cfile, loader, source_stats, mode)
