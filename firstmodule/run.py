@@ -2,9 +2,13 @@ def myfunc(a):
     print('hello', a)
 
 
-def otherfunc(b):
+def add_ten(b):
     return b + 10
 
 
+def add_five(b):
+    return b + 5
+
 myfunc('there')
-print(otherfunc(10))
+print(add_ten(10))
+print(add_five(10))
