@@ -4,8 +4,9 @@ import ast
 import importlib
 import os
 import pathlib
+from pathlib import Path
 from py_compile import PycInvalidationMode
-from typing import Any, Dict, List, NamedTuple
+from typing import Any, Dict, List, NamedTuple, Union
 
 from mutation.transformers import RewriteAddSub
 
@@ -21,13 +22,13 @@ class Mutant(NamedTuple):
 def check_invalidation_mode():
     # https://github.com/python/cpython/blob/master/Lib/py_compile.py#L72
     # TODO: figure out how to make this work with hash as well
-    if os.environ.get('SOURCE_DATE_EPOCH'):
+    if os.environ.get("SOURCE_DATE_EPOCH"):
         raise OSError("SOURCE_DATE_EPOOCH set, but only TIMESTAMP cache checking is supported.")
 
     return PycInvalidationMode.TIMESTAMP
 
 
-def get_py_files(dir: pathlib.Path) -> List[pathlib.PurePath]:
+def get_py_files(dir: Union[str, pathlib.PurePath]) -> List[pathlib.PurePath]:
     """Return paths for all py files in the dir.
 
     Args:
@@ -36,27 +37,27 @@ def get_py_files(dir: pathlib.Path) -> List[pathlib.PurePath]:
     Returns:
         List of resolved absolute paths
     """
-    relative_list = list(dir.glob("**/*.py"))
+    relative_list = list(Path(dir).rglob("*.py"))
     return [p.resolve() for p in relative_list]
 
 
-def get_ast_tree(fn: pathlib.PurePath) -> ast.Module:
+def get_ast_tree(fn: str) -> ast.Module:
 
     with open(fn, "rb") as fn_stream:
         source = fn_stream.read()
         return ast.parse(source)
 
 
-def get_cache_file_loc(fn: pathlib.PurePath) -> str:
+def get_cache_file_loc(fn: str) -> str:
     #  https://github.com/python/cpython/blob/master/Lib/py_compile.py#L130
     cfile = importlib.util.cache_from_source(fn)
     if os.path.islink(cfile):
-        msg = ('{} is a symlink and will be changed into a regular file if '
-               'import writes a byte-compiled file to it')
+        msg = ("{} is a symlink and will be changed into a regular file if "
+               "import writes a byte-compiled file to it")
         raise FileExistsError(msg.format(cfile))
     elif os.path.exists(cfile) and not os.path.isfile(cfile):
-        msg = ('{} is a non-regular file and will be changed into a regular '
-               'one if import writes a byte-compiled file to it')
+        msg = ("{} is a non-regular file and will be changed into a regular "
+               "one if import writes a byte-compiled file to it")
         raise FileExistsError(msg.format(cfile))
     return cfile
 
@@ -77,13 +78,13 @@ def create_cache_file(mutant: Mutant) -> None:
 
     bytecode = importlib._bootstrap_external._code_to_timestamp_pyc(
         mutant.mutant_code,
-        mutant.source_stats['mtime'],
-        mutant.source_stats['size'])
+        mutant.source_stats["mtime"],
+        mutant.source_stats["size"])
 
     importlib._bootstrap_external._write_atomic(mutant.cfile, bytecode, mutant.mode)
 
 
-def mutation_pipeline(dir):
+def mutation_pipeline(dir, no_mutation=False):
 
     mutants = []
 
@@ -91,6 +92,7 @@ def mutation_pipeline(dir):
 
         tree = get_ast_tree(fn)
         mutant = RewriteAddSub().visit(tree)
+
         mutant_code = compile(mutant, str(fn), "exec")
 
         # cache files
@@ -98,7 +100,7 @@ def mutation_pipeline(dir):
         create_cache_dirs(cfile)
 
         # loaders
-        loader = importlib.machinery.SourceFileLoader('<py_compile>', fn)
+        loader = importlib.machinery.SourceFileLoader("<py_compile>", fn)
         source_stats = loader.path_stats(fn)
         mode = importlib._bootstrap_external._calc_mode(fn)
 
