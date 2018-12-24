@@ -25,9 +25,10 @@ class LocIndex(NamedTuple):
 
 class MutateAST(ast.NodeTransformer):
 
-    def __init__(self, readonly=False):
+    def __init__(self, readonly=False, target=None):
         self.readonly = readonly
         self.locs = set()
+        self.target = target
 
     def visit_BinOp(self, node):
         """Replace BinOps with ast.Sub()"""

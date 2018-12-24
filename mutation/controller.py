@@ -1,11 +1,12 @@
 """Trial and job controller.
 """
+import ast
 import logging
 import pathlib
 from pathlib import Path
 import subprocess
 import sys
-from typing import List, Union
+from typing import Any, Dict, List, NamedTuple, Set, Tuple, Union
 
 from mutation.cache import remove_existing_cache_files
 from mutation.maker import create_mutant
@@ -22,6 +23,19 @@ logging.basicConfig(
     stream=sys.stdout
 )
 
+BINOP_TYPES = {
+    ast.Add, ast.Sub,
+    ast.Div, ast.Mult, ast.Pow,
+}
+
+
+'''
+class SourceDefinition(NamedTuple):
+    src_file: pathlib.PurePath
+    tree: ast.Module
+    targets: Set[Any]
+'''
+
 
 def get_py_files(pkg_dir: Union[str, pathlib.PurePath]) -> List[pathlib.PurePath]:
     """Return paths for all py files in the dir.
@@ -35,7 +49,7 @@ def get_py_files(pkg_dir: Union[str, pathlib.PurePath]) -> List[pathlib.PurePath
     # TODO: rglob is a generator, for large systems that may be
     # TODO: better behavior than generating the full file list
     relative_list = list(Path(pkg_dir).rglob("*.py"))
-    return [p.resolve() for p in relative_list]
+    return [p.resolve() for p in relative_list if not p.stem.startswith("test_")]
 
 
 def clean_trial(pkg_dir: pathlib.PurePath) -> None:
@@ -50,12 +64,11 @@ def clean_trial(pkg_dir: pathlib.PurePath) -> None:
                         f"Output: {clean_run.stdout}")
 
 
-def run_trials():
-    pkg_dir = Path("firstmodule")
-    exceptions = 0
+def build_src_trees_and_targets(pkg_dir: pathlib.PurePath) -> Tuple[Dict[str, ast.Module],
+                                                                    Dict[str, List[Any]]]:
 
-    # Run the pipeline with no mutations first
-    clean_trial(pkg_dir)
+    src_trees = {}
+    src_targets = {}
 
     for src_file in get_py_files(pkg_dir):
 
@@ -65,6 +78,32 @@ def run_trials():
         # Get the locations for all mutation potential for the given file
         LOGGER.info("Get mutation targets from AST.")
         targets = get_mutation_targets(tree)
+
+        src_trees[str(src_file)] = tree
+        src_targets[str(src_file)] = list(targets)
+
+    return src_trees, src_targets
+
+
+def run_trials():
+
+    pkg_dir = Path("firstmodule")
+    exceptions = 0
+
+    # Run the pipeline with no mutations first
+    clean_trial(pkg_dir)
+    src_trees, src_targets = build_src_trees_and_targets(pkg_dir)
+
+
+    # make a big list of
+    '''
+    while targets:
+        current_target = targets.pop()
+        mutant_ops = BINOP_TYPES.copy()
+        mutant_ops.remove(current_target.op_type)
+
+
+
 
     # For each entry, process mutations
 
@@ -78,3 +117,4 @@ def run_trials():
     clean_trial(pkg_dir)
 
     LOGGER.info("Mutation failures: %s", exceptions)
+    '''
