@@ -6,9 +6,12 @@ import pathlib
 from pathlib import Path
 import subprocess
 import sys
+from typing import List, Union
 
-from mutation.maker import get_cache_file_loc
-from mutation.maker import mutation_pipeline
+from mutation.cache import remove_existing_cache_files
+from mutation.maker import create_mutant
+from mutation.maker import get_mutation_targets
+from mutation.transformers import get_ast_from_src
 
 
 LOGGER = logging.getLogger(__name__)
@@ -21,20 +24,20 @@ logging.basicConfig(
 )
 
 
-def remove_existing_cache_files(src_loc: pathlib.PurePath) -> None:
+def get_py_files(pkg_dir: Union[str, pathlib.PurePath]) -> List[pathlib.PurePath]:
+    """Return paths for all py files in the dir.
 
-    def remove_cfile(srcfile):
-        cfile = get_cache_file_loc(srcfile.resolve())
-        if cfile.exists():
-            LOGGER.debug("Removing cache file: %s", cfile)
-            os.remove(cfile)
+    Args:
+        dir: directory to scan
 
-    if src_loc.is_dir():
-        for srcfile in Path(src_loc).rglob("*.py"):
-            remove_cfile(srcfile)
+    Returns:
+        List of resolved absolute paths
+    """
+    # TODO: rglob is a generator, for large systems that may be
+    # TODO: better behavior than generating the full file list
+    relative_list = list(Path(pkg_dir).rglob("*.py"))
+    return [p.resolve() for p in relative_list]
 
-    elif src_loc.suffix == ".py":
-        remove_cfile(src_loc)
 
 def clean_trial(pkg_dir: pathlib.PurePath) -> None:
 
@@ -44,23 +47,35 @@ def clean_trial(pkg_dir: pathlib.PurePath) -> None:
     clean_run = subprocess.run("pytest", capture_output=True)
 
     if clean_run.returncode != 0:
-        raise Exception("Clean trial does not pass, mutant tests will be meaningless.\n"
-                        "Output: {}".format(clean_run.stdout))
+        raise Exception(f"Clean trial does not pass, mutant tests will be meaningless.\n"
+                        f"Output: {clean_run.stdout}")
+
 
 def run_trials():
-    test_dir = Path("firstmodule")
+    pkg_dir = Path("firstmodule")
     exceptions = 0
 
     # Run the pipeline with no mutations first
-    clean_trial(test_dir)
+    clean_trial(pkg_dir)
+
+    for src_file in get_py_files(pkg_dir):
+
+        tree = get_ast_from_src(src_file)
+
+        # Get the locations for all mutation potential for the given file
+        targets = get_mutation_targets(tree)
+
+
+    # For each entry, process mutations
 
     # Create the mutations
-    mutation_pipeline(test_dir)
+
+    create_mutant(pkg_dir)
     mtrial = subprocess.run("pytest")
     exceptions += int(mtrial.returncode != 0)
 
     # Run the pipeline with no mutations last
-    clean_trial(test_dir)
+    clean_trial(pkg_dir)
 
     LOGGER.info("Mutation failures: %s", exceptions)
 
