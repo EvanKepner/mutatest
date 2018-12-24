@@ -2,8 +2,9 @@
 """
 import ast
 import logging
+import pathlib
 
-from typing import NamedTuple
+from typing import Union, NamedTuple
 
 LOGGER = logging.getLogger(__name__)
 

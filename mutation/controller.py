@@ -1,7 +1,6 @@
 """Trial and job controller.
 """
 import logging
-import os
 import pathlib
 from pathlib import Path
 import subprocess
@@ -60,11 +59,12 @@ def run_trials():
 
     for src_file in get_py_files(pkg_dir):
 
+        LOGGER.info("Creating AST from: %s", src_file)
         tree = get_ast_from_src(src_file)
 
         # Get the locations for all mutation potential for the given file
+        LOGGER.info("Get mutation targets from AST.")
         targets = get_mutation_targets(tree)
-
 
     # For each entry, process mutations
 
@@ -78,7 +78,3 @@ def run_trials():
     clean_trial(pkg_dir)
 
     LOGGER.info("Mutation failures: %s", exceptions)
-
-
-
-

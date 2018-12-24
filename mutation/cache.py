@@ -8,8 +8,6 @@ from pathlib import Path
 from py_compile import PycInvalidationMode
 from typing import Union
 
-from mutation.maker import Mutant
-
 
 LOGGER = logging.getLogger(__name__)
 
@@ -45,7 +43,7 @@ def create_cache_dirs(cache_file: pathlib.PurePath) -> None:
         Path.mkdir(cache_file.parent)
 
 
-def create_cache_file(mutant: Mutant) -> None:
+def create_cache_file(mutant) -> None:
     # https://github.com/python/cpython/blob/master/Lib/py_compile.py#L157
     check_invalidation_mode()
 

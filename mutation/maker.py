@@ -1,9 +1,8 @@
 """Mutation maker.
 """
-import ast
 import importlib
 import pathlib
-from typing import Any, Dict, NamedTuple, Set, Union
+from typing import Any, Dict, NamedTuple, Set
 
 from mutation.cache import get_cache_file_loc
 from mutation.cache import create_cache_dirs
