@@ -12,10 +12,13 @@ from mutation.transformers import MutateAST
 
 class Mutant(NamedTuple):
     mutant_code: Any
+    src_file: pathlib.PurePath
     cfile: pathlib.PurePath
     loader: Any
     source_stats: Dict[str, Any]
     mode: int
+    src_idx: Any
+    mutation: Any
 
 
 def get_mutation_targets(tree) -> Set[Any]:
@@ -25,10 +28,13 @@ def get_mutation_targets(tree) -> Set[Any]:
     return ro_mast.locs
 
 
-def create_mutant(tree, src_file) -> Mutant:
+def create_mutant(tree, src_file, sample_idx, mutation_op) -> Mutant:
 
     # mutate ast and create code binary
-    mutant_ast = MutateAST().visit(tree)
+    mutant_ast = MutateAST(readonly=False,
+                           target_idx=sample_idx,
+                           mutation=mutation_op).visit(tree)
+
     mutant_code = compile(mutant_ast, str(src_file), "exec")
 
     # get cache file locations and create directory if needed
@@ -41,7 +47,15 @@ def create_mutant(tree, src_file) -> Mutant:
     mode = importlib._bootstrap_external._calc_mode(src_file)
 
     # create the cache files with the mutation
-    mutant = Mutant(mutant_code, cfile, loader, source_stats, mode)
+    mutant = Mutant(mutant_code=mutant_code,
+                    src_file=src_file,
+                    cfile=cfile,
+                    loader=loader,
+                    source_stats=source_stats,
+                    mode=mode,
+                    src_idx=sample_idx,
+                    mutation=mutation_op)
+
     create_cache_file(mutant)
 
     return mutant

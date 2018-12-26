@@ -10,7 +10,8 @@ LOGGER = logging.getLogger(__name__)
 
 BINOP_TYPES = {
     ast.Add, ast.Sub,
-    ast.Div, ast.Mult, ast.Pow,
+    ast.Div, ast.Mult,
+    #ast.Pow,
 }
 
 CMPOP_TYPES = {
@@ -29,29 +30,40 @@ class LocIndex(NamedTuple):
 
 class MutateAST(ast.NodeTransformer):
 
-    def __init__(self, readonly=False, target=None):
+    def __init__(self, readonly=False, target_idx=None, mutation=None):
         self.readonly = readonly
         self.locs = set()
-        self.target = target
+        self.target_idx = target_idx
+        self.mutation = mutation
+
 
     def visit_BinOp(self, node):
-        """Replace BinOps with ast.Sub()"""
-        self.generic_visit(node)
+        LOGGER.info("NODE")
+        LOGGER.info(ast.dump(node))
+
+        #self.generic_visit(node)
 
         idx = LocIndex("BinOp", node.lineno, node.col_offset, type(node.op))
+        LOGGER.info("IDX VALUE:")
+        LOGGER.info(idx)
         self.locs.add(idx)
 
         if self.readonly:
             return node
 
         else:
-            LOGGER.debug("Mutating binOp with Sub")
-            return ast.copy_location(
-                ast.BinOp(left=node.left, op=ast.Sub(), right=node.right),
-                node)
+            if idx == self.target_idx and self.mutation:
+                LOGGER.debug("Mutating idx: %s with %s", self.target_idx, self.mutation)
+                return ast.copy_location(
+                    ast.BinOp(left=node.left, op=self.mutation(), right=node.right),
+                    node)
+            else:
+                LOGGER.debug("No mutation applied outside of READONLY mode.")
+                return node
 
 
 def get_mutations_for_target(target: LocIndex) -> Set[Any]:
+    # the target must have an op_type propoerty
 
     search_space = [BINOP_TYPES, CMPOP_TYPES]
 
@@ -59,11 +71,13 @@ def get_mutations_for_target(target: LocIndex) -> Set[Any]:
 
     for potential_ops in search_space:
         if target.op_type in potential_ops:
+            LOGGER.debug("Potential mutation operations found for target: %s", target.op_type)
             mutation_ops = potential_ops.copy()
             mutation_ops.remove(target.op_type)
             break
 
     return mutation_ops
+
 
 def get_ast_from_src(src_file: Union[str, pathlib.PurePath]) -> ast.Module:
 

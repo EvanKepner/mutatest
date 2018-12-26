@@ -55,6 +55,9 @@ def create_cache_file(mutant) -> None:
         mutant.source_stats["mtime"],
         mutant.source_stats["size"])
 
+    remove_existing_cache_files(mutant.src_file)
+
+    LOGGER.debug("Writing mutant cache file: %s", mutant.cfile)
     importlib._bootstrap_external._write_atomic(mutant.cfile, bytecode, mutant.mode)
 
 

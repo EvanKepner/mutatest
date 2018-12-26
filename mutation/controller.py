@@ -12,6 +12,7 @@ from mutation.cache import remove_existing_cache_files
 from mutation.maker import create_mutant
 from mutation.maker import get_mutation_targets
 from mutation.transformers import get_ast_from_src
+from mutation.transformers import get_mutations_for_target
 
 
 LOGGER = logging.getLogger(__name__)
@@ -97,37 +98,41 @@ def get_sample_space(src_targets: Dict[str, List[Any]]) -> List[Tuple[str, Any]]
 def run_trials():
 
     pkg_dir = Path("firstmodule")
-    exceptions = 0
+    detected_mutants = 0
+    total_trials = 0
 
     # Run the pipeline with no mutations first
+    LOGGER.info("START CLEAN TRIAL")
     clean_trial(pkg_dir)
 
     # Create the AST for each source file and make potential targets sample space
+    LOGGER.info("BUILD SAMPLE SPACE")
     src_trees, src_targets = build_src_trees_and_targets(pkg_dir)
     sample_space = get_sample_space(src_targets)
 
+    # Run mutation trials and tally test failures
+    LOGGER.info("ITERATIE MUTATIONS")
+    for sample_src, sample_idx in sample_space:
+        mutant_operations = get_mutations_for_target(sample_idx)
+        src_tree = src_trees[sample_src]
 
+        LOGGER.info("ITERATE OPERATIONS")
+        LOGGER.info(mutant_operations)
+        while mutant_operations:
+            current_mutation = mutant_operations.pop()
+            LOGGER.info("REMAINING OPERATIONS")
+            LOGGER.info(mutant_operations)
 
-    # make a big list of
-    '''
-    while targets:
-        current_target = targets.pop()
-        mutant_ops = BINOP_TYPES.copy()
-        mutant_ops.remove(current_target.op_type)
+            LOGGER.debug("Mutation creation for %s", current_mutation)
+            create_mutant(sample_src, src_tree, sample_idx, current_mutation)
 
-
-
-
-    # For each entry, process mutations
-
-    # Create the mutations
-
-    create_mutant(pkg_dir)
-    mtrial = subprocess.run("pytest")
-    exceptions += int(mtrial.returncode != 0)
+            LOGGER.info("Running test suite")
+            mtrial = subprocess.run("pytest")
+            detected_mutants += int(mtrial.returncode != 0)
+            total_trials += 1
 
     # Run the pipeline with no mutations last
     clean_trial(pkg_dir)
 
-    LOGGER.info("Mutation failures: %s", exceptions)
-    '''
+    LOGGER.info("Mutations Detected / Trials: %s / %s", detected_mutants, total_trials)
+
