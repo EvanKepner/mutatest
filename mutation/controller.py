@@ -1,6 +1,7 @@
 """Trial and job controller.
 """
 import ast
+from copy import deepcopy
 import logging
 import pathlib
 from pathlib import Path
@@ -20,19 +21,12 @@ FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
 logging.basicConfig(
     format=FORMAT,
-    level=logging.DEBUG,
+    level=logging.INFO,
+    #level=logging.DEBUG,
     stream=sys.stdout
 )
 
 
-
-
-'''
-class SourceDefinition(NamedTuple):
-    src_file: pathlib.PurePath
-    tree: ast.Module
-    targets: Set[Any]
-'''
 
 
 def get_py_files(pkg_dir: Union[str, pathlib.PurePath]) -> List[pathlib.PurePath]:
@@ -100,39 +94,46 @@ def run_trials():
     pkg_dir = Path("firstmodule")
     detected_mutants = 0
     total_trials = 0
+    mutants = []
 
     # Run the pipeline with no mutations first
-    LOGGER.info("START CLEAN TRIAL")
     clean_trial(pkg_dir)
 
     # Create the AST for each source file and make potential targets sample space
-    LOGGER.info("BUILD SAMPLE SPACE")
     src_trees, src_targets = build_src_trees_and_targets(pkg_dir)
     sample_space = get_sample_space(src_targets)
 
     # Run mutation trials and tally test failures
-    LOGGER.info("ITERATIE MUTATIONS")
     for sample_src, sample_idx in sample_space:
+        LOGGER.info(sample_idx)
         mutant_operations = get_mutations_for_target(sample_idx)
         src_tree = src_trees[sample_src]
 
-        LOGGER.info("ITERATE OPERATIONS")
-        LOGGER.info(mutant_operations)
         while mutant_operations:
             current_mutation = mutant_operations.pop()
-            LOGGER.info("REMAINING OPERATIONS")
-            LOGGER.info(mutant_operations)
 
             LOGGER.debug("Mutation creation for %s", current_mutation)
-            create_mutant(sample_src, src_tree, sample_idx, current_mutation)
 
-            LOGGER.info("Running test suite")
+            # mutation requires deep-copy to avoid in-place reference changes to AST
+            mutant = create_mutant(tree=deepcopy(src_tree),
+                                   src_file=sample_src,
+                                   sample_idx=sample_idx,
+                                   mutation_op=current_mutation)
+
             mtrial = subprocess.run("pytest")
-            detected_mutants += int(mtrial.returncode != 0)
+            detection_status = int(mtrial.returncode != 0)
+            LOGGER.info("Test suite status: %s, on mutation: %s",
+                        detection_status,
+                        current_mutation)
+
+            detected_mutants += detection_status
             total_trials += 1
+            mutants.append(mutant)
 
     # Run the pipeline with no mutations last
     clean_trial(pkg_dir)
 
     LOGGER.info("Mutations Detected / Trials: %s / %s", detected_mutants, total_trials)
+
+    return mutants
 

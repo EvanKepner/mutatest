@@ -2,6 +2,7 @@
 """
 import importlib
 import pathlib
+from pathlib import Path
 from typing import Any, Dict, NamedTuple, Set
 
 from mutation.cache import get_cache_file_loc
@@ -48,8 +49,8 @@ def create_mutant(tree, src_file, sample_idx, mutation_op) -> Mutant:
 
     # create the cache files with the mutation
     mutant = Mutant(mutant_code=mutant_code,
-                    src_file=src_file,
-                    cfile=cfile,
+                    src_file=Path(src_file),
+                    cfile=Path(cfile),
                     loader=loader,
                     source_stats=source_stats,
                     mode=mode,

@@ -11,7 +11,7 @@ LOGGER = logging.getLogger(__name__)
 BINOP_TYPES = {
     ast.Add, ast.Sub,
     ast.Div, ast.Mult,
-    #ast.Pow,
+    ast.Pow,
 }
 
 CMPOP_TYPES = {
@@ -38,27 +38,25 @@ class MutateAST(ast.NodeTransformer):
 
 
     def visit_BinOp(self, node):
-        LOGGER.info("NODE")
-        LOGGER.info(ast.dump(node))
-
-        #self.generic_visit(node)
+        self.generic_visit(node)
 
         idx = LocIndex("BinOp", node.lineno, node.col_offset, type(node.op))
-        LOGGER.info("IDX VALUE:")
-        LOGGER.info(idx)
         self.locs.add(idx)
 
         if self.readonly:
             return node
 
         else:
+            LOGGER.debug("ELSE STATEMENT")
             if idx == self.target_idx and self.mutation:
+                LOGGER.debug("ELSE IF STATEMENT FOR MUTATION")
                 LOGGER.debug("Mutating idx: %s with %s", self.target_idx, self.mutation)
                 return ast.copy_location(
+                    #ast.BinOp(left=node.left, op=ast.Sub(), right=node.right),
                     ast.BinOp(left=node.left, op=self.mutation(), right=node.right),
                     node)
             else:
-                LOGGER.debug("No mutation applied outside of READONLY mode.")
+                LOGGER.debug("ELSE ELSE STATEMENT NOT MUTATION")
                 return node
 
 
