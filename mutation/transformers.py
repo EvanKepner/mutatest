@@ -30,8 +30,7 @@ class LocIndex(NamedTuple):
 
 class MutateAST(ast.NodeTransformer):
 
-    def __init__(self, readonly=False, target_idx=None, mutation=None):
-        self.readonly = readonly
+    def __init__(self, target_idx=None, mutation=None):
         self.locs = set()
         self.target_idx = target_idx
         self.mutation = mutation
@@ -43,21 +42,14 @@ class MutateAST(ast.NodeTransformer):
         idx = LocIndex("BinOp", node.lineno, node.col_offset, type(node.op))
         self.locs.add(idx)
 
-        if self.readonly:
-            return node
-
+        if idx == self.target_idx and self.mutation:
+            LOGGER.debug("Mutating idx: %s with %s", self.target_idx, self.mutation)
+            return ast.copy_location(
+                ast.BinOp(left=node.left, op=self.mutation(), right=node.right),
+                node)
         else:
-            LOGGER.debug("ELSE STATEMENT")
-            if idx == self.target_idx and self.mutation:
-                LOGGER.debug("ELSE IF STATEMENT FOR MUTATION")
-                LOGGER.debug("Mutating idx: %s with %s", self.target_idx, self.mutation)
-                return ast.copy_location(
-                    #ast.BinOp(left=node.left, op=ast.Sub(), right=node.right),
-                    ast.BinOp(left=node.left, op=self.mutation(), right=node.right),
-                    node)
-            else:
-                LOGGER.debug("ELSE ELSE STATEMENT NOT MUTATION")
-                return node
+            LOGGER.debug("No mutations applied")
+            return node
 
 
 def get_mutations_for_target(target: LocIndex) -> Set[Any]:

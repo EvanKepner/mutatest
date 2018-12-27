@@ -95,6 +95,7 @@ def run_trials():
     detected_mutants = 0
     total_trials = 0
     mutants = []
+    survivors = []
 
     # Run the pipeline with no mutations first
     clean_trial(pkg_dir)
@@ -122,6 +123,10 @@ def run_trials():
 
             mtrial = subprocess.run("pytest")
             detection_status = int(mtrial.returncode != 0)
+
+            if detection_status == 0:
+                survivors.append(mutant)
+
             LOGGER.info("Test suite status: %s, on mutation: %s",
                         detection_status,
                         current_mutation)
@@ -130,10 +135,20 @@ def run_trials():
             total_trials += 1
             mutants.append(mutant)
 
+
     # Run the pipeline with no mutations last
     clean_trial(pkg_dir)
 
+    surviving_mutants = total_trials - detected_mutants
+
     LOGGER.info("Mutations Detected / Trials: %s / %s", detected_mutants, total_trials)
+    LOGGER.info("Surviving mutations: %s", surviving_mutants)
+
+    for survivor in survivors:
+        LOGGER.info("Survivor:\n\tFile: %s\n\tIndex: %s\n\tMutation: %s",
+                    survivor.src_file,
+                    survivor.src_idx,
+                    survivor.mutation)
 
     return mutants
 

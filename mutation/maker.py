@@ -24,7 +24,7 @@ class Mutant(NamedTuple):
 
 def get_mutation_targets(tree) -> Set[Any]:
 
-    ro_mast = MutateAST(readonly=True)
+    ro_mast = MutateAST(target_idx=None, mutation=None)
     ro_mast.visit(tree)
     return ro_mast.locs
 
@@ -32,8 +32,7 @@ def get_mutation_targets(tree) -> Set[Any]:
 def create_mutant(tree, src_file, sample_idx, mutation_op) -> Mutant:
 
     # mutate ast and create code binary
-    mutant_ast = MutateAST(readonly=False,
-                           target_idx=sample_idx,
+    mutant_ast = MutateAST(target_idx=sample_idx,
                            mutation=mutation_op).visit(tree)
 
     mutant_code = compile(mutant_ast, str(src_file), "exec")
