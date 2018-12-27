@@ -3,7 +3,6 @@
 import ast
 from copy import deepcopy
 import logging
-import pathlib
 from pathlib import Path
 import subprocess
 import sys
@@ -17,7 +16,6 @@ from mutation.transformers import get_ast_from_src
 from mutation.transformers import get_mutations_for_target
 from mutation.transformers import LocIndex
 
-
 LOGGER = logging.getLogger(__name__)
 FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
@@ -29,25 +27,37 @@ logging.basicConfig(
 )
 
 
-def get_py_files(pkg_dir: Union[str, pathlib.Path]) -> List[pathlib.PurePath]:
-    """Return paths for all py files in the dir.
+def get_py_files(pkg_dir: Union[str, Path]) -> List[Path]:
+    """Find all .py files recursively under the pkg_dir skipping test_ prefixed files.
 
     Args:
-        pkg_dir: directory to scan
+        pkg_dir: the package directory to scan
 
     Returns:
-        List of resolved absolute paths
+        List of absolute paths to .py files in package
     """
     relative_list = list(Path(pkg_dir).rglob("*.py"))
     return [p.resolve() for p in relative_list if not p.stem.startswith("test_")]
 
 
-def clean_trial(pkg_dir: pathlib.Path) -> None:
+def clean_trial(pkg_dir: Path, test_cmds: Optional[List[str]] = None) -> None:
+    """Remove all existing cache files and run the test suite.
 
+    Args:
+        pkg_dir: the directory of the package for cache removal
+        test_cmds: test running commands, defaults to pytest
+
+    Returns:
+        None
+
+    Raises:
+        Exception if the clean trial does not pass from the test run.
+    """
+    test_cmds = test_cmds or ["pytest"]
     remove_existing_cache_files(pkg_dir)
 
     LOGGER.debug("Running clean trial")
-    clean_run = subprocess.run("pytest", capture_output=True)
+    clean_run = subprocess.run(test_cmds, capture_output=True)
 
     if clean_run.returncode != 0:
         raise Exception(
@@ -57,9 +67,16 @@ def clean_trial(pkg_dir: pathlib.Path) -> None:
 
 
 def build_src_trees_and_targets(
-    pkg_dir: pathlib.Path
+    pkg_dir: Path
 ) -> Tuple[Dict[str, ast.Module], Dict[str, List[LocIndex]]]:
+    """Build the source AST references and find all mutation target locations for each.
 
+    Args:
+        pkg_dir: the source code package directory to scan
+
+    Returns:
+        Tuple(source trees, source targets)
+    """
     src_trees: Dict[str, ast.Module] = {}
     src_targets: Dict[str, List[LocIndex]] = {}
 
@@ -80,7 +97,15 @@ def build_src_trees_and_targets(
     return src_trees, src_targets
 
 
-def get_sample_space(src_targets: Dict[str, List[Any]]) -> List[Tuple[str, Any]]:
+def get_sample_space(src_targets: Dict[str, List[Any]]) -> List[Tuple[str, LocIndex]]:
+    """Create a flat sample space of source files and mutation targets.
+
+    Args:
+        src_targets: Dictionary of targets indexed by source file
+
+    Returns:
+        List of source-file and target-index pairs as a flat structure.
+    """
 
     sample_space = []
     for src_file, target_list in src_targets.items():
@@ -90,17 +115,27 @@ def get_sample_space(src_targets: Dict[str, List[Any]]) -> List[Tuple[str, Any]]
     return sample_space
 
 
-def run_trials(pkg_dir: pathlib.Path, test_cmds: Optional[List[str]] = None) -> List[Mutant]:
+def run_trials(pkg_dir: Path, test_cmds: Optional[List[str]] = None) -> List[Mutant]:
+    """Run the mutation trials.
 
-    if not isinstance(pkg_dir, pathlib.Path):
+    Args:
+        pkg_dir: the source file package directory
+        test_cmds: the test runner commands, defaults to "pytest" if None
+
+    Returns:
+        List of mutants
+    """
+    # set defaults, Path object is required for other methods
+    if not isinstance(pkg_dir, Path):
         pkg_dir = Path(pkg_dir)
 
     test_cmds = test_cmds or ["pytest"]
 
+    # accumulators for counting mutant detections throughout trials
     detected_mutants, total_trials = 0, 0
     mutants, survivors = [], []
 
-    # Run the pipeline with no mutations first
+    # Run the pipeline with no mutations first to ensure later results are meaningful
     clean_trial(pkg_dir)
 
     # Create the AST for each source file and make potential targets sample space
@@ -122,7 +157,7 @@ def run_trials(pkg_dir: pathlib.Path, test_cmds: Optional[List[str]] = None) -> 
             mutant = create_mutant(
                 tree=deepcopy(src_tree),
                 src_file=sample_src,
-                sample_idx=sample_idx,
+                target_idx=sample_idx,
                 mutation_op=current_mutation,
             )
 

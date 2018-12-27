@@ -2,9 +2,9 @@
 """
 import ast
 import logging
-import pathlib
+from pathlib import Path
 
-from typing import Any, List, Optional, Set, Union, NamedTuple
+from typing import List, Optional, Set, Union, NamedTuple
 
 LOGGER = logging.getLogger(__name__)
 
@@ -14,6 +14,8 @@ CMPOP_TYPES: Set[type] = {ast.Eq, ast.NotEq, ast.Lt, ast.LtE, ast.Gt, ast.GtE}
 
 
 class LocIndex(NamedTuple):
+    """Location index within AST to mark mutation targets."""
+
     ast_class: str
     lineno: int
     col_offset: int
@@ -21,9 +23,22 @@ class LocIndex(NamedTuple):
 
 
 class MutateAST(ast.NodeTransformer):
+    """AST NodeTransformer to replace nodes with mutations by visits."""
+
     def __init__(
         self, target_idx: Optional[LocIndex] = None, mutation: Optional[type] = None
     ) -> None:
+        """Create the AST node transformer for mutations.
+
+        If the target_idx and mutation are set to None then no transformations are applied;
+        however, the locs attribute is updated with the locations of nodes that could
+        be transformed. This allows the class to function both as an inspection method
+        and as a mutation transformer.
+
+        Args:
+            target_idx: Location index for the mutation in the AST
+            mutation: the mutation to apply
+        """
         self.locs: Set[LocIndex] = set()
         self.target_idx = target_idx
         self.mutation = mutation
@@ -45,9 +60,15 @@ class MutateAST(ast.NodeTransformer):
             return node
 
 
-def get_mutations_for_target(target: LocIndex) -> Set[Any]:
-    # the target must have an op_type propoerty
+def get_mutations_for_target(target: LocIndex) -> Set[type]:
+    """Given a target, find all the mutations that could apply from the definitions.
 
+    Args:
+        target: the location index target
+
+    Returns:
+        Set of types that can mutated into the target op
+    """
     search_space: List[Set[type]] = [BINOP_TYPES, CMPOP_TYPES]
 
     mutation_ops: Set[type] = set()
@@ -62,8 +83,15 @@ def get_mutations_for_target(target: LocIndex) -> Set[Any]:
     return mutation_ops
 
 
-def get_ast_from_src(src_file: Union[str, pathlib.PurePath]) -> ast.Module:
+def get_ast_from_src(src_file: Union[str, Path]) -> ast.Module:
+    """Create an AST from a source file
 
+    Args:
+        src_file: the source file to  build into an AST
+
+    Returns:
+        The AST
+    """
     with open(src_file, "rb") as src_stream:
         source = src_stream.read()
         return ast.parse(source)

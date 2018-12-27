@@ -2,7 +2,6 @@
 """
 import ast
 import importlib
-import pathlib
 from pathlib import Path
 from typing import Any, Set
 
@@ -15,18 +14,36 @@ from mutation.transformers import MutateAST
 
 
 def get_mutation_targets(tree: ast.Module) -> Set[LocIndex]:
+    """Run the mutation AST search with no targets or mutations to bring back target indicies.
 
+    Args:
+        tree: the source file AST
+
+    Returns:
+        Set of potential mutation targets within AST
+    """
     ro_mast = MutateAST(target_idx=None, mutation=None)
     ro_mast.visit(tree)
     return ro_mast.locs
 
 
 def create_mutant(
-    tree: ast.Module, src_file: str, sample_idx: LocIndex, mutation_op: Any
+    tree: ast.Module, src_file: str, target_idx: LocIndex, mutation_op: Any
 ) -> Mutant:
+    """Create a mutation in the AST of src_file at sample_idx and update the cache.
+
+    Args:
+        tree: AST for the source file
+        src_file: source file location on disk
+        target_idx: the location to make the mutation
+        mutation_op: the mutation to apply
+
+    Returns:
+        The mutant, and creates the cache file of the mutation
+    """
 
     # mutate ast and create code binary
-    mutant_ast = MutateAST(target_idx=sample_idx, mutation=mutation_op).visit(tree)
+    mutant_ast = MutateAST(target_idx=target_idx, mutation=mutation_op).visit(tree)
 
     mutant_code = compile(mutant_ast, str(src_file), "exec")
 
@@ -47,7 +64,7 @@ def create_mutant(
         loader=loader,
         source_stats=source_stats,
         mode=mode,
-        src_idx=sample_idx,
+        src_idx=target_idx,
         mutation=mutation_op,
     )
 
