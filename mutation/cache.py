@@ -38,13 +38,17 @@ def get_cache_file_loc(src_file: Union[str, pathlib.Path]) -> pathlib.Path:
     cache_file = importlib.util.cache_from_source(str(src_file))
 
     if os.path.islink(cache_file):
-        msg = ("{} is a symlink and will be changed into a regular file if "
-               "import writes a byte-compiled file to it")
+        msg = (
+            "{} is a symlink and will be changed into a regular file if "
+            "import writes a byte-compiled file to it"
+        )
         raise FileExistsError(msg.format(cache_file))
 
     elif os.path.exists(cache_file) and not os.path.isfile(cache_file):
-        msg = ("{} is a non-regular file and will be changed into a regular "
-               "one if import writes a byte-compiled file to it")
+        msg = (
+            "{} is a non-regular file and will be changed into a regular "
+            "one if import writes a byte-compiled file to it"
+        )
         raise FileExistsError(msg.format(cache_file))
 
     return Path(cache_file)
@@ -55,15 +59,14 @@ def create_cache_dirs(cache_file: pathlib.Path) -> None:
         Path.mkdir(cache_file.parent)
 
 
-#def create_cache_file(mutant: Mutant) -> None:
+# def create_cache_file(mutant: Mutant) -> None:
 def create_cache_file(mutant: Mutant) -> None:
     # https://github.com/python/cpython/blob/master/Lib/py_compile.py#L157
     check_invalidation_mode()
 
     bytecode = importlib._bootstrap_external._code_to_timestamp_pyc(  # type: ignore
-        mutant.mutant_code,
-        mutant.source_stats["mtime"],
-        mutant.source_stats["size"])
+        mutant.mutant_code, mutant.source_stats["mtime"], mutant.source_stats["size"]
+    )
 
     remove_existing_cache_files(mutant.src_file)
 
@@ -72,7 +75,6 @@ def create_cache_file(mutant: Mutant) -> None:
 
 
 def remove_existing_cache_files(src_loc: pathlib.Path) -> None:
-
     def remove_cfile(srcfile: pathlib.Path) -> None:
         cfile = get_cache_file_loc(srcfile.resolve())
         if cfile.exists():

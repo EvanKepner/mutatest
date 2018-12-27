@@ -24,8 +24,8 @@ FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 logging.basicConfig(
     format=FORMAT,
     level=logging.INFO,
-    #level=logging.DEBUG,
-    stream=sys.stdout
+    # level=logging.DEBUG,
+    stream=sys.stdout,
 )
 
 
@@ -39,8 +39,7 @@ def get_py_files(pkg_dir: Union[str, pathlib.Path]) -> List[pathlib.PurePath]:
         List of resolved absolute paths
     """
     relative_list = list(Path(pkg_dir).rglob("*.py"))
-    return [p.resolve() for p in relative_list
-            if not p.stem.startswith("test_")]
+    return [p.resolve() for p in relative_list if not p.stem.startswith("test_")]
 
 
 def clean_trial(pkg_dir: pathlib.Path) -> None:
@@ -51,12 +50,15 @@ def clean_trial(pkg_dir: pathlib.Path) -> None:
     clean_run = subprocess.run("pytest", capture_output=True)
 
     if clean_run.returncode != 0:
-        raise Exception(f"Clean trial does not pass, mutant tests will be meaningless.\n"
-                        f"Output: {clean_run.stdout}")
+        raise Exception(
+            f"Clean trial does not pass, mutant tests will be meaningless.\n"
+            f"Output: {clean_run.stdout}"
+        )
 
 
-def build_src_trees_and_targets(pkg_dir: pathlib.Path) -> Tuple[Dict[str, ast.Module],
-                                                                Dict[str, List[LocIndex]]]:
+def build_src_trees_and_targets(
+    pkg_dir: pathlib.Path
+) -> Tuple[Dict[str, ast.Module], Dict[str, List[LocIndex]]]:
 
     src_trees: Dict[str, ast.Module] = {}
     src_targets: Dict[str, List[LocIndex]] = {}
@@ -70,7 +72,7 @@ def build_src_trees_and_targets(pkg_dir: pathlib.Path) -> Tuple[Dict[str, ast.Mo
         LOGGER.info("Get mutation targets from AST.")
         targets = get_mutation_targets(tree)
 
-        #only add files that have at least one valid target for mutation
+        # only add files that have at least one valid target for mutation
         if targets:
             src_trees[str(src_file)] = tree
             src_targets[str(src_file)] = [tgt for tgt in targets]
@@ -117,10 +119,12 @@ def run_trials(pkg_dir: pathlib.Path, test_cmds: Optional[List[str]] = None) -> 
             LOGGER.debug("Mutation creation for %s", current_mutation)
 
             # mutation requires deep-copy to avoid in-place reference changes to AST
-            mutant = create_mutant(tree=deepcopy(src_tree),
-                                   src_file=sample_src,
-                                   sample_idx=sample_idx,
-                                   mutation_op=current_mutation)
+            mutant = create_mutant(
+                tree=deepcopy(src_tree),
+                src_file=sample_src,
+                sample_idx=sample_idx,
+                mutation_op=current_mutation,
+            )
 
             mtrial = subprocess.run(test_cmds)
             detection_status = int(mtrial.returncode != 0)
@@ -128,14 +132,13 @@ def run_trials(pkg_dir: pathlib.Path, test_cmds: Optional[List[str]] = None) -> 
             if detection_status == 0:
                 survivors.append(mutant)
 
-            LOGGER.info("Test suite status: %s, on mutation: %s",
-                        detection_status,
-                        current_mutation)
+            LOGGER.info(
+                "Test suite status: %s, on mutation: %s", detection_status, current_mutation
+            )
 
             detected_mutants += detection_status
             total_trials += 1
             mutants.append(mutant)
-
 
     # Run the pipeline with no mutations last
     clean_trial(pkg_dir)
@@ -146,10 +149,11 @@ def run_trials(pkg_dir: pathlib.Path, test_cmds: Optional[List[str]] = None) -> 
     LOGGER.info("Surviving mutations: %s", surviving_mutants)
 
     for survivor in survivors:
-        LOGGER.info("Survivor:\n\tFile: %s\n\tIndex: %s\n\tMutation: %s",
-                    survivor.src_file,
-                    survivor.src_idx,
-                    survivor.mutation)
+        LOGGER.info(
+            "Survivor:\n\tFile: %s\n\tIndex: %s\n\tMutation: %s",
+            survivor.src_file,
+            survivor.src_idx,
+            survivor.mutation,
+        )
 
     return mutants
-

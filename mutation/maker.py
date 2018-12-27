@@ -21,14 +21,12 @@ def get_mutation_targets(tree: ast.Module) -> Set[LocIndex]:
     return ro_mast.locs
 
 
-def create_mutant(tree: ast.Module,
-                  src_file: str,
-                  sample_idx: LocIndex,
-                  mutation_op: Any) -> Mutant:
+def create_mutant(
+    tree: ast.Module, src_file: str, sample_idx: LocIndex, mutation_op: Any
+) -> Mutant:
 
     # mutate ast and create code binary
-    mutant_ast = MutateAST(target_idx=sample_idx,
-                           mutation=mutation_op).visit(tree)
+    mutant_ast = MutateAST(target_idx=sample_idx, mutation=mutation_op).visit(tree)
 
     mutant_code = compile(mutant_ast, str(src_file), "exec")
 
@@ -42,14 +40,16 @@ def create_mutant(tree: ast.Module,
     mode = importlib._bootstrap_external._calc_mode(src_file)  # type: ignore
 
     # create the cache files with the mutation
-    mutant = Mutant(mutant_code=mutant_code,
-                    src_file=Path(src_file),
-                    cfile=Path(cfile),
-                    loader=loader,
-                    source_stats=source_stats,
-                    mode=mode,
-                    src_idx=sample_idx,
-                    mutation=mutation_op)
+    mutant = Mutant(
+        mutant_code=mutant_code,
+        src_file=Path(src_file),
+        cfile=Path(cfile),
+        loader=loader,
+        source_stats=source_stats,
+        mode=mode,
+        src_idx=sample_idx,
+        mutation=mutation_op,
+    )
 
     create_cache_file(mutant)
 
