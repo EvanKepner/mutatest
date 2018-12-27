@@ -10,10 +10,12 @@ import sys
 from typing import Any, Dict, List, NamedTuple, Set, Tuple, Union
 
 from mutation.cache import remove_existing_cache_files
+from mutation.cache import Mutant
 from mutation.maker import create_mutant
 from mutation.maker import get_mutation_targets
 from mutation.transformers import get_ast_from_src
 from mutation.transformers import get_mutations_for_target
+from mutation.transformers import LocIndex
 
 
 LOGGER = logging.getLogger(__name__)
@@ -27,9 +29,7 @@ logging.basicConfig(
 )
 
 
-
-
-def get_py_files(pkg_dir: Union[str, pathlib.PurePath]) -> List[pathlib.PurePath]:
+def get_py_files(pkg_dir: Union[str, pathlib.Path]) -> List[pathlib.PurePath]:
     """Return paths for all py files in the dir.
 
     Args:
@@ -38,13 +38,12 @@ def get_py_files(pkg_dir: Union[str, pathlib.PurePath]) -> List[pathlib.PurePath
     Returns:
         List of resolved absolute paths
     """
-    # TODO: rglob is a generator, for large systems that may be
-    # TODO: better behavior than generating the full file list
     relative_list = list(Path(pkg_dir).rglob("*.py"))
-    return [p.resolve() for p in relative_list if not p.stem.startswith("test_")]
+    return [p.resolve() for p in relative_list
+            if not p.stem.startswith("test_")]
 
 
-def clean_trial(pkg_dir: pathlib.PurePath) -> None:
+def clean_trial(pkg_dir: pathlib.Path) -> None:
 
     remove_existing_cache_files(pkg_dir)
 
@@ -56,11 +55,11 @@ def clean_trial(pkg_dir: pathlib.PurePath) -> None:
                         f"Output: {clean_run.stdout}")
 
 
-def build_src_trees_and_targets(pkg_dir: pathlib.PurePath) -> Tuple[Dict[str, ast.Module],
+def build_src_trees_and_targets(pkg_dir: pathlib.Path) -> Tuple[Dict[str, ast.Module],
                                                                     Dict[str, List[Any]]]:
 
-    src_trees = {}
-    src_targets = {}
+    src_trees: Dict[str, ast.Module] = {}
+    src_targets: Dict[str, List[LocIndex]] = {}
 
     for src_file in get_py_files(pkg_dir):
 
@@ -74,7 +73,7 @@ def build_src_trees_and_targets(pkg_dir: pathlib.PurePath) -> Tuple[Dict[str, as
         #only add files that have at least one valid target for mutation
         if targets:
             src_trees[str(src_file)] = tree
-            src_targets[str(src_file)] = list(targets)
+            src_targets[str(src_file)] = [tgt for tgt in targets]
 
     return src_trees, src_targets
 
@@ -89,7 +88,7 @@ def get_sample_space(src_targets: Dict[str, List[Any]]) -> List[Tuple[str, Any]]
     return sample_space
 
 
-def run_trials():
+def run_trials() -> List[Mutant]:
 
     pkg_dir = Path("firstmodule")
     detected_mutants = 0

@@ -5,16 +5,26 @@ import logging
 import os
 import pathlib
 from pathlib import Path
-from py_compile import PycInvalidationMode
-from typing import Union
+from py_compile import PycInvalidationMode  # type: ignore
+from typing import Any, Mapping, NamedTuple, Union
 
-# from mutation.maker import Mutant
-
+from mutation.transformers import LocIndex
 
 LOGGER = logging.getLogger(__name__)
 
 
-def check_invalidation_mode():
+class Mutant(NamedTuple):
+    mutant_code: Any
+    src_file: pathlib.Path
+    cfile: pathlib.Path
+    loader: Any
+    source_stats: Mapping[str, Any]
+    mode: int
+    src_idx: LocIndex
+    mutation: Any
+
+
+def check_invalidation_mode() -> PycInvalidationMode:
     # https://github.com/python/cpython/blob/master/Lib/py_compile.py#L72
     # TODO: figure out how to make this work with hash as well
     if os.environ.get("SOURCE_DATE_EPOCH"):
@@ -23,9 +33,9 @@ def check_invalidation_mode():
     return PycInvalidationMode.TIMESTAMP
 
 
-def get_cache_file_loc(src_file: Union[str, pathlib.PurePath]) -> pathlib.PurePath:
+def get_cache_file_loc(src_file: Union[str, pathlib.Path]) -> pathlib.Path:
     #  https://github.com/python/cpython/blob/master/Lib/py_compile.py#L130
-    cache_file = importlib.util.cache_from_source(src_file)
+    cache_file = importlib.util.cache_from_source(str(src_file))
 
     if os.path.islink(cache_file):
         msg = ("{} is a symlink and will be changed into a regular file if "
@@ -40,17 +50,17 @@ def get_cache_file_loc(src_file: Union[str, pathlib.PurePath]) -> pathlib.PurePa
     return Path(cache_file)
 
 
-def create_cache_dirs(cache_file: pathlib.PurePath) -> None:
+def create_cache_dirs(cache_file: pathlib.Path) -> None:
     if not cache_file.parent.exists():
         Path.mkdir(cache_file.parent)
 
 
 #def create_cache_file(mutant: Mutant) -> None:
-def create_cache_file(mutant) -> None:
+def create_cache_file(mutant: Mutant) -> None:
     # https://github.com/python/cpython/blob/master/Lib/py_compile.py#L157
     check_invalidation_mode()
 
-    bytecode = importlib._bootstrap_external._code_to_timestamp_pyc(
+    bytecode = importlib._bootstrap_external._code_to_timestamp_pyc(  # type: ignore
         mutant.mutant_code,
         mutant.source_stats["mtime"],
         mutant.source_stats["size"])
@@ -58,16 +68,16 @@ def create_cache_file(mutant) -> None:
     remove_existing_cache_files(mutant.src_file)
 
     LOGGER.debug("Writing mutant cache file: %s", mutant.cfile)
-    importlib._bootstrap_external._write_atomic(mutant.cfile, bytecode, mutant.mode)
+    importlib._bootstrap_external._write_atomic(mutant.cfile, bytecode, mutant.mode)  # type: ignore
 
 
-def remove_existing_cache_files(src_loc: pathlib.PurePath) -> None:
+def remove_existing_cache_files(src_loc: pathlib.Path) -> None:
 
-    def remove_cfile(srcfile):
+    def remove_cfile(srcfile: pathlib.Path) -> None:
         cfile = get_cache_file_loc(srcfile.resolve())
         if cfile.exists():
             LOGGER.debug("Removing cache file: %s", cfile)
-            os.remove(cfile)
+            os.remove(str(cfile))
 
     if src_loc.is_dir():
         for srcfile in Path(src_loc).rglob("*.py"):

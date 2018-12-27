@@ -4,17 +4,17 @@ import ast
 import logging
 import pathlib
 
-from typing import Any, Set, Union, NamedTuple
+from typing import Any, List, Optional, Set, Union, NamedTuple
 
 LOGGER = logging.getLogger(__name__)
 
-BINOP_TYPES = {
+BINOP_TYPES: Set[type] = {
     ast.Add, ast.Sub,
     ast.Div, ast.Mult,
     ast.Pow,
 }
 
-CMPOP_TYPES = {
+CMPOP_TYPES: Set[type] = {
     ast.Eq, ast.NotEq,
     ast.Lt, ast.LtE, ast.Gt, ast.GtE,
 
@@ -30,13 +30,15 @@ class LocIndex(NamedTuple):
 
 class MutateAST(ast.NodeTransformer):
 
-    def __init__(self, target_idx=None, mutation=None):
-        self.locs = set()
+    def __init__(self,
+                 target_idx: Optional[LocIndex]=None,
+                 mutation: Optional[type]=None) -> None:
+        self.locs: Set[LocIndex] = set()
         self.target_idx = target_idx
         self.mutation = mutation
 
 
-    def visit_BinOp(self, node):
+    def visit_BinOp(self, node: ast.BinOp) -> ast.AST:
         self.generic_visit(node)
 
         idx = LocIndex("BinOp", node.lineno, node.col_offset, type(node.op))
@@ -47,6 +49,7 @@ class MutateAST(ast.NodeTransformer):
             return ast.copy_location(
                 ast.BinOp(left=node.left, op=self.mutation(), right=node.right),
                 node)
+
         else:
             LOGGER.debug("No mutations applied")
             return node
@@ -55,9 +58,9 @@ class MutateAST(ast.NodeTransformer):
 def get_mutations_for_target(target: LocIndex) -> Set[Any]:
     # the target must have an op_type propoerty
 
-    search_space = [BINOP_TYPES, CMPOP_TYPES]
+    search_space: List[Set[type]] = [BINOP_TYPES, CMPOP_TYPES]
 
-    mutation_ops = set()
+    mutation_ops: Set[type] = set()
 
     for potential_ops in search_space:
         if target.op_type in potential_ops:
