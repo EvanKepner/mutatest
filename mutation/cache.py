@@ -1,4 +1,4 @@
-"""Cache file controls
+"""Cache file controls.
 """
 import importlib
 import logging

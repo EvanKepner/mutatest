@@ -1,4 +1,4 @@
-"""AST Transformers
+"""AST Transformers.
 """
 import ast
 import logging
@@ -8,7 +8,9 @@ from typing import List, Optional, Set, Union, NamedTuple
 
 LOGGER = logging.getLogger(__name__)
 
-BINOP_TYPES: Set[type] = {ast.Add, ast.Sub, ast.Div, ast.Mult, ast.Pow}
+BINOP_TYPES: Set[type] = {ast.Add, ast.Sub, ast.Div, ast.Mult, ast.Pow, ast.Mod, ast.FloorDiv}
+
+BINOP_BIT_TYPES: Set[type] = {ast.LShift, ast.RShift, ast.BitAnd, ast.BitOr, ast.BitXor}
 
 CMPOP_TYPES: Set[type] = {ast.Eq, ast.NotEq, ast.Lt, ast.LtE, ast.Gt, ast.GtE}
 
@@ -69,7 +71,7 @@ def get_mutations_for_target(target: LocIndex) -> Set[type]:
     Returns:
         Set of types that can mutated into the target op
     """
-    search_space: List[Set[type]] = [BINOP_TYPES, CMPOP_TYPES]
+    search_space: List[Set[type]] = [BINOP_TYPES, BINOP_BIT_TYPES, CMPOP_TYPES]
 
     mutation_ops: Set[type] = set()
 
