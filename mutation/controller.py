@@ -7,7 +7,7 @@ import pathlib
 from pathlib import Path
 import subprocess
 import sys
-from typing import Any, Dict, List, NamedTuple, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from mutation.cache import remove_existing_cache_files
 from mutation.cache import Mutant
@@ -33,7 +33,7 @@ def get_py_files(pkg_dir: Union[str, pathlib.Path]) -> List[pathlib.PurePath]:
     """Return paths for all py files in the dir.
 
     Args:
-        dir: directory to scan
+        pkg_dir: directory to scan
 
     Returns:
         List of resolved absolute paths
@@ -56,7 +56,7 @@ def clean_trial(pkg_dir: pathlib.Path) -> None:
 
 
 def build_src_trees_and_targets(pkg_dir: pathlib.Path) -> Tuple[Dict[str, ast.Module],
-                                                                    Dict[str, List[Any]]]:
+                                                                Dict[str, List[LocIndex]]]:
 
     src_trees: Dict[str, ast.Module] = {}
     src_targets: Dict[str, List[LocIndex]] = {}
@@ -88,13 +88,15 @@ def get_sample_space(src_targets: Dict[str, List[Any]]) -> List[Tuple[str, Any]]
     return sample_space
 
 
-def run_trials() -> List[Mutant]:
+def run_trials(pkg_dir: pathlib.Path, test_cmds: Optional[List[str]] = None) -> List[Mutant]:
 
-    pkg_dir = Path("firstmodule")
-    detected_mutants = 0
-    total_trials = 0
-    mutants = []
-    survivors = []
+    if not isinstance(pkg_dir, pathlib.Path):
+        pkg_dir = Path(pkg_dir)
+
+    test_cmds = test_cmds or ["pytest"]
+
+    detected_mutants, total_trials = 0, 0
+    mutants, survivors = [], []
 
     # Run the pipeline with no mutations first
     clean_trial(pkg_dir)
@@ -120,7 +122,7 @@ def run_trials() -> List[Mutant]:
                                    sample_idx=sample_idx,
                                    mutation_op=current_mutation)
 
-            mtrial = subprocess.run("pytest")
+            mtrial = subprocess.run(test_cmds)
             detection_status = int(mtrial.returncode != 0)
 
             if detection_status == 0:
