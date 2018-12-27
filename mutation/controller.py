@@ -133,10 +133,10 @@ def run_trials(pkg_dir: Path, test_cmds: Optional[List[str]] = None) -> List[Mut
 
     # accumulators for counting mutant detections throughout trials
     detected_mutants, total_trials = 0, 0
-    mutants, survivors = [], []
+    mutants, survivors, mutation_errors = [], [], []
 
     # Run the pipeline with no mutations first to ensure later results are meaningful
-    clean_trial(pkg_dir)
+    clean_trial(pkg_dir=pkg_dir, test_cmds=test_cmds)
 
     # Create the AST for each source file and make potential targets sample space
     src_trees, src_targets = build_src_trees_and_targets(pkg_dir)
@@ -164,8 +164,12 @@ def run_trials(pkg_dir: Path, test_cmds: Optional[List[str]] = None) -> List[Mut
             mtrial = subprocess.run(test_cmds)
             detection_status = int(mtrial.returncode != 0)
 
+            # return codes: 0 = pass, 1 = fail, 2 = error
             if detection_status == 0:
                 survivors.append(mutant)
+
+            if detection_status == 2:
+                mutation_errors.append(mutant)
 
             LOGGER.info(
                 "Test suite status: %s, on mutation: %s", detection_status, current_mutation
@@ -176,11 +180,12 @@ def run_trials(pkg_dir: Path, test_cmds: Optional[List[str]] = None) -> List[Mut
             mutants.append(mutant)
 
     # Run the pipeline with no mutations last
-    clean_trial(pkg_dir)
+    clean_trial(pkg_dir=pkg_dir, test_cmds=test_cmds)
 
     surviving_mutants = total_trials - detected_mutants
 
     LOGGER.info("Mutations Detected / Trials: %s / %s", detected_mutants, total_trials)
+    LOGGER.info("Mutations generating errors: %s", len(mutation_errors))
     LOGGER.info("Surviving mutations: %s", surviving_mutants)
 
     for survivor in survivors:
