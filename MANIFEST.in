@@ -1,0 +1,6 @@
+include LICENSE
+include *.md
+include *.rst
+include *.toml
+include *.yml
+include *.yaml
