@@ -5,7 +5,6 @@ from copy import deepcopy
 import logging
 from pathlib import Path
 import subprocess
-import sys
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from mutatest.cache import remove_existing_cache_files
@@ -17,14 +16,6 @@ from mutatest.transformers import get_mutations_for_target
 from mutatest.transformers import LocIndex
 
 LOGGER = logging.getLogger(__name__)
-FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-
-logging.basicConfig(
-    format=FORMAT,
-    level=logging.INFO,
-    # level=logging.DEBUG,
-    stream=sys.stdout,
-)
 
 
 def get_py_files(pkg_dir: Union[str, Path]) -> List[Path]:
