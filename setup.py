@@ -6,16 +6,16 @@ import sys
 from setuptools import find_packages, setup
 
 if sys.version_info < (3, 6, 0):
-    raise Exception("Mutation requires Python version 3.6 or later")
+    raise Exception("Mutatest requires Python version 3.6 or later")
 
 ###############################################################################
 # Using setup.py from Attrs as a template for finding components
 # Original reference: https://github.com/python-attrs/attrs/blob/master/setup.py
 
 NAME = "mutatest"
-PACKAGES = find_packages(where="mutaton")
+PACKAGES = find_packages(where="mutatest")
 META_PATH = os.path.join("mutatest",  "__init__.py")
-KEYWORDS = ["mutatest", "testing", "test", "mutant", "mutate"]
+KEYWORDS = ["mutatest", "mutation", "testing", "test", "mutant", "mutate"]
 PROJECT_URLS = {
     "Documentation": "https://github.com/EvanKepner/m",
     "Bug Tracker": "https://github.com/EvanKepner/m/issues",
@@ -96,7 +96,7 @@ if __name__ == "__main__":
         description=find_meta("description"),
         license=find_meta("license"),
         url=URL,
-        #project_urls=PROJECT_URLS,
+        project_urls=PROJECT_URLS,
         version=VERSION,
         author=find_meta("author"),
         author_email=find_meta("email"),
@@ -108,6 +108,7 @@ if __name__ == "__main__":
         package_dir={"": "mutatest"},
         python_requires=">=3.6.0",
         zip_safe=False,
+        entry_points={"console_scripts":["mutatest=mutatest.cli:run_all"]},
         classifiers=CLASSIFIERS,
         install_requires=INSTALL_REQUIRES,
         extras_require=EXTRAS_REQUIRE,
