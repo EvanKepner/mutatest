@@ -5,6 +5,7 @@ import logging
 from pathlib import Path
 import sys
 
+from mutatest.analyzer import analyze_mutant_trials
 from mutatest.controller import clean_trial
 from mutatest.controller import run_mutation_trials
 
@@ -46,10 +47,18 @@ def run_all():
     )
 
     # Run the pipeline with no mutations first to ensure later results are meaningful
+    LOGGER.info("Running clean trial")
     clean_trial(pkg_dir=pkg_dir, test_cmds=test_cmds)
 
     # Run the mutation trials
-    results = run_mutation_trials(pkg_dir=pkg_dir, test_cmds=test_cmds)
+    LOGGER.info("Running mutation trials")
+    results = run_mutation_trials(pkg_dir=pkg_dir, test_cmds=test_cmds,
+                                  break_on_detected=True,
+                                  break_on_survival=True)
 
     # Run the pipeline with no mutations last
+    LOGGER.info("Running clean trial")
     clean_trial(pkg_dir=pkg_dir, test_cmds=test_cmds)
+
+    status = analyze_mutant_trials(results)
+    LOGGER.info("Status:\n %s", status)

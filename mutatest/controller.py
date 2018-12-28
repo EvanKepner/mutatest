@@ -10,6 +10,7 @@ from mutatest.cache import remove_existing_cache_files
 from mutatest.cache import Mutant
 from mutatest.maker import create_mutation_and_run_trial
 from mutatest.maker import get_mutation_targets
+from mutatest.maker import MutantTrialResult
 from mutatest.transformers import get_ast_from_src
 from mutatest.transformers import get_mutations_for_target
 from mutatest.transformers import LocIndex
@@ -109,7 +110,7 @@ def get_sample_space(src_targets: Dict[str, List[Any]]) -> List[Tuple[str, LocIn
 def run_mutation_trials(pkg_dir: Path, test_cmds: [List[str]],
                         break_on_survival: bool=True,
                         break_on_detected: bool=False
-                        ) -> List[Tuple[Mutant, str]]:
+                        ) -> List[MutantTrialResult]:
     """Run the mutatest trials.
 
     Args:
@@ -132,7 +133,7 @@ def run_mutation_trials(pkg_dir: Path, test_cmds: [List[str]],
     sample_space = get_sample_space(src_targets)
 
     # Run mutatest trials and tally test failures
-    results: List[Tuple[Mutant, str]] = []
+    results: List[MutantTrialResult] = []
 
     for sample_src, sample_idx in sample_space:
 

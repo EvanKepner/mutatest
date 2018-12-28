@@ -5,7 +5,7 @@ from copy import deepcopy
 import importlib
 from pathlib import Path
 import subprocess
-from typing import Any, List, Set, Tuple
+from typing import Any, List, NamedTuple, Set, Tuple
 
 from mutatest.cache import get_cache_file_loc
 from mutatest.cache import create_cache_dirs
@@ -13,6 +13,18 @@ from mutatest.cache import create_cache_file
 from mutatest.cache import Mutant
 from mutatest.transformers import LocIndex
 from mutatest.transformers import MutateAST
+
+
+class MutantTrialResult(NamedTuple):
+    """Mutant trial result to encode return_code status with mutation information."""
+    mutant: Mutant
+    return_code: int
+
+    @property
+    def status(self) -> str:
+        """Based on pytest return codes"""
+        trial_status = {0: "SURVIVED", 1: "DETECTED", 2: "ERROR"}
+        return trial_status.get(self.return_code, "UNKNOWN")
 
 
 def get_mutation_targets(tree: ast.Module) -> Set[LocIndex]:
@@ -76,7 +88,7 @@ def create_mutant(
 
 def create_mutation_and_run_trial(
         src_tree: ast.Module, src_file: str, target_idx: LocIndex, mutation_op: type,
-test_cmds: List[str], tree_inplace:bool =False) -> Tuple[Mutant, str]:
+test_cmds: List[str], tree_inplace:bool =False) -> MutantTrialResult:
 
     # mutatest requires deep-copy to avoid in-place reference changes to AST
     tree = src_tree if tree_inplace else deepcopy(src_tree)
@@ -88,14 +100,5 @@ test_cmds: List[str], tree_inplace:bool =False) -> Tuple[Mutant, str]:
         mutation_op=mutation_op,
     )
 
-    # based on returncode of pytest
-    trial_status = {
-        0: "SURVIVED",
-        1: "DETECTED",
-        2: "ERROR"
-    }
-
-    mutant_trial = subprocess.run(test_cmds)
-    status = trial_status.get(int(mutant_trial.returncode), "UNKNOWN")
-
-    return mutant, status
+    mutant_trial = subprocess.run(test_cmds, capture_output=True)
+    return MutantTrialResult(mutant=mutant,return_code=mutant_trial.returncode)
