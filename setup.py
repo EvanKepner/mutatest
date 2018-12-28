@@ -13,7 +13,7 @@ if sys.version_info < (3, 6, 0):
 # Original reference: https://github.com/python-attrs/attrs/blob/master/setup.py
 
 NAME = "mutatest"
-PACKAGES = find_packages(where="mutatest")
+PACKAGES = find_packages()
 META_PATH = os.path.join("mutatest",  "__init__.py")
 KEYWORDS = ["mutatest", "mutation", "testing", "test", "mutant", "mutate"]
 PROJECT_URLS = {
@@ -105,7 +105,6 @@ if __name__ == "__main__":
         keywords=KEYWORDS,
         long_description=LONG,
         packages=PACKAGES,
-        package_dir={"": "mutatest"},
         python_requires=">=3.6.0",
         zip_safe=False,
         entry_points={"console_scripts":["mutatest=mutatest.cli:run_all"]},
