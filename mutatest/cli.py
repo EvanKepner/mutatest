@@ -5,7 +5,8 @@ import logging
 from pathlib import Path
 import sys
 
-from mutatest.controller import run_trials
+from mutatest.controller import clean_trial
+from mutatest.controller import run_mutation_trials
 
 LOGGER = logging.getLogger(__name__)
 FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -44,4 +45,11 @@ def run_all():
         stream=sys.stdout,
     )
 
-    run_trials(pkg_dir=pkg_dir, test_cmds=test_cmds)
+    # Run the pipeline with no mutations first to ensure later results are meaningful
+    clean_trial(pkg_dir=pkg_dir, test_cmds=test_cmds)
+
+    # Run the mutation trials
+    results = run_mutation_trials(pkg_dir=pkg_dir, test_cmds=test_cmds)
+
+    # Run the pipeline with no mutations last
+    clean_trial(pkg_dir=pkg_dir, test_cmds=test_cmds)

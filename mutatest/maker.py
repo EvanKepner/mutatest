@@ -1,9 +1,11 @@
 """Mutation maker.
 """
 import ast
+from copy import deepcopy
 import importlib
 from pathlib import Path
-from typing import Any, Set
+import subprocess
+from typing import Any, List, Set, Tuple
 
 from mutatest.cache import get_cache_file_loc
 from mutatest.cache import create_cache_dirs
@@ -71,3 +73,29 @@ def create_mutant(
     create_cache_file(mutant)
 
     return mutant
+
+def create_mutation_and_run_trial(
+        src_tree: ast.Module, src_file: str, target_idx: LocIndex, mutation_op: type,
+test_cmds: List[str], tree_inplace:bool =False) -> Tuple[Mutant, str]:
+
+    # mutatest requires deep-copy to avoid in-place reference changes to AST
+    tree = src_tree if tree_inplace else deepcopy(src_tree)
+
+    mutant = create_mutant(
+        tree=tree,
+        src_file=src_file,
+        target_idx=target_idx,
+        mutation_op=mutation_op,
+    )
+
+    # based on returncode of pytest
+    trial_status = {
+        0: "SURVIVED",
+        1: "DETECTED",
+        2: "ERROR"
+    }
+
+    mutant_trial = subprocess.run(test_cmds)
+    status = trial_status.get(int(mutant_trial.returncode), "UNKNOWN")
+
+    return mutant, status
