@@ -44,7 +44,4 @@ def run_all():
         stream=sys.stdout,
     )
 
-
     run_trials(pkg_dir=pkg_dir, test_cmds=test_cmds)
-
-

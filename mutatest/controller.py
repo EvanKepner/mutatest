@@ -31,12 +31,12 @@ def get_py_files(pkg_dir: Union[str, Path]) -> List[Path]:
     return [p.resolve() for p in relative_list if not p.stem.startswith("test_")]
 
 
-def clean_trial(pkg_dir: Path, test_cmds: Optional[List[str]] = None) -> None:
+def clean_trial(pkg_dir: Path, test_cmds: List[str]) -> None:
     """Remove all existing cache files and run the test suite.
 
     Args:
         pkg_dir: the directory of the package for cache removal
-        test_cmds: test running commands, defaults to pytest
+        test_cmds: test running commands for subprocess.run()
 
     Returns:
         None
@@ -44,7 +44,6 @@ def clean_trial(pkg_dir: Path, test_cmds: Optional[List[str]] = None) -> None:
     Raises:
         Exception if the clean trial does not pass from the test run.
     """
-    test_cmds = test_cmds or ["pytest"]
     remove_existing_cache_files(pkg_dir)
 
     LOGGER.debug("Running clean trial")
@@ -119,8 +118,6 @@ def run_trials(pkg_dir: Path, test_cmds: Optional[List[str]] = None) -> List[Mut
     # set defaults, Path object is required for other methods
     if not isinstance(pkg_dir, Path):
         pkg_dir = Path(pkg_dir)
-
-    test_cmds = test_cmds or ["pytest"]
 
     # accumulators for counting mutant detections throughout trials
     detected_mutants, total_trials = 0, 0
