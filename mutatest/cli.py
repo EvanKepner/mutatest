@@ -3,6 +3,7 @@
 import argparse
 import logging
 from pathlib import Path
+from pprint import pprint
 import sys
 
 from mutatest.analyzer import analyze_mutant_trials
@@ -61,4 +62,5 @@ def run_all():
     clean_trial(pkg_dir=pkg_dir, test_cmds=test_cmds)
 
     status = analyze_mutant_trials(results)
-    LOGGER.info("Status:\n %s", status)
+    LOGGER.info("Status:")
+    pprint(status)
