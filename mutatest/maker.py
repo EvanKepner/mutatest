@@ -5,22 +5,22 @@ import importlib
 from pathlib import Path
 from typing import Any, Set
 
-from mutation.cache import get_cache_file_loc
-from mutation.cache import create_cache_dirs
-from mutation.cache import create_cache_file
-from mutation.cache import Mutant
-from mutation.transformers import LocIndex
-from mutation.transformers import MutateAST
+from mutatest.cache import get_cache_file_loc
+from mutatest.cache import create_cache_dirs
+from mutatest.cache import create_cache_file
+from mutatest.cache import Mutant
+from mutatest.transformers import LocIndex
+from mutatest.transformers import MutateAST
 
 
 def get_mutation_targets(tree: ast.Module) -> Set[LocIndex]:
-    """Run the mutation AST search with no targets or mutations to bring back target indicies.
+    """Run the mutatest AST search with no targets or mutations to bring back target indicies.
 
     Args:
         tree: the source file AST
 
     Returns:
-        Set of potential mutation targets within AST
+        Set of potential mutatest targets within AST
     """
     ro_mast = MutateAST(target_idx=None, mutation=None)
     ro_mast.visit(tree)
@@ -30,16 +30,16 @@ def get_mutation_targets(tree: ast.Module) -> Set[LocIndex]:
 def create_mutant(
     tree: ast.Module, src_file: str, target_idx: LocIndex, mutation_op: Any
 ) -> Mutant:
-    """Create a mutation in the AST of src_file at sample_idx and update the cache.
+    """Create a mutatest in the AST of src_file at sample_idx and update the cache.
 
     Args:
         tree: AST for the source file
         src_file: source file location on disk
-        target_idx: the location to make the mutation
-        mutation_op: the mutation to apply
+        target_idx: the location to make the mutatest
+        mutation_op: the mutatest to apply
 
     Returns:
-        The mutant, and creates the cache file of the mutation
+        The mutant, and creates the cache file of the mutatest
     """
 
     # mutate ast and create code binary
@@ -56,7 +56,7 @@ def create_mutant(
     source_stats = loader.path_stats(src_file)
     mode = importlib._bootstrap_external._calc_mode(src_file)  # type: ignore
 
-    # create the cache files with the mutation
+    # create the cache files with the mutatest
     mutant = Mutant(
         mutant_code=mutant_code,
         src_file=Path(src_file),

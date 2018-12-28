@@ -7,7 +7,7 @@ from pathlib import Path
 from py_compile import PycInvalidationMode  # type: ignore
 from typing import Any, Mapping, NamedTuple, Union
 
-from mutation.transformers import LocIndex
+from mutatest.transformers import LocIndex
 
 LOGGER = logging.getLogger(__name__)
 

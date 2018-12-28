@@ -8,13 +8,13 @@ import subprocess
 import sys
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from mutation.cache import remove_existing_cache_files
-from mutation.cache import Mutant
-from mutation.maker import create_mutant
-from mutation.maker import get_mutation_targets
-from mutation.transformers import get_ast_from_src
-from mutation.transformers import get_mutations_for_target
-from mutation.transformers import LocIndex
+from mutatest.cache import remove_existing_cache_files
+from mutatest.cache import Mutant
+from mutatest.maker import create_mutant
+from mutatest.maker import get_mutation_targets
+from mutatest.transformers import get_ast_from_src
+from mutatest.transformers import get_mutations_for_target
+from mutatest.transformers import LocIndex
 
 LOGGER = logging.getLogger(__name__)
 FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -69,7 +69,7 @@ def clean_trial(pkg_dir: Path, test_cmds: Optional[List[str]] = None) -> None:
 def build_src_trees_and_targets(
     pkg_dir: Path
 ) -> Tuple[Dict[str, ast.Module], Dict[str, List[LocIndex]]]:
-    """Build the source AST references and find all mutation target locations for each.
+    """Build the source AST references and find all mutatest target locations for each.
 
     Args:
         pkg_dir: the source code package directory to scan
@@ -85,11 +85,11 @@ def build_src_trees_and_targets(
         LOGGER.info("Creating AST from: %s", src_file)
         tree = get_ast_from_src(src_file)
 
-        # Get the locations for all mutation potential for the given file
-        LOGGER.info("Get mutation targets from AST.")
+        # Get the locations for all mutatest potential for the given file
+        LOGGER.info("Get mutatest targets from AST.")
         targets = get_mutation_targets(tree)
 
-        # only add files that have at least one valid target for mutation
+        # only add files that have at least one valid target for mutatest
         if targets:
             src_trees[str(src_file)] = tree
             src_targets[str(src_file)] = [tgt for tgt in targets]
@@ -98,7 +98,7 @@ def build_src_trees_and_targets(
 
 
 def get_sample_space(src_targets: Dict[str, List[Any]]) -> List[Tuple[str, LocIndex]]:
-    """Create a flat sample space of source files and mutation targets.
+    """Create a flat sample space of source files and mutatest targets.
 
     Args:
         src_targets: Dictionary of targets indexed by source file
@@ -116,7 +116,7 @@ def get_sample_space(src_targets: Dict[str, List[Any]]) -> List[Tuple[str, LocIn
 
 
 def run_trials(pkg_dir: Path, test_cmds: Optional[List[str]] = None) -> List[Mutant]:
-    """Run the mutation trials.
+    """Run the mutatest trials.
 
     Args:
         pkg_dir: the source file package directory
@@ -142,7 +142,7 @@ def run_trials(pkg_dir: Path, test_cmds: Optional[List[str]] = None) -> List[Mut
     src_trees, src_targets = build_src_trees_and_targets(pkg_dir)
     sample_space = get_sample_space(src_targets)
 
-    # Run mutation trials and tally test failures
+    # Run mutatest trials and tally test failures
     for sample_src, sample_idx in sample_space:
         LOGGER.info(sample_idx)
         mutant_operations = get_mutations_for_target(sample_idx)
@@ -153,7 +153,7 @@ def run_trials(pkg_dir: Path, test_cmds: Optional[List[str]] = None) -> List[Mut
 
             LOGGER.debug("Mutation creation for %s", current_mutation)
 
-            # mutation requires deep-copy to avoid in-place reference changes to AST
+            # mutatest requires deep-copy to avoid in-place reference changes to AST
             mutant = create_mutant(
                 tree=deepcopy(src_tree),
                 src_file=sample_src,
@@ -172,7 +172,7 @@ def run_trials(pkg_dir: Path, test_cmds: Optional[List[str]] = None) -> List[Mut
                 mutation_errors.append(mutant)
 
             LOGGER.info(
-                "Test suite status: %s, on mutation: %s", detection_status, current_mutation
+                "Test suite status: %s, on mutatest: %s", detection_status, current_mutation
             )
 
             detected_mutants += detection_status

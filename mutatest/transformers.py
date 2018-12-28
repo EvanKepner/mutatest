@@ -16,7 +16,7 @@ CMPOP_TYPES: Set[type] = {ast.Eq, ast.NotEq, ast.Lt, ast.LtE, ast.Gt, ast.GtE}
 
 
 class LocIndex(NamedTuple):
-    """Location index within AST to mark mutation targets."""
+    """Location index within AST to mark mutatest targets."""
 
     ast_class: str
     lineno: int
@@ -32,14 +32,14 @@ class MutateAST(ast.NodeTransformer):
     ) -> None:
         """Create the AST node transformer for mutations.
 
-        If the target_idx and mutation are set to None then no transformations are applied;
+        If the target_idx and mutatest are set to None then no transformations are applied;
         however, the locs attribute is updated with the locations of nodes that could
         be transformed. This allows the class to function both as an inspection method
-        and as a mutation transformer.
+        and as a mutatest transformer.
 
         Args:
-            target_idx: Location index for the mutation in the AST
-            mutation: the mutation to apply
+            target_idx: Location index for the mutatest in the AST
+            mutation: the mutatest to apply
         """
         self.locs: Set[LocIndex] = set()
         self.target_idx = target_idx
@@ -77,7 +77,7 @@ def get_mutations_for_target(target: LocIndex) -> Set[type]:
 
     for potential_ops in search_space:
         if target.op_type in potential_ops:
-            LOGGER.debug("Potential mutation operations found for target: %s", target.op_type)
+            LOGGER.debug("Potential mutatest operations found for target: %s", target.op_type)
             mutation_ops = potential_ops.copy()
             mutation_ops.remove(target.op_type)
             break

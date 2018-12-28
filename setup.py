@@ -12,10 +12,10 @@ if sys.version_info < (3, 6, 0):
 # Using setup.py from Attrs as a template for finding components
 # Original reference: https://github.com/python-attrs/attrs/blob/master/setup.py
 
-NAME = "mutation"
+NAME = "mutatest"
 PACKAGES = find_packages(where="mutaton")
-META_PATH = os.path.join("mutation",  "__init__.py")
-KEYWORDS = ["mutation", "testing", "test", "mutant", "mutate"]
+META_PATH = os.path.join("mutatest",  "__init__.py")
+KEYWORDS = ["mutatest", "testing", "test", "mutant", "mutate"]
 PROJECT_URLS = {
     "Documentation": "https://github.com/EvanKepner/m",
     "Bug Tracker": "https://github.com/EvanKepner/m/issues",
@@ -34,7 +34,8 @@ CLASSIFIERS = [
     "Programming Language :: Python :: 3 :: Only",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Software Development :: Quality Assurance",
-    "Topic :: Software Development :: Mutation Testing",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Software Development :: Testing :: Mutation",
 ]
 
 INSTALL_REQUIRES = []
@@ -83,9 +84,9 @@ def find_meta(meta):
 VERSION = find_meta("version")
 URL = find_meta("url")
 LONG = (
-    read("README.md")
+    read("README.rst")
     + "\n\n"
-    + read("AUTHORS.md")
+    + read("AUTHORS.rst")
 )
 
 
@@ -104,7 +105,7 @@ if __name__ == "__main__":
         keywords=KEYWORDS,
         long_description=LONG,
         packages=PACKAGES,
-        package_dir={"": "mutation"},
+        package_dir={"": "mutatest"},
         python_requires=">=3.6.0",
         zip_safe=False,
         classifiers=CLASSIFIERS,

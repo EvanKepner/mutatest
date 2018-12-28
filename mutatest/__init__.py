@@ -2,7 +2,7 @@
 """
 __version__ = "alpha.0.1.0"
 
-__title__ = "mutation"
+__title__ = "mutatest"
 __description__ = "Mutation testing in Python"
 __url__ = "https://github.com/EvanKepner/m"
 __uri__ = __url__
