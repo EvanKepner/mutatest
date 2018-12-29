@@ -46,7 +46,7 @@ EXTRAS_REQUIRE = {
         "pytest",
         "pytest-cov",
     ],
-    "qa": ["mypy", "black", "pre-commit"]
+    "qa": ["mypy", "black", "pre-commit", "isort"]
 }
 
 EXTRAS_REQUIRE["dev"] = (
