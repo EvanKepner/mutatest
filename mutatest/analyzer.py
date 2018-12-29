@@ -5,6 +5,7 @@ from typing import List, Tuple
 from mutatest.cache import Mutant
 from mutatest.maker import MutantTrialResult
 
+
 def analyze_mutant_trials(trial_results: List[MutantTrialResult]):
 
     status = dict(Counter([t.status for t in trial_results]))
@@ -21,7 +22,7 @@ def analyze_mutant_trials(trial_results: List[MutantTrialResult]):
         "detected_mutants": detected,
         "surviving_mutants": survived,
         "errors_from_mutations": errors,
-        "unknown_results": unknowns
+        "unknown_results": unknowns,
     }
 
     return summary

@@ -105,12 +105,12 @@ def get_sample_space(src_targets: Dict[str, List[Any]]) -> List[Tuple[str, LocIn
     return sample_space
 
 
-
-
-def run_mutation_trials(pkg_dir: Path, test_cmds: [List[str]],
-                        break_on_survival: bool=True,
-                        break_on_detected: bool=False
-                        ) -> List[MutantTrialResult]:
+def run_mutation_trials(
+    pkg_dir: Path,
+    test_cmds: [List[str]],
+    break_on_survival: bool = True,
+    break_on_detected: bool = False,
+) -> List[MutantTrialResult]:
     """Run the mutatest trials.
 
     Args:
@@ -144,23 +144,23 @@ def run_mutation_trials(pkg_dir: Path, test_cmds: [List[str]],
         while mutant_operations:
             current_mutation = mutant_operations.pop()
 
-            LOGGER.debug("Mutation creation for %s", current_mutation)
+            LOGGER.debug("Running trial for %s", current_mutation)
 
             trial_results = create_mutation_and_run_trial(
                 src_tree=src_tree,
                 src_file=sample_src,
                 target_idx=sample_idx,
                 mutation_op=current_mutation,
-                test_cmds=test_cmds
+                test_cmds=test_cmds,
             )
 
             results.append(trial_results)
 
-            if trial_results[1] == "SURVIVED" and break_on_survival:
+            if trial_results.status == "SURVIVED" and break_on_survival:
                 LOGGER.info("Surviving mutation detected, stopping further mutations for location.")
                 break
 
-            if trial_results[1] == "DETECTED" and break_on_detected:
+            if trial_results.status == "DETECTED" and break_on_detected:
                 LOGGER.info("Detected mutation, stopping further mutations for location.")
                 break
 

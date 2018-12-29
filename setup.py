@@ -46,11 +46,11 @@ EXTRAS_REQUIRE = {
         "pytest",
         "pytest-cov",
     ],
-    "other": ["mypy", "black"]
+    "qa": ["mypy", "black", "pre-commit"]
 }
 
 EXTRAS_REQUIRE["dev"] = (
-    EXTRAS_REQUIRE["tests"] + EXTRAS_REQUIRE["docs"] + EXTRAS_REQUIRE["other"]
+    EXTRAS_REQUIRE["tests"] + EXTRAS_REQUIRE["docs"] + EXTRAS_REQUIRE["qa"]
 )
 
 

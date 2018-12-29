@@ -4,7 +4,10 @@ import argparse
 import logging
 from pathlib import Path
 from pprint import pprint
+from setuptools import find_packages
 import sys
+from textwrap import dedent
+from typing import NamedTuple
 
 from mutatest.analyzer import analyze_mutant_trials
 from mutatest.controller import clean_trial
@@ -14,23 +17,79 @@ LOGGER = logging.getLogger(__name__)
 FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
 
-def run_all():
-    parser = argparse.ArgumentParser(description="Run mutation tests.")
+class RunMode(NamedTuple):
+    """Running mode choices."""
 
+    mode: str
+
+    @property
+    def break_on_detection(self) -> bool:
+        return self.mode in ["d", "sd"]
+
+    @property
+    def break_on_survival(self) -> bool:
+        return self.mode in ["s", "sd"]
+
+
+def mode_descriptions() -> str:
+    return dedent(
+        """\
+    Additional information:
+    =======================
+    
+    Testcmds:
+    ---------
+     - Specify custom test commands as a string e.g. 'pytest -m quicktests' for running only 
+       the test suite with the given mark of 'quicktests' for the mutation trials.
+    
+    Modes:
+    ------
+     - f: full mode, run all possible combinations (slowest but most thorough).
+     - s: break on first SURVIVOR per mutated line e.g. if there is a single surviving mutation
+          on a line move to the next line location without further testing.
+          This is the default mode.
+     - d: break on the first DETECTION per mutated line e.g. if there is a detected mutation on
+          a line move to the next one.
+     - sd: break on the first SURVIVOR or DETECTION (fastest, and least thorough).
+    """
+    )
+
+
+def run_all():
+
+    parser = argparse.ArgumentParser(
+        prog="Mutatest",
+        description="Run mutation tests on a source code directory.",
+        formatter_class=argparse.RawTextHelpFormatter,
+        epilog=mode_descriptions(),
+    )
     parser.add_argument(
-        "-p",
-        "--pkg",
-        required=True,
+        "-s",
+        "--src",
+        required=False,
         type=str,
-        help="Target package directory for mutation testing.",
+        help=(
+            "Target source code directory for mutation testing. "
+            "The first result from find_packages() is used if unspecified."
+        ),
     )
     parser.add_argument(
         "-t",
-        "--testcmds",
+        "" "--testcmds",
         required=False,
         default="pytest",
         type=str,
-        help="Test command string to execute, default to 'pytest' if empty.",
+        help="Test command string to execute, defaults to 'pytest' if unspecified.",
+    )
+    parser.add_argument(
+        "-m",
+        "--mode",
+        choices=["f", "s", "d", "sd"],
+        default="s",
+        help=(
+            "Running modes, see the choice option descriptions below. "
+            "Default is 's' if unspecified."
+        ),
     )
     parser.add_argument(
         "-d", "--debug", action="store_true", help="Turn on DEBUG level logging output."
@@ -38,13 +97,21 @@ def run_all():
 
     args = parser.parse_args()
 
-    pkg_dir = Path(args.pkg)
+    if not args.src:
+        find_pkgs = find_packages()
+        if find_pkgs:
+            pkg_dir = Path(find_pkgs[0])
+        else:
+            raise Exception("No source directory specified or automatically detected. "
+                            "Use --src or --help to see options.")
+    else:
+        pkg_dir = Path(args.src)
+
+    # whitespace splitting as valid argument array for subprocess.run()
     test_cmds = args.testcmds.split()
 
     logging.basicConfig(
-        format=FORMAT,
-        level=logging.DEBUG if args.debug else logging.INFO,
-        stream=sys.stdout,
+        format=FORMAT, level=logging.DEBUG if args.debug else logging.INFO, stream=sys.stdout
     )
 
     # Run the pipeline with no mutations first to ensure later results are meaningful
@@ -53,9 +120,15 @@ def run_all():
 
     # Run the mutation trials
     LOGGER.info("Running mutation trials")
-    results = run_mutation_trials(pkg_dir=pkg_dir, test_cmds=test_cmds,
-                                  break_on_detected=True,
-                                  break_on_survival=True)
+
+    runmode = RunMode(args.mode)
+
+    results = run_mutation_trials(
+        pkg_dir=pkg_dir,
+        test_cmds=test_cmds,
+        break_on_detected=runmode.break_on_detection,
+        break_on_survival=runmode.break_on_survival,
+    )
 
     # Run the pipeline with no mutations last
     LOGGER.info("Running clean trial")

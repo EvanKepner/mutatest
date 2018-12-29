@@ -11,12 +11,14 @@ from mutatest.cache import get_cache_file_loc
 from mutatest.cache import create_cache_dirs
 from mutatest.cache import create_cache_file
 from mutatest.cache import Mutant
+from mutatest.cache import remove_existing_cache_files
 from mutatest.transformers import LocIndex
 from mutatest.transformers import MutateAST
 
 
 class MutantTrialResult(NamedTuple):
     """Mutant trial result to encode return_code status with mutation information."""
+
     mutant: Mutant
     return_code: int
 
@@ -86,19 +88,24 @@ def create_mutant(
 
     return mutant
 
+
 def create_mutation_and_run_trial(
-        src_tree: ast.Module, src_file: str, target_idx: LocIndex, mutation_op: type,
-test_cmds: List[str], tree_inplace:bool =False) -> MutantTrialResult:
+    src_tree: ast.Module,
+    src_file: str,
+    target_idx: LocIndex,
+    mutation_op: type,
+    test_cmds: List[str],
+    tree_inplace: bool = False,
+) -> MutantTrialResult:
 
     # mutatest requires deep-copy to avoid in-place reference changes to AST
     tree = src_tree if tree_inplace else deepcopy(src_tree)
 
     mutant = create_mutant(
-        tree=tree,
-        src_file=src_file,
-        target_idx=target_idx,
-        mutation_op=mutation_op,
+        tree=tree, src_file=src_file, target_idx=target_idx, mutation_op=mutation_op
     )
 
     mutant_trial = subprocess.run(test_cmds, capture_output=True)
-    return MutantTrialResult(mutant=mutant,return_code=mutant_trial.returncode)
+    remove_existing_cache_files(mutant.src_file)
+
+    return MutantTrialResult(mutant=mutant, return_code=mutant_trial.returncode)
