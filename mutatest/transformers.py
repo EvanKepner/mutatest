@@ -2,9 +2,10 @@
 """
 import ast
 import logging
-from pathlib import Path
 
-from typing import List, Optional, Set, Union, NamedTuple
+from pathlib import Path
+from typing import List, NamedTuple, Optional, Set, Union
+
 
 LOGGER = logging.getLogger(__name__)
 

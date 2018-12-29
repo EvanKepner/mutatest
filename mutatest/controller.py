@@ -2,18 +2,15 @@
 """
 import ast
 import logging
-from pathlib import Path
 import subprocess
-from typing import Any, Dict, List, Optional, Tuple, Union
+
+from pathlib import Path
+from typing import Any, Dict, List, Tuple, Union
 
 from mutatest.cache import remove_existing_cache_files
-from mutatest.cache import Mutant
-from mutatest.maker import create_mutation_and_run_trial
-from mutatest.maker import get_mutation_targets
-from mutatest.maker import MutantTrialResult
-from mutatest.transformers import get_ast_from_src
-from mutatest.transformers import get_mutations_for_target
-from mutatest.transformers import LocIndex
+from mutatest.maker import MutantTrialResult, create_mutation_and_run_trial, get_mutation_targets
+from mutatest.transformers import LocIndex, get_ast_from_src, get_mutations_for_target
+
 
 LOGGER = logging.getLogger(__name__)
 

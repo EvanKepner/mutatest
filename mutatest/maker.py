@@ -1,19 +1,21 @@
 """Mutation maker.
 """
 import ast
-from copy import deepcopy
 import importlib
-from pathlib import Path
 import subprocess
-from typing import Any, List, NamedTuple, Set, Tuple
 
-from mutatest.cache import get_cache_file_loc
-from mutatest.cache import create_cache_dirs
-from mutatest.cache import create_cache_file
-from mutatest.cache import Mutant
-from mutatest.cache import remove_existing_cache_files
-from mutatest.transformers import LocIndex
-from mutatest.transformers import MutateAST
+from copy import deepcopy
+from pathlib import Path
+from typing import Any, List, NamedTuple, Set
+
+from mutatest.cache import (
+    Mutant,
+    create_cache_dirs,
+    create_cache_file,
+    get_cache_file_loc,
+    remove_existing_cache_files,
+)
+from mutatest.transformers import LocIndex, MutateAST
 
 
 class MutantTrialResult(NamedTuple):

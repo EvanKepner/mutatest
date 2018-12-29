@@ -2,16 +2,18 @@
 """
 import argparse
 import logging
+import sys
+
 from pathlib import Path
 from pprint import pprint
-from setuptools import find_packages
-import sys
 from textwrap import dedent
 from typing import NamedTuple
 
+from setuptools import find_packages
+
 from mutatest.analyzer import analyze_mutant_trials
-from mutatest.controller import clean_trial
-from mutatest.controller import run_mutation_trials
+from mutatest.controller import clean_trial, run_mutation_trials
+
 
 LOGGER = logging.getLogger(__name__)
 FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -36,12 +38,12 @@ def mode_descriptions() -> str:
         """\
     Additional information:
     =======================
-    
+
     Testcmds:
     ---------
-     - Specify custom test commands as a string e.g. 'pytest -m quicktests' for running only 
+     - Specify custom test commands as a string e.g. 'pytest -m quicktests' for running only
        the test suite with the given mark of 'quicktests' for the mutation trials.
-    
+
     Modes:
     ------
      - f: full mode, run all possible combinations (slowest but most thorough).
@@ -102,8 +104,10 @@ def run_all():
         if find_pkgs:
             pkg_dir = Path(find_pkgs[0])
         else:
-            raise Exception("No source directory specified or automatically detected. "
-                            "Use --src or --help to see options.")
+            raise Exception(
+                "No source directory specified or automatically detected. "
+                "Use --src or --help to see options."
+            )
     else:
         pkg_dir = Path(args.src)
 

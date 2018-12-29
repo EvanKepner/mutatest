@@ -1,8 +1,8 @@
 """Results analysis.
 """
 from collections import Counter
-from typing import List, Tuple
-from mutatest.cache import Mutant
+from typing import List
+
 from mutatest.maker import MutantTrialResult
 
 
