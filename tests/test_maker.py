@@ -41,21 +41,13 @@ def add_five_to_mult_mutant(binop_file, stdoutIO):
     return mutant
 
 
-def test_get_mutation_targets(binop_file):
+def test_get_mutation_targets(binop_file, binop_expected_locs):
     """Test mutation target retrieval from the bin_op test fixture."""
     tree = get_ast_from_src(binop_file)
     targets = get_mutation_targets(tree)
 
     assert len(targets) == 4
-
-    expected = {
-        LocIndex(ast_class="BinOp", lineno=6, col_offset=11, op_type=ast.Add),
-        LocIndex(ast_class="BinOp", lineno=6, col_offset=18, op_type=ast.Sub),
-        LocIndex(ast_class="BinOp", lineno=10, col_offset=11, op_type=ast.Add),
-        LocIndex(ast_class="BinOp", lineno=15, col_offset=11, op_type=ast.Div),
-    }
-
-    assert targets == expected
+    assert targets == binop_expected_locs
 
 
 def test_create_mutant(binop_file, stdoutIO):

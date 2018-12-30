@@ -5,7 +5,7 @@ import logging
 import subprocess
 
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 from mutatest.cache import remove_existing_cache_files
 from mutatest.maker import MutantTrialResult, create_mutation_and_run_trial, get_mutation_targets
@@ -106,7 +106,7 @@ def build_src_trees_and_targets(
     return src_trees, src_targets
 
 
-def get_sample_space(src_targets: Dict[str, List[Any]]) -> List[Tuple[str, LocIndex]]:
+def get_sample_space(src_targets: Dict[str, List[LocIndex]]) -> List[Tuple[str, LocIndex]]:
     """Create a flat sample space of source files and mutatest targets.
 
     Args:
