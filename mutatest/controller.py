@@ -76,7 +76,7 @@ def clean_trial(src_loc: Path, test_cmds: List[str]) -> None:
 
 
 def build_src_trees_and_targets(
-    src_loc: Path
+    src_loc: Union[str, Path]
 ) -> Tuple[Dict[str, ast.Module], Dict[str, List[LocIndex]]]:
     """Build the source AST references and find all mutatest target locations for each.
 
@@ -125,7 +125,7 @@ def get_sample_space(src_targets: Dict[str, List[Any]]) -> List[Tuple[str, LocIn
 
 
 def run_mutation_trials(
-    pkg_dir: Path,
+    src_loc: Union[str, Path],
     test_cmds: List[str],
     break_on_survival: bool = True,
     break_on_detected: bool = False,
@@ -133,7 +133,7 @@ def run_mutation_trials(
     """Run the mutatest trials.
 
     Args:
-        pkg_dir: the source file package directory
+        src_loc: the source file package directory
         test_cmds: the test runner commands for subprocess.run()
         break_on_survival: flag to stop further mutations at a location if one survives,
             defaults to True
@@ -143,12 +143,8 @@ def run_mutation_trials(
     Returns:
         List of mutants and trial results
     """
-    # set defaults, Path object is required for other methods
-    if not isinstance(pkg_dir, Path):
-        pkg_dir = Path(pkg_dir)
-
     # Create the AST for each source file and make potential targets sample space
-    src_trees, src_targets = build_src_trees_and_targets(pkg_dir)
+    src_trees, src_targets = build_src_trees_and_targets(src_loc)
     sample_space = get_sample_space(src_targets)
 
     # Run mutatest trials and tally test failures

@@ -81,7 +81,7 @@ def run_all() -> None:
     )
     parser.add_argument(
         "-t",
-        "" "--testcmds",
+        "--testcmds",
         required=False,
         default="pytest",
         type=str,
@@ -106,14 +106,14 @@ def run_all() -> None:
     if not args.src:
         find_pkgs = find_packages()
         if find_pkgs:
-            pkg_dir = Path(find_pkgs[0])
+            src_loc = Path(find_pkgs[0])
         else:
-            raise Exception(
+            raise FileNotFoundError(
                 "No source directory specified or automatically detected. "
                 "Use --src or --help to see options."
             )
     else:
-        pkg_dir = Path(args.src)
+        src_loc = Path(args.src)
 
     # whitespace splitting as valid argument array for subprocess.run()
     test_cmds = args.testcmds.split()
@@ -124,7 +124,7 @@ def run_all() -> None:
 
     # Run the pipeline with no mutations first to ensure later results are meaningful
     LOGGER.info("Running clean trial")
-    clean_trial(pkg_dir=pkg_dir, test_cmds=test_cmds)
+    clean_trial(src_loc=src_loc, test_cmds=test_cmds)
 
     # Run the mutation trials
     LOGGER.info("Running mutation trials")
@@ -132,7 +132,7 @@ def run_all() -> None:
     runmode = RunMode(args.mode)
 
     results = run_mutation_trials(
-        pkg_dir=pkg_dir,
+        src_loc=src_loc,
         test_cmds=test_cmds,
         break_on_detected=runmode.break_on_detection,
         break_on_survival=runmode.break_on_survival,
@@ -140,7 +140,7 @@ def run_all() -> None:
 
     # Run the pipeline with no mutations last
     LOGGER.info("Running clean trial")
-    clean_trial(pkg_dir=pkg_dir, test_cmds=test_cmds)
+    clean_trial(src_loc=src_loc, test_cmds=test_cmds)
 
     status = analyze_mutant_trials(results)
     LOGGER.info("Status:")
