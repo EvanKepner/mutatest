@@ -6,28 +6,13 @@ import os
 
 from pathlib import Path
 from py_compile import PycInvalidationMode  # type: ignore
-from typing import Any, Mapping, NamedTuple, Union
-
-from mutatest.transformers import LocIndex
+from typing import Union
 
 
 LOGGER = logging.getLogger(__name__)
 
 
-class Mutant(NamedTuple):
-    """Mutant definition."""
-
-    mutant_code: Any
-    src_file: Path
-    cfile: Path
-    loader: Any
-    source_stats: Mapping[str, Any]
-    mode: int
-    src_idx: LocIndex
-    mutation: Any
-
-
-def check_invalidation_mode() -> PycInvalidationMode:
+def check_cache_invalidation_mode() -> PycInvalidationMode:
     """Check the invalidation mode for cache files.
 
     Reference: https://github.com/python/cpython/blob/master/Lib/py_compile.py#L72
@@ -44,7 +29,11 @@ def check_invalidation_mode() -> PycInvalidationMode:
         OSError if the SOURCE_DATE_EPOCH environment variable is set.
     """
     if os.environ.get("SOURCE_DATE_EPOCH"):
-        raise OSError("SOURCE_DATE_EPOOCH set, but only TIMESTAMP cache checking is supported.")
+        raise OSError(
+            "SOURCE_DATE_EPOCH set, but only TIMESTAMP cache invalidation is supported. "
+            "Clear this environment variable so that timestamp invalidation of the Python "
+            "cache can be used to trigger mutations for the testing suite."
+        )
 
     return PycInvalidationMode.TIMESTAMP
 
@@ -90,31 +79,6 @@ def create_cache_dirs(cache_file: Path) -> None:
     """
     if not cache_file.parent.exists():
         Path.mkdir(cache_file.parent)
-
-
-def create_cache_file(mutant: Mutant) -> None:
-    """Create the cache file for the mutant on disk in __pycache__.
-
-    Existing target cache files are removed to ensure clean overwrites.
-
-    Reference: https://github.com/python/cpython/blob/master/Lib/py_compile.py#L157
-
-    Args:
-        mutant: the mutant definition to create
-
-    Returns:
-        None, creates the cache file on disk.
-    """
-    check_invalidation_mode()
-
-    bytecode = importlib._bootstrap_external._code_to_timestamp_pyc(  # type: ignore
-        mutant.mutant_code, mutant.source_stats["mtime"], mutant.source_stats["size"]
-    )
-
-    remove_existing_cache_files(mutant.src_file)
-
-    LOGGER.debug("Writing mutant cache file: %s", mutant.cfile)
-    importlib._bootstrap_external._write_atomic(mutant.cfile, bytecode, mutant.mode)  # type: ignore
 
 
 def remove_existing_cache_files(src_loc: Path) -> None:

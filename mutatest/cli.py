@@ -13,6 +13,7 @@ from setuptools import find_packages
 
 from mutatest.analyzer import analyze_mutant_trials
 from mutatest.controller import clean_trial, run_mutation_trials
+from mutatest.cache import check_cache_invalidation_mode
 
 
 LOGGER = logging.getLogger(__name__)
@@ -58,6 +59,9 @@ def mode_descriptions() -> str:
 
 
 def run_all():
+
+    # Run a quick check at the beginning in case of later OS errors.
+    check_cache_invalidation_mode()
 
     parser = argparse.ArgumentParser(
         prog="Mutatest",

@@ -2,20 +2,35 @@
 """
 import ast
 import importlib
+import logging
 import subprocess
 
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, List, NamedTuple, Set
+from typing import Any, List, Mapping, NamedTuple, Set
 
 from mutatest.cache import (
-    Mutant,
+    check_cache_invalidation_mode,
     create_cache_dirs,
-    create_cache_file,
     get_cache_file_loc,
     remove_existing_cache_files,
 )
 from mutatest.transformers import LocIndex, MutateAST
+
+LOGGER = logging.getLogger(__name__)
+
+
+class Mutant(NamedTuple):
+    """Mutant definition."""
+
+    mutant_code: Any
+    src_file: Path
+    cfile: Path
+    loader: Any
+    source_stats: Mapping[str, Any]
+    mode: int
+    src_idx: LocIndex
+    mutation: Any
 
 
 class MutantTrialResult(NamedTuple):
@@ -86,8 +101,6 @@ def create_mutant(
         mutation=mutation_op,
     )
 
-    create_cache_file(mutant)
-
     return mutant
 
 
@@ -107,7 +120,34 @@ def create_mutation_and_run_trial(
         tree=tree, src_file=src_file, target_idx=target_idx, mutation_op=mutation_op
     )
 
+    write_mutant_cache_file(mutant)
+
     mutant_trial = subprocess.run(test_cmds, capture_output=True)
     remove_existing_cache_files(mutant.src_file)
 
     return MutantTrialResult(mutant=mutant, return_code=mutant_trial.returncode)
+
+
+def write_mutant_cache_file(mutant: Mutant) -> None:
+    """Create the cache file for the mutant on disk in __pycache__.
+
+    Existing target cache files are removed to ensure clean overwrites.
+
+    Reference: https://github.com/python/cpython/blob/master/Lib/py_compile.py#L157
+
+    Args:
+        mutant: the mutant definition to create
+
+    Returns:
+        None, creates the cache file on disk.
+    """
+    check_cache_invalidation_mode()
+
+    bytecode = importlib._bootstrap_external._code_to_timestamp_pyc(  # type: ignore
+        mutant.mutant_code, mutant.source_stats["mtime"], mutant.source_stats["size"]
+    )
+
+    remove_existing_cache_files(mutant.src_file)
+
+    LOGGER.debug("Writing mutant cache file: %s", mutant.cfile)
+    importlib._bootstrap_external._write_atomic(mutant.cfile, bytecode, mutant.mode)  # type: ignore
