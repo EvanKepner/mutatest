@@ -15,24 +15,46 @@ from mutatest.transformers import LocIndex, get_ast_from_src, get_mutations_for_
 LOGGER = logging.getLogger(__name__)
 
 
-def get_py_files(pkg_dir: Union[str, Path]) -> List[Path]:
-    """Find all .py files recursively under the pkg_dir skipping test_ prefixed files.
+class BaselineTestException(Exception):
+    """Used as an exception for the clean trial runs."""
+
+    pass
+
+
+def get_py_files(src_loc: Union[str, Path]) -> List[Path]:
+    """Find all .py files in src_loc and return absolute path
 
     Args:
-        pkg_dir: the package directory to scan
+        src_loc: the source location to scan, can be file or folder
 
     Returns:
-        List of absolute paths to .py files in package
+        List of absolute paths to .py file(s)
+
+    Raises:
+        FileNotFoundError, if src_loc is not a valid file or directory
     """
-    relative_list = list(Path(pkg_dir).rglob("*.py"))
-    return [p.resolve() for p in relative_list if not p.stem.startswith("test_")]
+    # ensure Path object in case str is passed
+    if not isinstance(src_loc, Path):
+        src_loc = Path(src_loc)
+
+    # in case a single py file is passed
+    if src_loc.is_file() and src_loc.suffix == ".py" and not src_loc.stem.startswith("test_"):
+        return [src_loc.resolve()]
+
+    # if a directory is passed
+    if src_loc.is_dir():
+        relative_list = list(src_loc.rglob("*.py"))
+        return [p.resolve() for p in relative_list if not p.stem.startswith("test_")]
+
+    else:
+        raise FileNotFoundError(f"{src_loc} is not a valid Python file or directory.")
 
 
-def clean_trial(pkg_dir: Path, test_cmds: List[str]) -> None:
+def clean_trial(src_loc: Path, test_cmds: List[str]) -> None:
     """Remove all existing cache files and run the test suite.
 
     Args:
-        pkg_dir: the directory of the package for cache removal
+        src_loc: the directory of the package for cache removal, may be a file
         test_cmds: test running commands for subprocess.run()
 
     Returns:
@@ -41,25 +63,25 @@ def clean_trial(pkg_dir: Path, test_cmds: List[str]) -> None:
     Raises:
         Exception if the clean trial does not pass from the test run.
     """
-    remove_existing_cache_files(pkg_dir)
+    remove_existing_cache_files(src_loc)
 
     LOGGER.debug("Running clean trial")
     clean_run = subprocess.run(test_cmds, capture_output=True)
 
     if clean_run.returncode != 0:
-        raise Exception(
+        raise BaselineTestException(
             f"Clean trial does not pass, mutant tests will be meaningless.\n"
             f"Output: {clean_run.stdout}"
         )
 
 
 def build_src_trees_and_targets(
-    pkg_dir: Path
+    src_loc: Path
 ) -> Tuple[Dict[str, ast.Module], Dict[str, List[LocIndex]]]:
     """Build the source AST references and find all mutatest target locations for each.
 
     Args:
-        pkg_dir: the source code package directory to scan
+        src_loc: the source code package directory to scan or file location
 
     Returns:
         Tuple(source trees, source targets)
@@ -67,7 +89,7 @@ def build_src_trees_and_targets(
     src_trees: Dict[str, ast.Module] = {}
     src_targets: Dict[str, List[LocIndex]] = {}
 
-    for src_file in get_py_files(pkg_dir):
+    for src_file in get_py_files(src_loc):
 
         LOGGER.info("Creating AST from: %s", src_file)
         tree = get_ast_from_src(src_file)

@@ -20,7 +20,7 @@ def test_check_cache_invalidation_mode_error(monkeypatch):
     """Ensure OS error is raised when SOURCE_DATE_EPOCH is set."""
     monkeypatch.setenv("SOURCE_DATE_EPOCH", "testvalue")
 
-    with pytest.raises(OSError):
+    with pytest.raises(EnvironmentError):
         check_cache_invalidation_mode()
 
 

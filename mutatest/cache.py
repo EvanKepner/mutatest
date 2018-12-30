@@ -26,10 +26,10 @@ def check_cache_invalidation_mode() -> PycInvalidationMode:
         None
 
     Raises:
-        OSError if the SOURCE_DATE_EPOCH environment variable is set.
+        EnvironmentError if the SOURCE_DATE_EPOCH environment variable is set.
     """
     if os.environ.get("SOURCE_DATE_EPOCH"):
-        raise OSError(
+        raise EnvironmentError(
             "SOURCE_DATE_EPOCH set, but only TIMESTAMP cache invalidation is supported. "
             "Clear this environment variable so that timestamp invalidation of the Python "
             "cache can be used to trigger mutations for the testing suite."
@@ -48,6 +48,9 @@ def get_cache_file_loc(src_file: Union[str, Path]) -> Path:
 
     Returns:
         Path to the cache file
+
+    Raises:
+        FileExistsError if the cache-file path is symlink or irregular file
     """
     cache_file = importlib.util.cache_from_source(str(src_file))
 
