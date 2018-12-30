@@ -82,7 +82,6 @@ def create_mutant(
 
     # get cache file locations and create directory if needed
     cfile = get_cache_file_loc(src_file)
-    create_cache_dirs(cfile)
 
     # generate cache file pyc machinery for writing the cache file
     loader = importlib.machinery.SourceFileLoader("<py_compile>", src_file)
@@ -148,6 +147,7 @@ def write_mutant_cache_file(mutant: Mutant) -> None:
     )
 
     remove_existing_cache_files(mutant.src_file)
+    create_cache_dirs(mutant.cfile)
 
     LOGGER.debug("Writing mutant cache file: %s", mutant.cfile)
     importlib._bootstrap_external._write_atomic(mutant.cfile, bytecode, mutant.mode)  # type: ignore

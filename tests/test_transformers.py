@@ -15,8 +15,8 @@ def test_get_ast_from_src(binop_file):
 
     assert type(tree) == ast.Module
 
-    # 4 functions will be 4 body entries in the AST
-    assert len(tree.body) == 4
+    # 4 functions will be 4 body entries in the AST, plus 1 for print statement, 5 total
+    assert len(tree.body) == 5
 
 
 TEST_BINOPS = {ast.Add, ast.Sub, ast.Div, ast.Mult, ast.Pow, ast.Mod, ast.FloorDiv}
