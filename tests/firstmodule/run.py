@@ -1,5 +1,5 @@
 def myfunc(a):
-    print('hello', a)
+    print("hello", a)
 
 
 def add_ten(b):
@@ -14,6 +14,7 @@ def add_five_divide_3(b):
     x = add_five(b)
     return x / 3
 
-myfunc('there')
+
+myfunc("there")
 print(add_ten(10))
 print(add_five(10))

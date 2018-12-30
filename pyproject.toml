@@ -1,6 +1,8 @@
 [build-system]
 requires = ["setuptools", "wheel"]
 
+[tool.pytest]
+addopts = -ra --cov=mutatest --cov-report=html
 
 [tool.black]
 line-length = 100

@@ -3,6 +3,7 @@
 
 from firstmodule import run
 
+
 def test_add_ten():
     assert run.add_ten(10) == 20
 
