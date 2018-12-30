@@ -45,6 +45,7 @@ def binop_file(tmp_path_factory):
 @pytest.fixture(scope="session")
 def stdoutIO():
     """Stdout redirection as a context manager to evaluating code mutations."""
+
     @contextlib.contextmanager
     def stdoutIO(stdout=None):
         old = sys.stdout

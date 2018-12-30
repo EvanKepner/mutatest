@@ -5,8 +5,28 @@ import sys
 
 import pytest
 
-from mutatest.maker import create_mutant, get_mutation_targets
+from mutatest.maker import (
+    MutantTrialResult,
+    create_mutant,
+    get_mutation_targets,
+    write_mutant_cache_file,
+)
 from mutatest.transformers import LocIndex, get_ast_from_src
+
+
+@pytest.fixture
+def add_five_to_mult_mutant(binop_file):
+    """Mutant that takes add_five op ADD to MULT"""
+    tree = get_ast_from_src(binop_file)
+
+    # this target is the add_five() function, changing add to mult
+    target_idx = LocIndex(ast_class="BinOp", lineno=10, col_offset=11, op_type=ast.Add)
+    mutation_op = ast.Mult
+
+    mutant = create_mutant(
+        tree=tree, src_file=binop_file, target_idx=target_idx, mutation_op=mutation_op
+    )
+    return mutant
 
 
 def test_get_mutation_targets(binop_file):
@@ -41,11 +61,31 @@ def test_create_mutant(binop_file, stdoutIO):
     # uses the redirection for stdout to capture the value from the final output of binop_file
     with stdoutIO() as s:
         exec(mutant.mutant_code)
+        assert int(s.getvalue()) == 25
 
     tag = sys.implementation.cache_tag
     expected_cfile = binop_file.parent / "__pycache__" / ".".join([binop_file.stem, tag, "pyc"])
 
-    assert int(s.getvalue()) == 25
     assert mutant.src_file == binop_file
     assert mutant.cfile == expected_cfile
     assert mutant.src_idx == target_idx
+
+
+def test_write_mutant_cache_file(add_five_to_mult_mutant, binop_file):
+    """Test writing the cache file out to the temp directory with the mutation."""
+
+    tag = sys.implementation.cache_tag
+    expected_cfile = binop_file.parent / "__pycache__" / ".".join([binop_file.stem, tag, "pyc"])
+
+    write_mutant_cache_file(add_five_to_mult_mutant)
+
+    assert expected_cfile.exists()
+
+
+@pytest.mark.parametrize(
+    "returncode, expected_status", [(0, "SURVIVED"), (1, "DETECTED"), (2, "ERROR"), (3, "UNKNOWN")]
+)
+def test_MutantTrialResult(returncode, expected_status, add_five_to_mult_mutant):
+    """Test that the status property translates as expected from return-codes."""
+    trial = MutantTrialResult(add_five_to_mult_mutant, returncode)
+    assert trial.status == expected_status
