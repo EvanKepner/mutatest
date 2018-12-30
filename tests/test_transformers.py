@@ -9,6 +9,9 @@ import pytest
 from mutatest.transformers import LocIndex, MutateAST, get_ast_from_src, get_mutations_for_target
 
 
+TEST_BINOPS = {ast.Add, ast.Sub, ast.Div, ast.Mult, ast.Pow, ast.Mod, ast.FloorDiv}
+
+
 def test_get_ast_from_src(binop_file):
     """Basic assurance that the AST matches expectations in type and body size."""
     tree = get_ast_from_src(binop_file)
@@ -17,9 +20,6 @@ def test_get_ast_from_src(binop_file):
 
     # 4 functions will be 4 body entries in the AST, plus 1 for print statement, 5 total
     assert len(tree.body) == 5
-
-
-TEST_BINOPS = {ast.Add, ast.Sub, ast.Div, ast.Mult, ast.Pow, ast.Mod, ast.FloorDiv}
 
 
 @pytest.mark.parametrize("test_op", TEST_BINOPS)
