@@ -1,12 +1,12 @@
 """Results analysis.
 """
 from collections import Counter
-from typing import List
+from typing import Any, Dict, List
 
 from mutatest.maker import MutantTrialResult
 
 
-def analyze_mutant_trials(trial_results: List[MutantTrialResult]):
+def analyze_mutant_trials(trial_results: List[MutantTrialResult]) -> Dict[str, Any]:
 
     status = dict(Counter([t.status for t in trial_results]))
 

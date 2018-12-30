@@ -104,7 +104,7 @@ def get_sample_space(src_targets: Dict[str, List[Any]]) -> List[Tuple[str, LocIn
 
 def run_mutation_trials(
     pkg_dir: Path,
-    test_cmds: [List[str]],
+    test_cmds: List[str],
     break_on_survival: bool = True,
     break_on_detected: bool = False,
 ) -> List[MutantTrialResult]:

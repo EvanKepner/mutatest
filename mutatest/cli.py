@@ -9,7 +9,7 @@ from pprint import pprint
 from textwrap import dedent
 from typing import NamedTuple
 
-from setuptools import find_packages
+from setuptools import find_packages  # type:ignore
 
 from mutatest.analyzer import analyze_mutant_trials
 from mutatest.controller import clean_trial, run_mutation_trials
@@ -58,7 +58,7 @@ def mode_descriptions() -> str:
     )
 
 
-def run_all():
+def run_all() -> None:
 
     # Run a quick check at the beginning in case of later OS errors.
     check_cache_invalidation_mode()
