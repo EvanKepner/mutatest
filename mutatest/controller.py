@@ -2,10 +2,11 @@
 """
 import ast
 import logging
+import random
 import subprocess
 
 from pathlib import Path
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, NamedTuple, Optional, Tuple, Union
 
 from mutatest.cache import remove_existing_cache_files
 from mutatest.maker import MutantTrialResult, create_mutation_and_run_trial, get_mutation_targets
@@ -17,6 +18,14 @@ LOGGER = logging.getLogger(__name__)
 
 class BaselineTestException(Exception):
     """Used as an exception for the clean trial runs."""
+
+
+class ResultsSummary(NamedTuple):
+    """Results summary container."""
+
+    results: List[MutantTrialResult]
+    n_locs_mutated: int
+    n_locs_identified: int
 
 
 def get_py_files(src_loc: Union[str, Path]) -> List[Path]:
@@ -62,7 +71,7 @@ def clean_trial(src_loc: Path, test_cmds: List[str]) -> None:
     """
     remove_existing_cache_files(src_loc)
 
-    LOGGER.debug("Running clean trial")
+    LOGGER.info("Running clean trial")
 
     # only capture output outside of debug mode
     # https://docs.python.org/3/library/logging.html#levels
@@ -129,16 +138,20 @@ def get_sample_space(src_targets: Dict[str, List[LocIndex]]) -> List[Tuple[str, 
 def run_mutation_trials(
     src_loc: Union[str, Path],
     test_cmds: List[str],
+    n_locations: Optional[int] = None,
+    random_seed: Optional[int] = None,
     break_on_survival: bool = False,
     break_on_detected: bool = False,
     break_on_error: bool = False,
     break_on_unknown: bool = False,
-) -> List[MutantTrialResult]:
+) -> ResultsSummary:
     """Run the mutatest trials.
 
     Args:
         src_loc: the source file package directory
         test_cmds: the test runner commands for subprocess.run()
+        n_locations: optional number of locations for mutations,
+            if unspecified then the full sample space is used.
         break_on_survival: flag to stop further mutations at a location if one survives,
             defaults to False
         break_on_detected: flag to stop further mutations at a location if one is detected,
@@ -151,21 +164,48 @@ def run_mutation_trials(
         List of mutants and trial results
     """
     # Create the AST for each source file and make potential targets sample space
+    LOGGER.info("Running mutation n_locations.")
+
     src_trees, src_targets = build_src_trees_and_targets(src_loc)
     sample_space = get_sample_space(src_targets)
 
-    # Run mutatest trials and tally test failures
+    # set the mutation sample to the full sample space
+    # then if max_trials is set and less than the size of the sample space
+    # take a random sample without replacement
+    mutation_sample = sample_space
+
+    if random_seed:
+        LOGGER.info("Random seed set by user to: %s.", random_seed)
+        random.seed(a=random_seed)
+
+    if n_locations:
+        if n_locations <= len(sample_space):
+            LOGGER.info(
+                "Selecting %s n_locations from %s potentials.", n_locations, len(sample_space)
+            )
+            mutation_sample = random.sample(sample_space, k=n_locations)
+
+        else:
+            # set here for final reporting, though not used in rest of trial controls
+            LOGGER.info("%s exceeds sample space, using full sample.", n_locations)
+            n_locations = len(sample_space)
+
+    else:
+        # set here for final reporting, though not used in rest of trial controls
+        n_locations = len(sample_space)
+
     results: List[MutantTrialResult] = []
 
-    for sample_src, sample_idx in sample_space:
+    for sample_src, sample_idx in mutation_sample:
 
         LOGGER.info(sample_idx)
         mutant_operations = get_mutations_for_target(sample_idx)
         src_tree = src_trees[sample_src]
 
         while mutant_operations:
-            # TODO: MAKE THIS A RANDOM CHOICE FROM TUPLE OF SET INSTEAD OF POP
-            current_mutation = mutant_operations.pop()
+            # random.choice doesn't support sets, but sample of 1 produces a list with one element
+            current_mutation = random.sample(mutant_operations, k=1)[0]
+            mutant_operations.remove(current_mutation)
 
             LOGGER.debug("Running trial for %s", current_mutation)
 
@@ -195,4 +235,6 @@ def run_mutation_trials(
                 LOGGER.info("Unknown mutation result, stopping further mutations for location.")
                 break
 
-    return results
+    return ResultsSummary(
+        results=results, n_locs_mutated=n_locations, n_locs_identified=len(sample_space)
+    )

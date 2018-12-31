@@ -138,17 +138,17 @@ def test_run_mutation_trials_good_binop(bos, bod, exp_trials, single_binop_file_
 
     test_cmds = f"pytest {single_binop_file_with_good_test.test_file.resolve()}".split()
 
-    results = run_mutation_trials(
+    results_summary = run_mutation_trials(
         single_binop_file_with_good_test.src_file.resolve(),
         test_cmds=test_cmds,
         break_on_survival=bos,
         break_on_detected=bod,
     )
 
-    assert len(results) == exp_trials
+    assert len(results_summary.results) == exp_trials
 
     # in all trials the status should be detected
-    for mutant_trial in results:
+    for mutant_trial in results_summary.results:
         assert mutant_trial.return_code == 1
         assert mutant_trial.status == "DETECTED"
 
@@ -173,16 +173,16 @@ def test_run_mutation_trials_bad_binop(bos, bod, exp_trials, single_binop_file_w
 
     test_cmds = f"pytest {single_binop_file_with_bad_test.test_file.resolve()}".split()
 
-    results = run_mutation_trials(
+    results_summary = run_mutation_trials(
         single_binop_file_with_bad_test.src_file.resolve(),
         test_cmds=test_cmds,
         break_on_survival=bos,
         break_on_detected=bod,
     )
 
-    assert len(results) == exp_trials
+    assert len(results_summary.results) == exp_trials
 
     # in all trials the status should be survivors
-    for mutant_trial in results:
+    for mutant_trial in results_summary.results:
         assert mutant_trial.return_code == 0
         assert mutant_trial.status == "SURVIVED"

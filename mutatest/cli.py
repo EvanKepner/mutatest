@@ -45,6 +45,16 @@ class RunMode:
         return True
 
 
+class PositiveIntegerAction(argparse.Action):
+    """Custom action for ensuring positive integers in number of trials."""
+
+    def __call__(self, parser, namespace, values, option_string=None):  # type: ignore
+        if values <= 0:
+            parser.error("{0} must be a non-zero positive integer.".format(option_string))
+
+        setattr(namespace, self.dest, values)
+
+
 def cli_epilog() -> str:
     return dedent(
         """\
@@ -122,11 +132,31 @@ def cli_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "-n",
+        "--nlocations",
+        type=int,
+        action=PositiveIntegerAction,
+        default=10,
+        help=(
+            "Number of locations in code to randomly select for mutation from possible targets. "
+            "The default value is 10."
+        ),
+    )
+    parser.add_argument(
         "-o",
         "--output",
         type=lambda x: Path(x),
         default="mutation_report.rst",
         help="Output file location for results, defaults to 'mutation_report.rst'.",
+    )
+    parser.add_argument(
+        "-r",
+        "--rseed",
+        type=int,
+        action=PositiveIntegerAction,
+        help=(
+            "Random seed to use for sample selection. Default to the system values if unspecified."
+        ),
     )
     parser.add_argument(
         "-s",
@@ -152,7 +182,9 @@ def cli_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def cli_summary_report(src_loc: Path, args: argparse.Namespace) -> str:
+def cli_summary_report(
+    src_loc: Path, args: argparse.Namespace, locs_mutated: int, locs_identified: int
+) -> str:
     """Create a command line summary header for the final reporting.
 
     Args:
@@ -170,10 +202,25 @@ def cli_summary_report(src_loc: Path, args: argparse.Namespace) -> str:
     Source location: {src_loc}
     Test commands: {testcmds}
     Mode: {mode}
+    N locations input: {n_locs}
+    Random seed: {seed}
+
+    Random sample details
+    ---------------------
+    Total locations mutated: {locs_mutated}
+    Total locations identified: {locs_identified}
     """
     )
 
-    fmt_map = {"src_loc": str(src_loc.resolve()), "testcmds": args.testcmds, "mode": args.mode}
+    fmt_map = {
+        "src_loc": str(src_loc.resolve()),
+        "testcmds": args.testcmds,
+        "mode": args.mode,
+        "n_locs": args.nlocations,
+        "seed": args.rseed,
+        "locs_mutated": locs_mutated,
+        "locs_identified": locs_identified,
+    }
 
     return cli_summary_template.format_map(fmt_map)
 
@@ -202,22 +249,22 @@ def main(args: argparse.Namespace) -> None:
         src_loc = args.src
 
     # set the logging level based on the debug flag in args
+    # when in debug mode the test stdout is not captured by subprocess.run
     logging.basicConfig(
         format=FORMAT, level=logging.DEBUG if args.debug else logging.INFO, stream=sys.stdout
     )
 
     # Run the pipeline with no mutations first to ensure later results are meaningful
-    LOGGER.info("Running clean trial")
     clean_trial(src_loc=src_loc, test_cmds=args.testcmds)
 
-    # Run the mutation trials
-    LOGGER.info("Running mutation trials")
-
+    # Run the mutation trials based on the input argument
     run_mode = RunMode(args.mode)
 
-    results = run_mutation_trials(
+    results_summary = run_mutation_trials(
         src_loc=src_loc,
         test_cmds=args.testcmds,
+        n_locations=args.nlocations,
+        random_seed=args.rseed,
         break_on_detected=run_mode.break_on_detection,
         break_on_survival=run_mode.break_on_survival,
         break_on_error=run_mode.break_on_error,
@@ -225,12 +272,17 @@ def main(args: argparse.Namespace) -> None:
     )
 
     # Run the pipeline with no mutations last to ensure cleared cache
-    LOGGER.info("Running clean trial")
     clean_trial(src_loc=src_loc, test_cmds=args.testcmds)
 
     # create the report of results
-    cli_report = cli_summary_report(src_loc, args)
-    trial_report = analyze_mutant_trials(results)
+    cli_report = cli_summary_report(
+        src_loc=src_loc,
+        args=args,
+        locs_mutated=results_summary.n_locs_mutated,
+        locs_identified=results_summary.n_locs_identified,
+    )
+
+    trial_report = analyze_mutant_trials(results_summary.results)
 
     report = "\n".join([cli_report, trial_report])
     LOGGER.info("Status report: \n%s", report)

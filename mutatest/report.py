@@ -78,7 +78,7 @@ def analyze_mutant_trials(trial_results: List[MutantTrialResult]) -> str:
         report_sections.append(f"{s}: {n}")
 
     # build the breakout sections for each type
-    section_header = "Breakdown by section"
+    section_header = "Mutations by result status"
     report_sections.append("\n".join(["\n", section_header, "=" * len(section_header)]))
     for rpt_results in [survived, detected, errors, unknowns]:
         if rpt_results.mutants:
