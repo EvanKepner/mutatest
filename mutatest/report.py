@@ -1,4 +1,4 @@
-"""Results analysis.
+"""Results analysis and report creation..
 """
 from collections import Counter
 from typing import List, NamedTuple

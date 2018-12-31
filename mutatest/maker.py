@@ -24,7 +24,7 @@ LOGGER = logging.getLogger(__name__)
 
 @dataclass
 class Mutant:
-    """Mutant definition."""
+    """Mutant definition. This is a dataclass instead of a namedtuple for potential modification."""
 
     mutant_code: Any
     src_file: Path
