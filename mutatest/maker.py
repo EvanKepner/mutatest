@@ -6,6 +6,7 @@ import logging
 import subprocess
 
 from copy import deepcopy
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, List, Mapping, NamedTuple, Set
 
@@ -17,10 +18,12 @@ from mutatest.cache import (
 )
 from mutatest.transformers import LocIndex, MutateAST
 
+
 LOGGER = logging.getLogger(__name__)
 
 
-class Mutant(NamedTuple):
+@dataclass
+class Mutant:
     """Mutant definition."""
 
     mutant_code: Any

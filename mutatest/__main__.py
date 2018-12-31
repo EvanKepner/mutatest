@@ -5,22 +5,23 @@ import logging
 import shlex
 import sys
 
+from dataclasses import dataclass
 from pathlib import Path
 from textwrap import dedent
-from typing import NamedTuple
 
 from setuptools import find_packages  # type:ignore
 
 from mutatest.analyzer import analyze_mutant_trials
-from mutatest.controller import clean_trial, run_mutation_trials
 from mutatest.cache import check_cache_invalidation_mode
+from mutatest.controller import clean_trial, run_mutation_trials
 
 
 LOGGER = logging.getLogger(__name__)
 FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
 
-class RunMode(NamedTuple):
+@dataclass
+class RunMode:
     """Running mode choices."""
 
     mode: str

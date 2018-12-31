@@ -1,54 +1,118 @@
 """Results analysis.
 """
 from collections import Counter
-from textwrap import dedent
-from typing import List
+from typing import List, NamedTuple
 
-from mutatest.maker import MutantTrialResult
+from mutatest.maker import Mutant, MutantTrialResult
+
+
+class ReportedMutants(NamedTuple):
+    """Container for reported mutants to pair status with the list of mutants."""
+
+    status: str
+    mutants: List[Mutant]
+
+
+def get_reported_results(trial_results: List[MutantTrialResult], status: str) -> ReportedMutants:
+    """Utility function to create filtered lists of mutants based on status.
+
+    Args:
+        trial_results: list of mutant trial results
+        status: the status to filter by
+
+    Returns:
+        The reported mutants as a ReportedMutants container.
+    """
+    mutants = [t.mutant for t in trial_results if t.status == status]
+    return ReportedMutants(status, mutants)
 
 
 def analyze_mutant_trials(trial_results: List[MutantTrialResult]) -> str:
-    # def analyze_mutant_trials(trial_results: List[MutantTrialResult]) -> Dict[str, Any]:
+    """Create the analysis text report string for the trials.
+
+    It will look like:
+
+    Overall mutation trial summary:
+    ===============================
+    DETECTED: x
+    SURVIVED: y
+    ...
+
+    Breakdown by section:
+    =====================
+
+    Section title
+    -------------
+    source_file.py: (l: 1, c: 10) - mutation from op.Original to op.Mutated
+    source_file.py: (l: 3, c: 10) - mutation from op.Original to op.Mutated
+
+    Args:
+        trial_results: list of MutantTrial results
+
+    Returns:
+        str, the text report
+    """
 
     status = dict(Counter([t.status for t in trial_results]))
+    status["TOTAL RUNS"] = len(trial_results)
 
-    # detected = [t.mutant for t in trial_results if t.status == "DETECTED"]
-    survived = [t.mutant for t in trial_results if t.status == "SURVIVED"]
-    # errors = [t.mutant for t in trial_results if t.status == "ERROR"]
-    # unknowns = [t.mutant for t in trial_results if t.status == "UNKNOWN"]
+    detected = get_reported_results(trial_results, "DETECTED")
+    survived = get_reported_results(trial_results, "SURVIVED")
+    errors = get_reported_results(trial_results, "ERROR")
+    unknowns = get_reported_results(trial_results, "UNKNOWN")
 
-    status["TOTAL_RUNS"] = len(trial_results)
+    report_sections = []
 
-    surviving_template = dedent(
-        """\
-    {src_file}: (l: {lineno}, c: {col_offset}) - surviving mutation from {op_type} to {mutation}.
+    # build the summary section
+    summary_header = "Overall mutation trial summary:"
+    report_sections.append("\n".join([summary_header, "=" * len(summary_header)]))
+    for s, n in status.items():
+        report_sections.append(f"{s}: {n}")
+
+    # build the breakout sections for each type
+    section_header = "Breakdown by section:"
+    report_sections.append("\n".join(["\n", section_header, "=" * len(section_header)]))
+    for rpt_results in [survived, detected, errors, unknowns]:
+        if rpt_results.mutants:
+            report_sections.append(build_report_section(rpt_results.status, rpt_results.mutants))
+
+    return "\n".join(report_sections)
+
+
+def build_report_section(title: str, mutants: List[Mutant]) -> str:
+    """Build a readable mutation report section from the list of mutants.
+
+    It will look like:
+
+    Title
+    -----
+    source_file.py: (l: 1, c: 10) - mutation from op.Original to op.Mutated
+    source_file.py: (l: 3, c: 10) - mutation from op.Original to op.Mutated
+
+
+    Args:
+        title: title for the section.
+        mutants: list of mutants for the formatted lines.
+
+    Returns:
+        The report section as a formatted string.
     """
+
+    fmt_list = []
+
+    fmt_template = (
+        "{src_file}: (l: {lineno}, c: {col_offset}) - mutation from {op_type} to {mutation}"
     )
 
-    survivors_list = []
+    for mutant in mutants:
+        summary = {}
+        summary["src_file"] = str(mutant.src_file)
+        summary["lineno"] = str(mutant.src_idx.lineno)
+        summary["col_offset"] = str(mutant.src_idx.col_offset)
+        summary["op_type"] = str(mutant.src_idx.op_type)
+        summary["mutation"] = str(mutant.mutation)
 
-    for surv in survived:
-        surv_summary = {}
-        surv_summary["src_file"] = str(surv.src_file)
-        surv_summary["lineno"] = str(surv.src_idx.lineno)
-        surv_summary["col_offset"] = str(surv.src_idx.col_offset)
-        surv_summary["op_type"] = str(surv.src_idx.op_type)
-        surv_summary["mutation"] = str(surv.mutation)
+        fmt_list.append(fmt_template.format_map(summary))
 
-        survivors_list.append(surviving_template.format_map(surv_summary))
-
-    header = "Surviving mutants:"
-    surv_report = "\n".join([header, "=" * len(header), "\n"] + [s for s in survivors_list])
-
-    """
-    summary = {
-        "status": status,
-        "detected_mutants": detected,
-        "surviving_mutants": survived,
-        "errors_from_mutations": errors,
-        "unknown_results": unknowns,
-    }
-
-    return summary
-    """
-    return surv_report
+    report = "\n".join(["\n", title, "-" * len(title)] + [s for s in fmt_list])
+    return report
