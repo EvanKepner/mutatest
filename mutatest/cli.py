@@ -1,4 +1,4 @@
-"""Main routine and command line interface.
+"""Command line interface.
 """
 import argparse
 import logging
@@ -45,7 +45,7 @@ class RunMode:
         return True
 
 
-def mode_descriptions() -> str:
+def cli_epilog() -> str:
     return dedent(
         """\
     Additional command argument information:
@@ -101,7 +101,7 @@ def cli_args() -> argparse.Namespace:
         prog="Mutatest",
         description="Run mutation tests on source code by manipulating __pycache__.",
         formatter_class=argparse.RawTextHelpFormatter,
-        epilog=mode_descriptions(),
+        epilog=cli_epilog(),
     )
     parser.add_argument(
         "-d", "--debug", action="store_true", help="Turn on DEBUG level logging output."
@@ -238,7 +238,3 @@ def main(args: argparse.Namespace) -> None:
     LOGGER.info("Status report: \n%s", report)
 
     write_report(report, args.output)
-
-
-if __name__ == "__main__":
-    cli_main()
