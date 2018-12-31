@@ -1,6 +1,12 @@
 include LICENSE
+
+# Core configuration files
+include *.ini
 include *.md
 include *.rst
 include *.toml
 include *.yml
 include *.yaml
+
+# Tests
+recursive-include tests *.py
