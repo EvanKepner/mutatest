@@ -2,6 +2,7 @@
 """
 import argparse
 import logging
+import shlex
 import sys
 
 from pathlib import Path
@@ -115,8 +116,8 @@ def run_all() -> None:
     else:
         src_loc = Path(args.src)
 
-    # whitespace splitting as valid argument array for subprocess.run()
-    test_cmds = args.testcmds.split()
+    # shelx.split will appropriately handle embedded quotes etc. for tokenization.
+    test_cmds = shlex.split(args.testcmds)
 
     logging.basicConfig(
         format=FORMAT, level=logging.DEBUG if args.debug else logging.INFO, stream=sys.stdout

@@ -14,7 +14,7 @@ if sys.version_info < (3, 6, 0):
 
 NAME = "mutatest"
 PACKAGES = find_packages()
-META_PATH = os.path.join("mutatest",  "__init__.py")
+META_PATH = os.path.join("mutatest", "__init__.py")
 KEYWORDS = ["mutatest", "mutation", "testing", "test", "mutant", "mutate"]
 PROJECT_URLS = {
     "Documentation": "https://github.com/EvanKepner/m",
@@ -40,18 +40,12 @@ CLASSIFIERS = [
 
 INSTALL_REQUIRES = []
 EXTRAS_REQUIRE = {
-    "docs": ["sphinx",],
-    "tests": [
-        "coverage",
-        "pytest",
-        "pytest-cov",
-    ],
-    "qa": ["mypy", "black", "pre-commit", "isort"]
+    "docs": ["sphinx"],
+    "tests": ["pytest >= 4.0.0", "coverage", "pytest-cov", "tox", "virtualenv"],
+    "qa": ["mypy", "black", "pre-commit", "isort"],
 }
 
-EXTRAS_REQUIRE["dev"] = (
-    EXTRAS_REQUIRE["tests"] + EXTRAS_REQUIRE["docs"] + EXTRAS_REQUIRE["qa"]
-)
+EXTRAS_REQUIRE["dev"] = EXTRAS_REQUIRE["tests"] + EXTRAS_REQUIRE["docs"] + EXTRAS_REQUIRE["qa"]
 
 
 HERE = os.path.abspath(os.path.dirname(__file__))
@@ -73,9 +67,7 @@ def find_meta(meta):
     """
     Extract __*meta*__ from META_FILE.
     """
-    meta_match = re.search(
-        r"^__{meta}__ = ['\"]([^'\"]*)['\"]".format(meta=meta), META_FILE, re.M
-    )
+    meta_match = re.search(r"^__{meta}__ = ['\"]([^'\"]*)['\"]".format(meta=meta), META_FILE, re.M)
     if meta_match:
         return meta_match.group(1)
     raise RuntimeError("Unable to find __{meta}__ string.".format(meta=meta))
@@ -83,11 +75,7 @@ def find_meta(meta):
 
 VERSION = find_meta("version")
 URL = find_meta("url")
-LONG = (
-    read("README.rst")
-    + "\n\n"
-    + read("AUTHORS.rst")
-)
+LONG = read("README.rst") + "\n\n" + read("AUTHORS.rst")
 
 
 if __name__ == "__main__":
@@ -107,7 +95,7 @@ if __name__ == "__main__":
         packages=PACKAGES,
         python_requires=">=3.6.0",
         zip_safe=False,
-        entry_points={"console_scripts":["mutatest=mutatest.cli:run_all"]},
+        entry_points={"console_scripts": ["mutatest=mutatest.cli:run_all"]},
         classifiers=CLASSIFIERS,
         install_requires=INSTALL_REQUIRES,
         extras_require=EXTRAS_REQUIRE,

@@ -1,15 +1,23 @@
 """Cache file controls.
 """
+import enum
 import importlib
 import logging
 import os
 
 from pathlib import Path
-from py_compile import PycInvalidationMode  # type: ignore
+
+# from py_compile import PycInvalidationMode  # type: ignore
 from typing import Union
 
 
 LOGGER = logging.getLogger(__name__)
+
+
+class PycInvalidationMode(enum.Enum):
+    TIMESTAMP = 1
+    CHECKED_HASH = 2
+    UNCHECKED_HASH = 3
 
 
 def check_cache_invalidation_mode() -> PycInvalidationMode:
