@@ -106,6 +106,9 @@ def cli_args() -> argparse.Namespace:
         default="mutation_report.rst",
         help="Output file location for results, defaults to 'mutation_report.rst'.",
     )
+
+    # TODO: ADD SKIP_FILES OPTION WITH DEFAULT OF __INIT__.PY
+
     parser.add_argument(
         "-d", "--debug", action="store_true", help="Turn on DEBUG level logging output."
     )

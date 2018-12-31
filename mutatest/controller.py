@@ -88,6 +88,8 @@ def build_src_trees_and_targets(
 
     for src_file in get_py_files(src_loc):
 
+        # TODO: USE SKIP FILES FROM CLI LINE 110
+
         LOGGER.info("Creating AST from: %s", src_file)
         tree = get_ast_from_src(src_file)
 
@@ -154,6 +156,7 @@ def run_mutation_trials(
         src_tree = src_trees[sample_src]
 
         while mutant_operations:
+            # TODO: MAKE THIS A RANDOM CHOICE FROM TUPLE OF SET INSTEAD OF POP
             current_mutation = mutant_operations.pop()
 
             LOGGER.debug("Running trial for %s", current_mutation)
