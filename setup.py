@@ -74,7 +74,7 @@ def find_meta(meta):
 
 VERSION = find_meta("version")
 URL = find_meta("url")
-LONG = read("README.rst") + "\n\n" + read("AUTHORS.rst")
+LONG = "\n\n".join([read("README.rst"), read("CHANGELOG.rst"), read("AUTHORS.rst")])
 
 
 if __name__ == "__main__":
