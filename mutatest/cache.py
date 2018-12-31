@@ -81,7 +81,7 @@ def create_cache_dirs(cache_file: Path) -> None:
         None, creates the cache directory on disk if needed.
     """
     if not cache_file.parent.exists():
-        # exists_ok shouldn't be neeeded with exists() check, suppressing FileExistsErrors
+        # exists_ok shouldn't be needed with exists() check, suppressing FileExistsErrors
         Path.mkdir(cache_file.parent, exist_ok=True)
 
 
