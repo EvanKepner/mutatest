@@ -59,11 +59,12 @@ def mode_descriptions() -> str:
     )
 
 
-def main() -> None:
+def cli_args() -> argparse.Namespace:
+    """Command line arguments.
 
-    # Run a quick check at the beginning in case of later OS errors.
-    check_cache_invalidation_mode()
-
+    Returns:
+        parsed args from ArgumentParser
+    """
     parser = argparse.ArgumentParser(
         prog="Mutatest",
         description="Run mutation tests on a source code directory.",
@@ -102,8 +103,44 @@ def main() -> None:
         "-d", "--debug", action="store_true", help="Turn on DEBUG level logging output."
     )
 
-    args = parser.parse_args()
+    return parser.parse_args()
 
+
+def cli_summary_report(src_loc: Path, args: argparse.Namespace) -> str:
+    """Create a command line summary header for the final reporting.
+
+    Args:
+        src_loc: source location
+        args: argparse namespace from cli
+
+    Returns:
+        str
+    """
+
+    cli_summary_template = dedent(
+        """\
+    Command line arguments
+    ======================
+    Source location: {src_loc}
+    Test commands: {testcmds}
+    Mode: {mode}
+    """
+    )
+
+    fmt_map = {"src_loc": str(src_loc.resolve()), "testcmds": args.testcmds, "mode": args.mode}
+
+    return cli_summary_template.format_map(fmt_map)
+
+
+def main() -> None:
+
+    # Run a quick check at the beginning in case of later OS errors.
+    check_cache_invalidation_mode()
+
+    # the command line arguments
+    args = cli_args()
+
+    # set the source path or auto-detect location if not specified
     if not args.src:
         find_pkgs = find_packages()
         if find_pkgs:
@@ -119,6 +156,7 @@ def main() -> None:
     # shelx.split will appropriately handle embedded quotes etc. for tokenization.
     test_cmds = shlex.split(args.testcmds)
 
+    # set the logging level based on the debug flag in args
     logging.basicConfig(
         format=FORMAT, level=logging.DEBUG if args.debug else logging.INFO, stream=sys.stdout
     )
@@ -143,9 +181,12 @@ def main() -> None:
     LOGGER.info("Running clean trial")
     clean_trial(src_loc=src_loc, test_cmds=test_cmds)
 
-    status = analyze_mutant_trials(results)
+    cli_report = cli_summary_report(src_loc, args)
+    trial_report = analyze_mutant_trials(results)
+
+    report = "\n".join([cli_report, trial_report])
     LOGGER.info("Status:")
-    print(status)
+    print(report)
 
 
 if __name__ == "__main__":
