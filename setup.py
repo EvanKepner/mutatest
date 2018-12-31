@@ -5,11 +5,11 @@ import sys
 
 from setuptools import find_packages, setup
 
-if sys.version_info < (3, 6, 0):
-    raise Exception("Mutatest requires Python version 3.6 or later")
+if sys.version_info < (3, 7, 0):
+    raise Exception("Mutatest requires Python version 3.7 (or later)")
 
 ###############################################################################
-# Using setup.py from Attrs as a template for finding components
+# Using setup.py from Attrs as a template for finding components, awesome config.
 # Original reference: https://github.com/python-attrs/attrs/blob/master/setup.py
 
 NAME = "mutatest"
@@ -29,7 +29,6 @@ CLASSIFIERS = [
     "Environment :: Console",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3 :: Only",
     "Topic :: Software Development :: Libraries :: Python Modules",
@@ -93,7 +92,7 @@ if __name__ == "__main__":
         keywords=KEYWORDS,
         long_description=LONG,
         packages=PACKAGES,
-        python_requires=">=3.6.0",
+        python_requires=">=3.7.0",
         zip_safe=False,
         entry_points={"console_scripts": ["mutatest=mutatest.cli:run_all"]},
         classifiers=CLASSIFIERS,

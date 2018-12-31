@@ -5,7 +5,7 @@ import sys
 
 from pathlib import Path
 
-# from py_compile import PycInvalidationMode  # type: ignore
+from py_compile import PycInvalidationMode  # type: ignore
 
 import pytest
 
@@ -14,7 +14,6 @@ from mutatest.cache import (
     create_cache_dirs,
     get_cache_file_loc,
     remove_existing_cache_files,
-    PycInvalidationMode,
 )
 
 
