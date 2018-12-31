@@ -11,9 +11,9 @@ from textwrap import dedent
 
 from setuptools import find_packages  # type:ignore
 
-from mutatest.report import analyze_mutant_trials
 from mutatest.cache import check_cache_invalidation_mode
 from mutatest.controller import clean_trial, run_mutation_trials
+from mutatest.report import analyze_mutant_trials, write_report
 
 
 LOGGER = logging.getLogger(__name__)
@@ -100,6 +100,13 @@ def cli_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "-o",
+        "--output",
+        type=str,
+        default="mutation_report.rst",
+        help="Output file location for results, defaults to 'mutation_report.rst'.",
+    )
+    parser.add_argument(
         "-d", "--debug", action="store_true", help="Turn on DEBUG level logging output."
     )
 
@@ -177,16 +184,18 @@ def main() -> None:
         break_on_survival=runmode.break_on_survival,
     )
 
-    # Run the pipeline with no mutations last
+    # Run the pipeline with no mutations last to ensure cleared cache
     LOGGER.info("Running clean trial")
     clean_trial(src_loc=src_loc, test_cmds=test_cmds)
 
+    # create the report of results
     cli_report = cli_summary_report(src_loc, args)
     trial_report = analyze_mutant_trials(results)
 
     report = "\n".join([cli_report, trial_report])
-    LOGGER.info("Status:")
-    print(report)
+    LOGGER.info("Status report: \n%s", report)
+
+    write_report(report, Path(args.output))
 
 
 if __name__ == "__main__":

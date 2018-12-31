@@ -1,9 +1,16 @@
 """Results analysis and report creation..
 """
+import logging
+
 from collections import Counter
-from typing import List, NamedTuple
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, NamedTuple, Union
 
 from mutatest.maker import Mutant, MutantTrialResult
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class ReportedMutants(NamedTuple):
@@ -53,8 +60,9 @@ def analyze_mutant_trials(trial_results: List[MutantTrialResult]) -> str:
         str, the text report
     """
 
-    status = dict(Counter([t.status for t in trial_results]))
+    status: Dict[str, Union[str, int]] = dict(Counter([t.status for t in trial_results]))
     status["TOTAL RUNS"] = len(trial_results)
+    status["RUN DATETIME"] = str(datetime.now())
 
     detected = get_reported_results(trial_results, "DETECTED")
     survived = get_reported_results(trial_results, "SURVIVED")
@@ -116,3 +124,25 @@ def build_report_section(title: str, mutants: List[Mutant]) -> str:
 
     report = "\n".join(["\n", title, "-" * len(title)] + [s for s in fmt_list])
     return report
+
+
+def write_report(report: str, location: Path) -> None:
+    """Write the report to a file.
+
+    If the location does not exist with folders they are created.
+
+    Args:
+        report: the string report to write
+        location: path location to the file
+
+    Returns:
+        None, writes output to location
+    """
+
+    if not location.parent.exists():
+        LOGGER.info("Creating directory tree for: %s", location.parent.resolve())
+        location.parent.mkdir(parents=True, exist_ok=True)
+
+    with open(location, "w", encoding="utf-8") as output_loc:
+        LOGGER.info("Writing output report to: %s", location.resolve())
+        output_loc.write(report)
