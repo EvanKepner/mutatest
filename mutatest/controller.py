@@ -85,7 +85,7 @@ def clean_trial(src_loc: Path, test_cmds: List[str]) -> None:
 
 
 def build_src_trees_and_targets(
-    src_loc: Union[str, Path]
+    src_loc: Union[str, Path], exclude_files: Optional[List[str]] = None
 ) -> Tuple[Dict[str, ast.Module], Dict[str, List[LocIndex]]]:
     """Build the source AST references and find all mutatest target locations for each.
 
@@ -100,7 +100,11 @@ def build_src_trees_and_targets(
 
     for src_file in get_py_files(src_loc):
 
-        # TODO: USE SKIP FILES FROM CLI LINE 110
+        # if the src_file is in the exclusion list then reset to the next iteration
+        if exclude_files:
+            if src_file.name in exclude_files:
+                LOGGER.info("%s is in the exclusion list, skipping.", src_file.name)
+                continue
 
         LOGGER.info("Creating AST from: %s", src_file)
         tree = get_ast_from_src(src_file)
@@ -138,6 +142,7 @@ def get_sample_space(src_targets: Dict[str, List[LocIndex]]) -> List[Tuple[str, 
 def run_mutation_trials(
     src_loc: Union[str, Path],
     test_cmds: List[str],
+    exclude_files: Optional[List[str]] = None,
     n_locations: Optional[int] = None,
     random_seed: Optional[int] = None,
     break_on_survival: bool = False,
@@ -150,6 +155,7 @@ def run_mutation_trials(
     Args:
         src_loc: the source file package directory
         test_cmds: the test runner commands for subprocess.run()
+        exclude_files: optional list of files to exclude from mutation trials, default None
         n_locations: optional number of locations for mutations,
             if unspecified then the full sample space is used.
         break_on_survival: flag to stop further mutations at a location if one survives,
@@ -164,9 +170,11 @@ def run_mutation_trials(
         List of mutants and trial results
     """
     # Create the AST for each source file and make potential targets sample space
-    LOGGER.info("Running mutation n_locations.")
+    LOGGER.info("Running mutation trials.")
 
-    src_trees, src_targets = build_src_trees_and_targets(src_loc)
+    src_trees, src_targets = build_src_trees_and_targets(
+        src_loc=src_loc, exclude_files=exclude_files
+    )
     sample_space = get_sample_space(src_targets)
 
     # set the mutation sample to the full sample space

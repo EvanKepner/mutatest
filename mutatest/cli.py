@@ -202,6 +202,7 @@ def cli_summary_report(
     Source location: {src_loc}
     Test commands: {testcmds}
     Mode: {mode}
+    Excluded files: {exclude}
     N locations input: {n_locs}
     Random seed: {seed}
 
@@ -216,6 +217,7 @@ def cli_summary_report(
         "src_loc": str(src_loc.resolve()),
         "testcmds": args.testcmds,
         "mode": args.mode,
+        "exclude": args.exclude,
         "n_locs": args.nlocations,
         "seed": args.rseed,
         "locs_mutated": locs_mutated,
@@ -263,6 +265,7 @@ def main(args: argparse.Namespace) -> None:
     results_summary = run_mutation_trials(
         src_loc=src_loc,
         test_cmds=args.testcmds,
+        exclude_files=args.exclude,
         n_locations=args.nlocations,
         random_seed=args.rseed,
         break_on_detected=run_mode.break_on_detection,
