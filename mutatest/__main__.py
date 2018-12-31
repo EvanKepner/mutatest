@@ -1,4 +1,4 @@
-"""Command line interface.
+"""Main routine and command line interface.
 """
 import argparse
 import logging
@@ -59,7 +59,7 @@ def mode_descriptions() -> str:
     )
 
 
-def run_all() -> None:
+def main() -> None:
 
     # Run a quick check at the beginning in case of later OS errors.
     check_cache_invalidation_mode()
@@ -146,3 +146,7 @@ def run_all() -> None:
     status = analyze_mutant_trials(results)
     LOGGER.info("Status:")
     pprint(status)
+
+
+if __name__ == "__main__":
+    main()
