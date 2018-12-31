@@ -210,8 +210,11 @@ def cli_summary_report(
     ---------------------
     Total locations mutated: {locs_mutated}
     Total locations identified: {locs_identified}
+    Location sample coverage: {coverage} %
     """
     )
+
+    coverage = (locs_mutated / locs_identified) * 100
 
     fmt_map = {
         "src_loc": str(src_loc.resolve()),
@@ -222,6 +225,7 @@ def cli_summary_report(
         "seed": args.rseed,
         "locs_mutated": locs_mutated,
         "locs_identified": locs_identified,
+        "coverage": f"{coverage:.2f}",
     }
 
     return cli_summary_template.format_map(fmt_map)

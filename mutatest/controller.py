@@ -189,7 +189,7 @@ def run_mutation_trials(
     if n_locations:
         if n_locations <= len(sample_space):
             LOGGER.info(
-                "Selecting %s n_locations from %s potentials.", n_locations, len(sample_space)
+                "Selecting %s locations from %s potentials.", n_locations, len(sample_space)
             )
             mutation_sample = random.sample(sample_space, k=n_locations)
 
