@@ -29,11 +29,11 @@ def analyze_mutant_trials(trial_results: List[MutantTrialResult]) -> str:
 
     for surv in survived:
         surv_summary = {}
-        surv_summary["src_file"] = surv.src_file
-        surv_summary["lineno"] = surv.src_idx.lineno
-        surv_summary["col_offset"] = surv.src_idx.col_offset
-        surv_summary["op_type"] = surv.src_idx.op_type
-        surv_summary["mutation"] = surv.mutation
+        surv_summary["src_file"] = str(surv.src_file)
+        surv_summary["lineno"] = str(surv.src_idx.lineno)
+        surv_summary["col_offset"] = str(surv.src_idx.col_offset)
+        surv_summary["op_type"] = str(surv.src_idx.op_type)
+        surv_summary["mutation"] = str(surv.mutation)
 
         survivors_list.append(surviving_template.format_map(surv_summary))
 
