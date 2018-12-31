@@ -126,8 +126,10 @@ def get_sample_space(src_targets: Dict[str, List[LocIndex]]) -> List[Tuple[str, 
 def run_mutation_trials(
     src_loc: Union[str, Path],
     test_cmds: List[str],
-    break_on_survival: bool = True,
+    break_on_survival: bool = False,
     break_on_detected: bool = False,
+    break_on_error: bool = False,
+    break_on_unknown: bool = False,
 ) -> List[MutantTrialResult]:
     """Run the mutatest trials.
 
@@ -135,10 +137,13 @@ def run_mutation_trials(
         src_loc: the source file package directory
         test_cmds: the test runner commands for subprocess.run()
         break_on_survival: flag to stop further mutations at a location if one survives,
-            defaults to True
-        break_on_detected: flag to stop further mutations at a location is one is detected,
             defaults to False
-
+        break_on_detected: flag to stop further mutations at a location if one is detected,
+            defaults to False
+        break_on_error: flag to stop further mutations at a location if there is an error,
+            defaults to False
+        break_on_unknown: flag to stop further mutations at a location if the status is unknown,
+            defaults to False
     Returns:
         List of mutants and trial results
     """
@@ -177,6 +182,14 @@ def run_mutation_trials(
 
             if trial_results.status == "DETECTED" and break_on_detected:
                 LOGGER.info("Detected mutation, stopping further mutations for location.")
+                break
+
+            if trial_results.status == "ERROR" and break_on_error:
+                LOGGER.info("Error on mutation, stopping further mutations for location.")
+                break
+
+            if trial_results.status == "UNKNOWN" and break_on_unknown:
+                LOGGER.info("Unknown mutation result, stopping further mutations for location.")
                 break
 
     return results

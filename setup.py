@@ -94,7 +94,7 @@ if __name__ == "__main__":
         packages=PACKAGES,
         python_requires=">=3.7.0",
         zip_safe=False,
-        entry_points={"console_scripts": ["mutatest=mutatest.__main__:main"]},
+        entry_points={"console_scripts": ["mutatest=mutatest.__main__:cli_main"]},
         classifiers=CLASSIFIERS,
         install_requires=INSTALL_REQUIRES,
         extras_require=EXTRAS_REQUIRE,

@@ -34,6 +34,16 @@ class RunMode:
     def break_on_survival(self) -> bool:
         return self.mode in ["s", "sd"]
 
+    @property
+    def break_on_error(self) -> bool:
+        # Set to TRUE for the cli as a default, may add CLI control options later
+        return True
+
+    @property
+    def break_on_unknown(self) -> bool:
+        # Set to TRUE for the cli as a default, may add CLI control options later
+        return True
+
 
 def mode_descriptions() -> str:
     return dedent(
@@ -142,13 +152,16 @@ def cli_summary_report(src_loc: Path, args: argparse.Namespace) -> str:
     return cli_summary_template.format_map(fmt_map)
 
 
-def main() -> None:
-
+def cli_main() -> None:
+    """Entry point to run CLI args and execute main function."""
     # Run a quick check at the beginning in case of later OS errors.
     check_cache_invalidation_mode()
 
-    # the command line arguments
     args = cli_args()
+    main(args)
+
+
+def main(args: argparse.Namespace) -> None:
 
     # set the source path or auto-detect location if not specified
     if not args.src:
@@ -185,6 +198,8 @@ def main() -> None:
         test_cmds=test_cmds,
         break_on_detected=runmode.break_on_detection,
         break_on_survival=runmode.break_on_survival,
+        break_on_error=runmode.break_on_error,
+        break_on_unknown=runmode.break_on_unknown,
     )
 
     # Run the pipeline with no mutations last to ensure cleared cache
@@ -202,4 +217,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    cli_main()
