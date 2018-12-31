@@ -124,7 +124,9 @@ def create_mutation_and_run_trial(
 
     write_mutant_cache_file(mutant)
 
-    mutant_trial = subprocess.run(test_cmds, capture_output=True)
+    # only capture output outside of debug mode
+    # https://docs.python.org/3/library/logging.html#levels
+    mutant_trial = subprocess.run(test_cmds, capture_output=LOGGER.getEffectiveLevel() != 10)
     remove_existing_cache_files(mutant.src_file)
 
     return MutantTrialResult(mutant=mutant, return_code=mutant_trial.returncode)

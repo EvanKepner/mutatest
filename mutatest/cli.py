@@ -104,9 +104,6 @@ def cli_args() -> argparse.Namespace:
         epilog=cli_epilog(),
     )
     parser.add_argument(
-        "-d", "--debug", action="store_true", help="Turn on DEBUG level logging output."
-    )
-    parser.add_argument(
         "-e",
         "--exclude",
         type=lambda x: x.split(),
@@ -150,6 +147,7 @@ def cli_args() -> argparse.Namespace:
         type=lambda x: shlex.split(x),
         help="Test command string to execute, defaults to 'pytest' if unspecified.",
     )
+    parser.add_argument("--debug", action="store_true", help="Turn on DEBUG level logging output.")
 
     return parser.parse_args()
 

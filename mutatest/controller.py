@@ -63,7 +63,10 @@ def clean_trial(src_loc: Path, test_cmds: List[str]) -> None:
     remove_existing_cache_files(src_loc)
 
     LOGGER.debug("Running clean trial")
-    clean_run = subprocess.run(test_cmds, capture_output=True)
+
+    # only capture output outside of debug mode
+    # https://docs.python.org/3/library/logging.html#levels
+    clean_run = subprocess.run(test_cmds, capture_output=LOGGER.getEffectiveLevel() != 10)
 
     if clean_run.returncode != 0:
         raise BaselineTestException(
