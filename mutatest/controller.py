@@ -18,8 +18,6 @@ LOGGER = logging.getLogger(__name__)
 class BaselineTestException(Exception):
     """Used as an exception for the clean trial runs."""
 
-    pass
-
 
 def get_py_files(src_loc: Union[str, Path]) -> List[Path]:
     """Find all .py files in src_loc and return absolute path
@@ -46,8 +44,7 @@ def get_py_files(src_loc: Union[str, Path]) -> List[Path]:
         relative_list = list(src_loc.rglob("*.py"))
         return [p.resolve() for p in relative_list if not p.stem.startswith("test_")]
 
-    else:
-        raise FileNotFoundError(f"{src_loc} is not a valid Python file or directory.")
+    raise FileNotFoundError(f"{src_loc} is not a valid Python file or directory.")
 
 
 def clean_trial(src_loc: Path, test_cmds: List[str]) -> None:
