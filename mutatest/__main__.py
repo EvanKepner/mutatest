@@ -6,7 +6,6 @@ import shlex
 import sys
 
 from pathlib import Path
-from pprint import pprint
 from textwrap import dedent
 from typing import NamedTuple
 
@@ -145,7 +144,7 @@ def main() -> None:
 
     status = analyze_mutant_trials(results)
     LOGGER.info("Status:")
-    pprint(status)
+    print(status)
 
 
 if __name__ == "__main__":
