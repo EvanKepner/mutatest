@@ -48,15 +48,15 @@ class RunMode:
 def mode_descriptions() -> str:
     return dedent(
         """\
-    Additional information:
-    =======================
+    Additional command argument information:
+    ========================================
 
-    Testcmds:
-    ---------
-     - Specify custom test commands as a string e.g. 'pytest -m quicktests' for running only
-       the test suite with the given mark of 'quicktests' for the mutation trials.
+    Exclude:
+    --------
+     - Useful for excluding files that are not included in test coverage. Use a space delimited
+       list for the files e.g. "__init__.py ignore.py also_ignore.py".
 
-    Modes:
+    Mode:
     ------
      - f: full mode, run all possible combinations (slowest but most thorough).
      - s: break on first SURVIVOR per mutated line e.g. if there is a single surviving mutation
@@ -65,6 +65,28 @@ def mode_descriptions() -> str:
      - d: break on the first DETECTION per mutated line e.g. if there is a detected mutation on
           a line move to the next one.
      - sd: break on the first SURVIVOR or DETECTION (fastest, and least thorough).
+
+     The API for mutatest.controller.run_mutation_trials offers finer control over the
+     run method beyond the CLI.
+
+    Output:
+    -------
+     - You can specify a file name or a path. The folders in the path will be created if they
+       do not already exist. The output is a text file formatted in RST headings.
+
+    Src:
+    ----
+     - This can be a file or a directory. If it is a directory it is recursively searched for .py
+       files. Note that the __pycache__ file associated with the file (or sub-files in a directory)
+       will be manipulated during mutation testing. If this argument is unspecified mutatest will
+       attempt to find Python ptackages (using setuptools.find_packages) and use the first
+       entry.
+
+    Testcmds:
+    ---------
+     - Specify custom test commands as a string e.g. 'pytest -m "not slow"' for running only
+       the test suite without the marked "slow" tests. Shlex.split() is used to parse the
+       entered command string.
     """
     )
 
@@ -77,15 +99,43 @@ def cli_args() -> argparse.Namespace:
     """
     parser = argparse.ArgumentParser(
         prog="Mutatest",
-        description="Run mutation tests on a source code directory.",
+        description="Run mutation tests on source code by manipulating __pycache__.",
         formatter_class=argparse.RawTextHelpFormatter,
         epilog=mode_descriptions(),
+    )
+    parser.add_argument(
+        "-d", "--debug", action="store_true", help="Turn on DEBUG level logging output."
+    )
+    parser.add_argument(
+        "-e",
+        "--exclude",
+        type=lambda x: x.split(),
+        default="__init__.py",
+        help="Space delimited string list of .py file names to exclude, defaults to '__init__.py'",
+    )
+    parser.add_argument(
+        "-m",
+        "--mode",
+        choices=["f", "s", "d", "sd"],
+        default="s",
+        type=str,  # can't lambda format this to RunMode because of choices
+        help=(
+            "Running modes, see the choice option descriptions below. "
+            "Default is 's' if unspecified."
+        ),
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=lambda x: Path(x),
+        default="mutation_report.rst",
+        help="Output file location for results, defaults to 'mutation_report.rst'.",
     )
     parser.add_argument(
         "-s",
         "--src",
         required=False,
-        type=str,
+        type=lambda x: Path(x),
         help=(
             "Target source code directory for mutation testing. "
             "The first result from find_packages() is used if unspecified."
@@ -96,31 +146,9 @@ def cli_args() -> argparse.Namespace:
         "--testcmds",
         required=False,
         default="pytest",
-        type=str,
+        # shelx.split will appropriately handle embedded quotes etc. for tokenization.
+        type=lambda x: shlex.split(x),
         help="Test command string to execute, defaults to 'pytest' if unspecified.",
-    )
-    parser.add_argument(
-        "-m",
-        "--mode",
-        choices=["f", "s", "d", "sd"],
-        default="s",
-        help=(
-            "Running modes, see the choice option descriptions below. "
-            "Default is 's' if unspecified."
-        ),
-    )
-    parser.add_argument(
-        "-o",
-        "--output",
-        type=str,
-        default="mutation_report.rst",
-        help="Output file location for results, defaults to 'mutation_report.rst'.",
-    )
-
-    # TODO: ADD SKIP_FILES OPTION WITH DEFAULT OF __INIT__.PY
-
-    parser.add_argument(
-        "-d", "--debug", action="store_true", help="Turn on DEBUG level logging output."
     )
 
     return parser.parse_args()
@@ -156,7 +184,6 @@ def cli_main() -> None:
     """Entry point to run CLI args and execute main function."""
     # Run a quick check at the beginning in case of later OS errors.
     check_cache_invalidation_mode()
-
     args = cli_args()
     main(args)
 
@@ -174,10 +201,7 @@ def main(args: argparse.Namespace) -> None:
                 "Use --src or --help to see options."
             )
     else:
-        src_loc = Path(args.src)
-
-    # shelx.split will appropriately handle embedded quotes etc. for tokenization.
-    test_cmds = shlex.split(args.testcmds)
+        src_loc = args.src
 
     # set the logging level based on the debug flag in args
     logging.basicConfig(
@@ -186,25 +210,25 @@ def main(args: argparse.Namespace) -> None:
 
     # Run the pipeline with no mutations first to ensure later results are meaningful
     LOGGER.info("Running clean trial")
-    clean_trial(src_loc=src_loc, test_cmds=test_cmds)
+    clean_trial(src_loc=src_loc, test_cmds=args.testcmds)
 
     # Run the mutation trials
     LOGGER.info("Running mutation trials")
 
-    runmode = RunMode(args.mode)
+    run_mode = RunMode(args.mode)
 
     results = run_mutation_trials(
         src_loc=src_loc,
-        test_cmds=test_cmds,
-        break_on_detected=runmode.break_on_detection,
-        break_on_survival=runmode.break_on_survival,
-        break_on_error=runmode.break_on_error,
-        break_on_unknown=runmode.break_on_unknown,
+        test_cmds=args.testcmds,
+        break_on_detected=run_mode.break_on_detection,
+        break_on_survival=run_mode.break_on_survival,
+        break_on_error=run_mode.break_on_error,
+        break_on_unknown=run_mode.break_on_unknown,
     )
 
     # Run the pipeline with no mutations last to ensure cleared cache
     LOGGER.info("Running clean trial")
-    clean_trial(src_loc=src_loc, test_cmds=test_cmds)
+    clean_trial(src_loc=src_loc, test_cmds=args.testcmds)
 
     # create the report of results
     cli_report = cli_summary_report(src_loc, args)
@@ -213,7 +237,7 @@ def main(args: argparse.Namespace) -> None:
     report = "\n".join([cli_report, trial_report])
     LOGGER.info("Status report: \n%s", report)
 
-    write_report(report, Path(args.output))
+    write_report(report, args.output)
 
 
 if __name__ == "__main__":
