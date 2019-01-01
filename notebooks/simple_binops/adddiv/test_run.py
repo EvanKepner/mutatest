@@ -1,7 +1,7 @@
 """Test run
 """
 
-from firstmodule import run
+from adddiv import run
 
 
 def test_add_ten():
