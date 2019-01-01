@@ -64,7 +64,7 @@ def cli_epilog() -> str:
     Exclude:
     --------
      - Useful for excluding files that are not included in test coverage. Use a space delimited
-       list for the files e.g. "__init__.py ignore.py also_ignore.py".
+       list in a string for the files e.g. "__init__.py ignore.py also_ignore.py".
 
     Mode:
     ------
@@ -89,14 +89,16 @@ def cli_epilog() -> str:
      - This can be a file or a directory. If it is a directory it is recursively searched for .py
        files. Note that the __pycache__ file associated with the file (or sub-files in a directory)
        will be manipulated during mutation testing. If this argument is unspecified mutatest will
-       attempt to find Python ptackages (using setuptools.find_packages) and use the first
+       attempt to find Python packages (using setuptools.find_packages) and use the first
        entry.
 
     Testcmds:
     ---------
      - Specify custom test commands as a string e.g. 'pytest -m "not slow"' for running only
        the test suite without the marked "slow" tests. Shlex.split() is used to parse the
-       entered command string.
+       entered command string. Mutant status e.g. SURVIVED vs. DETECTED is based on the
+       return code of the command. Return code 0 = SURVIVED, 1 = DETECTED, 2 = ERROR, and
+       all others are UNKNOWN. Stdout is shown from the command if --debug mode is enabled.
     """
     )
 
@@ -118,7 +120,8 @@ def cli_args() -> argparse.Namespace:
         "--exclude",
         type=lambda x: x.split(),
         default="__init__.py",
-        help="Space delimited string list of .py file names to exclude, defaults to '__init__.py'",
+        metavar="STR_LIST",
+        help="Space delimited string list of .py file names to exclude. (default: '__init__.py')",
     )
     parser.add_argument(
         "-m",
@@ -126,10 +129,7 @@ def cli_args() -> argparse.Namespace:
         choices=["f", "s", "d", "sd"],
         default="s",
         type=str,  # can't lambda format this to RunMode because of choices
-        help=(
-            "Running modes, see the choice option descriptions below. "
-            "Default is 's' if unspecified."
-        ),
+        help=("Running modes, see the choice option descriptions below. " "(default: s)"),
     )
     parser.add_argument(
         "-n",
@@ -137,32 +137,34 @@ def cli_args() -> argparse.Namespace:
         type=int,
         action=PositiveIntegerAction,
         default=10,
+        metavar="INT",
         help=(
             "Number of locations in code to randomly select for mutation from possible targets. "
-            "The default value is 10."
+            "(default: 10)"
         ),
     )
     parser.add_argument(
         "-o",
         "--output",
         type=lambda x: Path(x),
+        metavar="PATH",
         default="mutation_report.rst",
-        help="Output file location for results, defaults to 'mutation_report.rst'.",
+        help="Output file location for results. (default: mutation_report.rst)",
     )
     parser.add_argument(
         "-r",
         "--rseed",
         type=int,
         action=PositiveIntegerAction,
-        help=(
-            "Random seed to use for sample selection. Default to the system values if unspecified."
-        ),
+        metavar="INT",
+        help=("Random seed to use for sample selection."),
     )
     parser.add_argument(
         "-s",
         "--src",
         required=False,
         type=lambda x: Path(x),
+        metavar="PATH",
         help=(
             "Target source code directory for mutation testing. "
             "The first result from find_packages() is used if unspecified."
@@ -173,9 +175,10 @@ def cli_args() -> argparse.Namespace:
         "--testcmds",
         required=False,
         default="pytest",
+        metavar="STR_CMDS",
         # shelx.split will appropriately handle embedded quotes etc. for tokenization.
         type=lambda x: shlex.split(x),
-        help="Test command string to execute, defaults to 'pytest' if unspecified.",
+        help="Test command string to execute. (default: 'pytest')",
     )
     parser.add_argument("--debug", action="store_true", help="Turn on DEBUG level logging output.")
 
