@@ -49,6 +49,7 @@ def mock_trial_results(mock_Mutant):
 
 @pytest.mark.parametrize("status", ["SURVIVED", "DETECTED", "ERROR", "UNKNOWN"])
 def test_get_reported_results(status, mock_trial_results):
+    """Ensure status reporting per type returns appropriate lists."""
     reported = get_reported_results(mock_trial_results, status)
 
     assert reported.status == status
@@ -57,6 +58,7 @@ def test_get_reported_results(status, mock_trial_results):
 
 @freeze_time("2019-01-01")
 def test_get_status_summary(mock_trial_results):
+    """Test the status summary based on the trial results."""
     expected = {
         "SURVIVED": 1,
         "DETECTED": 1,
@@ -123,7 +125,7 @@ def test_analyze_mutant_trials(mock_trial_results):
 
 
 def test_write_report(tmp_path):
-
+    """Ensure the writing and recursive folder creation works."""
     rpt_content = "test"
     rpt_location = tmp_path / "f1" / "f2" / "f3" / "rpt.rst"
     write_report(rpt_content, rpt_location)
