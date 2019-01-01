@@ -1,11 +1,11 @@
 """Trial and job controller.
 """
 import ast
-from datetime import datetime, timedelta
 import logging
 import random
 import subprocess
 
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, NamedTuple, Optional, Tuple, Union
 

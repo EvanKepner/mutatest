@@ -15,27 +15,27 @@ class NodeLister(ast.NodeVisitor):
     >>> NodeLister().visit(tree)
     """
 
-    def visit_FunctionDef(self, node):
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         print(f"Function: {node.name}")
         print(ast.dump(node))
         self.generic_visit(node)
 
-    def visit_BinOp(self, node):
+    def visit_BinOp(self, node: ast.BinOp) -> None:
         print(f"BinOP: {node}")
         print(ast.dump(node))
         self.generic_visit(node)
 
-    def visit_If(self, node):
+    def visit_If(self, node: ast.If) -> None:
         print(f"If: {node}")
         print(ast.dump(node))
         self.generic_visit(node)
 
-    def visit_Compare(self, node):
+    def visit_Compare(self, node: ast.Compare) -> None:
         print(f"Compare: {node}")
         print(ast.dump(node))
         self.generic_visit(node)
 
-    def visit_BoolOp(self, node):
+    def visit_BoolOp(self, node: ast.BoolOp) -> None:
         print(f"Bool: {node}")
         print(ast.dump(node))
         self.generic_visit(node)
