@@ -5,8 +5,8 @@ import sys
 
 from setuptools import find_packages, setup
 
-if sys.version_info < (3, 7, 0):
-    raise EnvironmentError("Mutatest requires Python version 3.7.0 (or later)")
+if (sys.version_info.major, sys.version_info.minor) != (3, 7):
+    raise EnvironmentError("Mutatest requires Python version 3.7.")
 
 ###############################################################################
 # Using setup.py from Attrs as a template for finding components, awesome config.

@@ -18,7 +18,8 @@ from mutatest.report import analyze_mutant_trials, write_report
 
 
 LOGGER = logging.getLogger(__name__)
-FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+FORMAT = "%(asctime)s: %(message)s"
+DEBUG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
 
 @dataclass
@@ -261,7 +262,9 @@ def main(args: argparse.Namespace) -> None:
     # set the logging level based on the debug flag in args
     # when in debug mode the test stdout is not captured by subprocess.run
     logging.basicConfig(
-        format=FORMAT, level=logging.DEBUG if args.debug else logging.INFO, stream=sys.stdout
+        format=DEBUG_FORMAT if args.debug else FORMAT,
+        level=logging.DEBUG if args.debug else logging.INFO,
+        stream=sys.stdout,
     )
 
     # Run the pipeline with no mutations first to ensure later results are meaningful

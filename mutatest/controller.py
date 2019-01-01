@@ -223,7 +223,7 @@ def run_mutation_trials(
 
     for sample_src, sample_idx in mutation_sample:
 
-        LOGGER.info(sample_idx)
+        LOGGER.info("Current location: %s, %s", Path(sample_src).name, sample_idx)
         mutant_operations = get_mutations_for_target(sample_idx)
         src_tree = src_trees[sample_src]
 
