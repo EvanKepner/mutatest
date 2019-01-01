@@ -6,9 +6,10 @@ import random
 import shlex
 import sys
 
-from dataclasses import dataclass
+from datetime import timedelta
 from pathlib import Path
 from textwrap import dedent
+from typing import NamedTuple
 
 from setuptools import find_packages  # type:ignore
 
@@ -22,8 +23,7 @@ FORMAT = "%(asctime)s: %(message)s"
 DEBUG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
 
-@dataclass
-class RunMode:
+class RunMode(NamedTuple):
     """Running mode choices."""
 
     mode: str
@@ -45,6 +45,14 @@ class RunMode:
     def break_on_unknown(self) -> bool:
         # Set to TRUE for the cli as a default, may add CLI control options later
         return True
+
+
+class TrialTimes(NamedTuple):
+    """Container for trial run times used in summary report."""
+
+    clean_trial_1: timedelta
+    clean_trial_2: timedelta
+    mutation_trials: timedelta
 
 
 class PositiveIntegerAction(argparse.Action):
@@ -188,7 +196,11 @@ def cli_args() -> argparse.Namespace:
 
 
 def cli_summary_report(
-    src_loc: Path, args: argparse.Namespace, locs_mutated: int, locs_identified: int
+    src_loc: Path,
+    args: argparse.Namespace,
+    locs_mutated: int,
+    locs_identified: int,
+    runtimes: TrialTimes,
 ) -> str:
     """Create a command line summary header for the final reporting.
 
@@ -202,8 +214,8 @@ def cli_summary_report(
 
     cli_summary_template = dedent(
         """\
-    Command line arguments
-    ======================
+    Mutatest diagnostic summary
+    ===========================
     Source location: {src_loc}
     Test commands: {testcmds}
     Mode: {mode}
@@ -216,6 +228,13 @@ def cli_summary_report(
     Total locations mutated: {locs_mutated}
     Total locations identified: {locs_identified}
     Location sample coverage: {coverage} %
+
+
+    Running time details
+    --------------------
+    Clean trial 1 run time: {ct1}
+    Clean trial 2 run time: {ct2}
+    Mutation trials total run time: {mt}
     """
     )
 
@@ -231,6 +250,9 @@ def cli_summary_report(
         "locs_mutated": locs_mutated,
         "locs_identified": locs_identified,
         "coverage": f"{coverage:.2f}",
+        "ct1": runtimes.clean_trial_1,
+        "ct2": runtimes.clean_trial_2,
+        "mt": runtimes.mutation_trials,
     }
 
     return cli_summary_template.format_map(fmt_map)
@@ -268,7 +290,7 @@ def main(args: argparse.Namespace) -> None:
     )
 
     # Run the pipeline with no mutations first to ensure later results are meaningful
-    clean_trial(src_loc=src_loc, test_cmds=args.testcmds)
+    clean_runtime_1 = clean_trial(src_loc=src_loc, test_cmds=args.testcmds)
 
     # Run the mutation trials based on the input argument
     run_mode = RunMode(args.mode)
@@ -289,7 +311,13 @@ def main(args: argparse.Namespace) -> None:
     )
 
     # Run the pipeline with no mutations last to ensure cleared cache
-    clean_trial(src_loc=src_loc, test_cmds=args.testcmds)
+    clean_runtime_2 = clean_trial(src_loc=src_loc, test_cmds=args.testcmds)
+
+    runtimes = TrialTimes(
+        clean_trial_1=clean_runtime_1,
+        clean_trial_2=clean_runtime_2,
+        mutation_trials=results_summary.total_runtime,
+    )
 
     # create the report of results
     cli_report = cli_summary_report(
@@ -297,6 +325,7 @@ def main(args: argparse.Namespace) -> None:
         args=args,
         locs_mutated=results_summary.n_locs_mutated,
         locs_identified=results_summary.n_locs_identified,
+        runtimes=runtimes,
     )
 
     trial_report = analyze_mutant_trials(results_summary.results)

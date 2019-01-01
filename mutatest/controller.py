@@ -1,6 +1,7 @@
 """Trial and job controller.
 """
 import ast
+from datetime import datetime, timedelta
 import logging
 import random
 import subprocess
@@ -26,6 +27,7 @@ class ResultsSummary(NamedTuple):
     results: List[MutantTrialResult]
     n_locs_mutated: int
     n_locs_identified: int
+    total_runtime: timedelta
 
 
 def get_py_files(src_loc: Union[str, Path]) -> List[Path]:
@@ -56,7 +58,7 @@ def get_py_files(src_loc: Union[str, Path]) -> List[Path]:
     raise FileNotFoundError(f"{src_loc} is not a valid Python file or directory.")
 
 
-def clean_trial(src_loc: Path, test_cmds: List[str]) -> None:
+def clean_trial(src_loc: Path, test_cmds: List[str]) -> timedelta:
     """Remove all existing cache files and run the test suite.
 
     Args:
@@ -75,13 +77,17 @@ def clean_trial(src_loc: Path, test_cmds: List[str]) -> None:
 
     # only capture output outside of debug mode
     # https://docs.python.org/3/library/logging.html#levels
+    start = datetime.now()
     clean_run = subprocess.run(test_cmds, capture_output=LOGGER.getEffectiveLevel() != 10)
+    end = datetime.now()
 
     if clean_run.returncode != 0:
         raise BaselineTestException(
             f"Clean trial does not pass, mutant tests will be meaningless.\n"
             f"Output: {clean_run.stdout}"
         )
+
+    return end - start
 
 
 def build_src_trees_and_targets(
@@ -209,6 +215,7 @@ def run_mutation_trials(
     """
     # Create the AST for each source file and make potential targets sample space
     LOGGER.info("Running mutation trials.")
+    start = datetime.now()
 
     src_trees, src_targets = build_src_trees_and_targets(
         src_loc=src_loc, exclude_files=exclude_files
@@ -223,7 +230,7 @@ def run_mutation_trials(
 
     for sample_src, sample_idx in mutation_sample:
 
-        LOGGER.info("Current location: %s, %s", Path(sample_src).name, sample_idx)
+        LOGGER.info("Current target location: %s, %s", Path(sample_src).name, sample_idx)
         mutant_operations = get_mutations_for_target(sample_idx)
         src_tree = src_trees[sample_src]
 
@@ -260,6 +267,10 @@ def run_mutation_trials(
                 LOGGER.info("Unknown mutation result, stopping further mutations for location.")
                 break
 
+    end = datetime.now()
     return ResultsSummary(
-        results=results, n_locs_mutated=len(mutation_sample), n_locs_identified=len(sample_space)
+        results=results,
+        n_locs_mutated=len(mutation_sample),
+        n_locs_identified=len(sample_space),
+        total_runtime=end - start,
     )
