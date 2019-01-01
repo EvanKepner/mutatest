@@ -9,12 +9,6 @@ from typing import List, NamedTuple, Optional, Set, Union
 
 LOGGER = logging.getLogger(__name__)
 
-BINOP_TYPES: Set[type] = {ast.Add, ast.Sub, ast.Div, ast.Mult, ast.Pow, ast.Mod, ast.FloorDiv}
-
-BINOP_BIT_TYPES: Set[type] = {ast.LShift, ast.RShift, ast.BitAnd, ast.BitOr, ast.BitXor}
-
-CMPOP_TYPES: Set[type] = {ast.Eq, ast.NotEq, ast.Lt, ast.LtE, ast.Gt, ast.GtE}
-
 
 class LocIndex(NamedTuple):
     """Location index within AST to mark mutatest targets."""
@@ -76,6 +70,7 @@ class MutateAST(ast.NodeTransformer):
         if idx == self.target_idx and self.mutation:
             LOGGER.debug("Mutating idx: %s with %s", self.target_idx, self.mutation)
 
+            # TODO: Determine when/how this case would actually be called
             if len(node.ops) > 1:
                 # unlikely test case where the comparison has multiple values
                 LOGGER.debug("Multiple compare ops in node, len: %s", len(node.ops))
@@ -106,9 +101,27 @@ class MutateAST(ast.NodeTransformer):
             LOGGER.debug("No mutations applied")
             return node
 
+    def visit_BoolOp(self, node: ast.BoolOp) -> ast.AST:
+        """Boolean operations, AND/OR."""
+        self.generic_visit(node)
+
+        idx = LocIndex("BoolOp", node.lineno, node.col_offset, type(node.op))
+        self.locs.add(idx)
+
+        if idx == self.target_idx and self.mutation:
+            LOGGER.debug("Mutating idx: %s with %s", self.target_idx, self.mutation)
+            return ast.copy_location(ast.BoolOp(op=self.mutation(), values=node.values), node)
+
+        else:
+            LOGGER.debug("No mutations applied")
+            return node
+
 
 def get_mutations_for_target(target: LocIndex) -> Set[type]:
-    """Given a target, find all the mutations that could apply from the definitions.
+    """Given a target, find all the mutations that could apply from the AST definitions.
+
+    All of the mutation transformation sets that are supported by mutatest are defined here.
+    See: https://docs.python.org/3/library/ast.html#abstract-grammar
 
     Args:
         target: the location index target
@@ -116,7 +129,19 @@ def get_mutations_for_target(target: LocIndex) -> Set[type]:
     Returns:
         Set of types that can mutated into the target op
     """
-    search_space: List[Set[type]] = [BINOP_TYPES, BINOP_BIT_TYPES, CMPOP_TYPES]
+    binop_types: Set[type] = {ast.Add, ast.Sub, ast.Div, ast.Mult, ast.Pow, ast.Mod, ast.FloorDiv}
+    binop_bit_cmp_types: Set[type] = {ast.BitAnd, ast.BitOr, ast.BitXor}
+    binop_bit_shift_types: Set[type] = {ast.LShift, ast.RShift}
+    cmpop_types: Set[type] = {ast.Eq, ast.NotEq, ast.Lt, ast.LtE, ast.Gt, ast.GtE}
+    boolop_types: Set[type] = {ast.And, ast.Or}
+
+    search_space: List[Set[type]] = [
+        binop_types,
+        binop_bit_cmp_types,
+        binop_bit_shift_types,
+        cmpop_types,
+        boolop_types,
+    ]
 
     mutation_ops: Set[type] = set()
 
