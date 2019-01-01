@@ -2,6 +2,7 @@
 """
 import argparse
 import logging
+import random
 import shlex
 import sys
 
@@ -269,12 +270,15 @@ def main(args: argparse.Namespace) -> None:
     # Run the mutation trials based on the input argument
     run_mode = RunMode(args.mode)
 
+    if args.rseed:
+        LOGGER.info("Random seed set by user to: %s.", args.rseed)
+        random.seed(a=args.rseed)
+
     results_summary = run_mutation_trials(
         src_loc=src_loc,
         test_cmds=args.testcmds,
         exclude_files=args.exclude,
         n_locations=args.nlocations,
-        random_seed=args.rseed,
         break_on_detected=run_mode.break_on_detection,
         break_on_survival=run_mode.break_on_survival,
         break_on_error=run_mode.break_on_error,

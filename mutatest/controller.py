@@ -139,18 +139,56 @@ def get_sample_space(src_targets: Dict[str, List[LocIndex]]) -> List[Tuple[str, 
     return sample_space
 
 
+def get_mutation_sample_locations(
+    sample_space: List[Tuple[str, LocIndex]], n_locations: Optional[int] = None
+) -> List[Tuple[str, LocIndex]]:
+    """Create the mutation sample space and set n_locations to a correct value for reporting.
+
+    n_locations will change if it is larger than the total sample_space (or is unset).
+    If n_locations is not specified the full sample is returned as the mutation sample space.
+    This process requires a seed to be set before invocation for repeatable results in the
+    random sample.
+
+    Args:
+        sample_space: sample space to draw random locations from
+        n_locations: number of locations to draw
+
+    Returns:
+        mutation sample
+    """
+    # set the mutation sample to the full sample space
+    # then if max_trials is set and less than the size of the sample space
+    # take a random sample without replacement
+    mutation_sample = sample_space
+
+    if n_locations:
+        if n_locations <= len(sample_space):
+            LOGGER.info(
+                "Selecting %s locations from %s potentials.", n_locations, len(sample_space)
+            )
+            mutation_sample = random.sample(sample_space, k=n_locations)
+
+        else:
+            # set here for final reporting, though not used in rest of trial controls
+            LOGGER.info("%s exceeds sample space, using full sample.", n_locations)
+
+    return mutation_sample
+
+
 def run_mutation_trials(
     src_loc: Union[str, Path],
     test_cmds: List[str],
     exclude_files: Optional[List[str]] = None,
     n_locations: Optional[int] = None,
-    random_seed: Optional[int] = None,
     break_on_survival: bool = False,
     break_on_detected: bool = False,
     break_on_error: bool = False,
     break_on_unknown: bool = False,
 ) -> ResultsSummary:
-    """Run the mutatest trials.
+    """Run the mutatest trials. This uses random sampling for locations and operations.
+
+    Set a SEED for the pseudo-random number generation before calling this function for
+    repeatable trial results.
 
     Args:
         src_loc: the source file package directory
@@ -177,30 +215,9 @@ def run_mutation_trials(
     )
     sample_space = get_sample_space(src_targets)
 
-    # set the mutation sample to the full sample space
-    # then if max_trials is set and less than the size of the sample space
-    # take a random sample without replacement
-    mutation_sample = sample_space
-
-    if random_seed:
-        LOGGER.info("Random seed set by user to: %s.", random_seed)
-        random.seed(a=random_seed)
-
-    if n_locations:
-        if n_locations <= len(sample_space):
-            LOGGER.info(
-                "Selecting %s locations from %s potentials.", n_locations, len(sample_space)
-            )
-            mutation_sample = random.sample(sample_space, k=n_locations)
-
-        else:
-            # set here for final reporting, though not used in rest of trial controls
-            LOGGER.info("%s exceeds sample space, using full sample.", n_locations)
-            n_locations = len(sample_space)
-
-    else:
-        # set here for final reporting, though not used in rest of trial controls
-        n_locations = len(sample_space)
+    mutation_sample = get_mutation_sample_locations(
+        sample_space=sample_space, n_locations=n_locations
+    )
 
     results: List[MutantTrialResult] = []
 
@@ -244,5 +261,5 @@ def run_mutation_trials(
                 break
 
     return ResultsSummary(
-        results=results, n_locs_mutated=n_locations, n_locs_identified=len(sample_space)
+        results=results, n_locs_mutated=len(mutation_sample), n_locs_identified=len(sample_space)
     )

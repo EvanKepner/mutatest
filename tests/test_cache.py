@@ -4,7 +4,6 @@ import os.path
 import sys
 
 from pathlib import Path
-
 from py_compile import PycInvalidationMode  # type: ignore
 
 import pytest

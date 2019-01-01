@@ -3,6 +3,7 @@
 import ast
 import subprocess
 
+from pathlib import Path
 from subprocess import CompletedProcess
 
 import pytest
@@ -11,11 +12,12 @@ from mutatest.controller import (
     BaselineTestException,
     build_src_trees_and_targets,
     clean_trial,
+    get_mutation_sample_locations,
     get_py_files,
     get_sample_space,
     run_mutation_trials,
 )
-from mutatest.maker import LocIndex
+from mutatest.maker import LocIndex, MutantTrialResult
 
 
 def test_get_py_files_flat(tmp_path):
@@ -103,19 +105,66 @@ def test_build_src_trees_and_targets(binop_file, binop_expected_locs):
     assert set(src_targets[expected_key]) == binop_expected_locs
 
 
-def test_get_sample_space():
+def test_build_src_trees_and_targets_exclusions(tmp_path):
+    """Test building source trees and targets with exclusion list."""
+    f = tmp_path / "folder"
+    f.mkdir()
+
+    test_files = [
+        tmp_path / "first.py",
+        tmp_path / "second.py",
+        tmp_path / "test_first.py",
+        tmp_path / "test_second.py",
+        f / "third.py",
+        f / "test_third.py",
+    ]
+
+    exclude = ["second.py", "third.py"]
+    expected = "first.py"
+
+    # need at least on valid location operation to return a value for trees/targets
+    for tf in test_files:
+        with open(tf, "w") as temp_py:
+            temp_py.write("x: int = 1 + 2")
+
+    src_trees, src_targets = build_src_trees_and_targets(tmp_path, exclude_files=exclude)
+
+    keys = [k for k in src_trees]
+    assert len(keys) == 1
+    assert Path(keys[0]).name == expected
+
+
+@pytest.mark.parametrize("size", [0, 1, 10])
+def test_get_sample_space(size):
     """Sample space should flatten out a dictionary of multiple entries to tuple pairs."""
     mock_LocIdx = LocIndex(ast_class="BinOp", lineno=1, col_offset=2, op_type=ast.Add)
 
     mock_src_file = "source.py"
-    mock_src_targets = {mock_src_file: [mock_LocIdx, mock_LocIdx, mock_LocIdx]}
+    mock_src_targets = {mock_src_file: [mock_LocIdx] * size}
 
     results = get_sample_space(mock_src_targets)
 
-    assert len(results) == 3
+    assert len(results) == size
     for s, l in results:
         assert s == mock_src_file
         assert l == mock_LocIdx
+
+
+@pytest.mark.parametrize("popsize, nlocs, nexp", [(3, None, 3), (3, 2, 2), (3, 5, 3)])
+def test_get_mutation_sample_locations(popsize, nlocs, nexp):
+    """Test sample size draws for the mutation sample."""
+    mock_LocIdx = LocIndex(ast_class="BinOp", lineno=1, col_offset=2, op_type=ast.Add)
+
+    mock_src_file = "source.py"
+    mock_sample = [(mock_src_file, mock_LocIdx)] * popsize
+
+    # if n is unspecified then the full sample is used and result_n is the sample size
+    result_sample = get_mutation_sample_locations(sample_space=mock_sample, n_locations=nlocs)
+    assert len(result_sample) == nexp
+
+    # special case when nlocs is None, result_sample is mock_sample
+    if not nlocs:
+        assert result_sample == mock_sample
 
 
 @pytest.mark.slow
