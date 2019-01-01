@@ -34,6 +34,22 @@ def get_reported_results(trial_results: List[MutantTrialResult], status: str) ->
     return ReportedMutants(status, mutants)
 
 
+def get_status_summary(trial_results: List[MutantTrialResult]) -> Dict[str, Union[str, int]]:
+    """Create a status summary dictionary for later formatting.
+
+    Args:
+        trial_results: list of mutant trials
+
+    Returns:
+        Dictionary with keys for formatting in the report
+    """
+    status: Dict[str, Union[str, int]] = dict(Counter([t.status for t in trial_results]))
+    status["TOTAL RUNS"] = len(trial_results)
+    status["RUN DATETIME"] = str(datetime.now())
+
+    return status
+
+
 def analyze_mutant_trials(trial_results: List[MutantTrialResult]) -> str:
     """Create the analysis text report string for the trials.
 
@@ -59,10 +75,7 @@ def analyze_mutant_trials(trial_results: List[MutantTrialResult]) -> str:
     Returns:
         str, the text report
     """
-
-    status: Dict[str, Union[str, int]] = dict(Counter([t.status for t in trial_results]))
-    status["TOTAL RUNS"] = len(trial_results)
-    status["RUN DATETIME"] = str(datetime.now())
+    status = get_status_summary(trial_results)
 
     detected = get_reported_results(trial_results, "DETECTED")
     survived = get_reported_results(trial_results, "SURVIVED")
