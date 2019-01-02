@@ -216,25 +216,25 @@ def cli_summary_report(
         """\
     Mutatest diagnostic summary
     ===========================
-    Source location: {src_loc}
-    Test commands: {testcmds}
-    Mode: {mode}
-    Excluded files: {exclude}
-    N locations input: {n_locs}
-    Random seed: {seed}
+     - Source location: {src_loc}
+     - Test commands: {testcmds}
+     - Mode: {mode}
+     - Excluded files: {exclude}
+     - N locations input: {n_locs}
+     - Random seed: {seed}
 
     Random sample details
     ---------------------
-    Total locations mutated: {locs_mutated}
-    Total locations identified: {locs_identified}
-    Location sample coverage: {coverage} %
+     - Total locations mutated: {locs_mutated}
+     - Total locations identified: {locs_identified}
+     - Location sample coverage: {coverage} %
 
 
     Running time details
     --------------------
-    Clean trial 1 run time: {ct1}
-    Clean trial 2 run time: {ct2}
-    Mutation trials total run time: {mt}
+     - Clean trial 1 run time: {ct1}
+     - Clean trial 2 run time: {ct2}
+     - Mutation trials total run time: {mt}
     """
     )
 

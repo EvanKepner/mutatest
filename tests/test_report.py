@@ -87,7 +87,7 @@ def test_build_report_section(mock_Mutant):
 
     Title
     -----
-    src.py: (l: 1, c: 2) - mutation from <class '_ast.Add'> to <class '_ast.Mult'>"""
+     - src.py: (l: 1, c: 2) - mutation from <class '_ast.Add'> to <class '_ast.Mult'>"""
     )
 
     assert report == expected
@@ -100,10 +100,10 @@ def test_analyze_mutant_trials(mock_trial_results):
         """\
     Overall mutation trial summary
     ==============================
-    SURVIVED: 1
-    DETECTED: 1
-    TOTAL RUNS: 2
-    RUN DATETIME: 2019-01-01 00:00:00
+     - SURVIVED: 1
+     - DETECTED: 1
+     - TOTAL RUNS: 2
+     - RUN DATETIME: 2019-01-01 00:00:00
 
 
     Mutations by result status
@@ -112,12 +112,12 @@ def test_analyze_mutant_trials(mock_trial_results):
 
     SURVIVED
     --------
-    src.py: (l: 1, c: 2) - mutation from <class '_ast.Add'> to <class '_ast.Mult'>
+     - src.py: (l: 1, c: 2) - mutation from <class '_ast.Add'> to <class '_ast.Mult'>
 
 
     DETECTED
     --------
-    src.py: (l: 1, c: 2) - mutation from <class '_ast.Add'> to <class '_ast.Mult'>"""
+     - src.py: (l: 1, c: 2) - mutation from <class '_ast.Add'> to <class '_ast.Mult'>"""
     )
 
     report = analyze_mutant_trials(mock_trial_results[:2])

@@ -88,7 +88,7 @@ def analyze_mutant_trials(trial_results: List[MutantTrialResult]) -> str:
     summary_header = "Overall mutation trial summary"
     report_sections.append("\n".join([summary_header, "=" * len(summary_header)]))
     for s, n in status.items():
-        report_sections.append(f"{s}: {n}")
+        report_sections.append(f" - {s}: {n}")
 
     # build the breakout sections for each type
     section_header = "Mutations by result status"
@@ -122,7 +122,7 @@ def build_report_section(title: str, mutants: List[Mutant]) -> str:
     fmt_list = []
 
     fmt_template = (
-        "{src_file}: (l: {lineno}, c: {col_offset}) - mutation from {op_type} to {mutation}"
+        " - {src_file}: (l: {lineno}, c: {col_offset}) - mutation from {op_type} to {mutation}"
     )
 
     for mutant in mutants:
