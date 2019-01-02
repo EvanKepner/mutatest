@@ -16,6 +16,7 @@ from setuptools import find_packages  # type:ignore
 from mutatest.cache import check_cache_invalidation_mode
 from mutatest.controller import clean_trial, run_mutation_trials
 from mutatest.report import analyze_mutant_trials, write_report
+from mutatest.transformers import get_compatible_operation_sets
 
 
 LOGGER = logging.getLogger(__name__)
@@ -66,8 +67,8 @@ class PositiveIntegerAction(argparse.Action):
 
 
 def cli_epilog() -> str:
-    return dedent(
-        """\
+    main_epilog = dedent(
+        """
     Additional command argument information:
     ========================================
 
@@ -111,6 +112,14 @@ def cli_epilog() -> str:
        all others are UNKNOWN. Stdout is shown from the command if --debug mode is enabled.
     """
     )
+
+    header = "Supported mutation sets"
+    description = "These are the current operations that are mutated as compatible sets."
+    mutation_epilog = [header, "=" * len(header), description, "\n"]
+    for mutop in get_compatible_operation_sets():
+        mutation_epilog.extend([mutop.name, "-" * len(mutop.name), f" - {str(mutop.operations)}\n"])
+
+    return "\n".join([main_epilog] + mutation_epilog)
 
 
 def cli_args() -> argparse.Namespace:

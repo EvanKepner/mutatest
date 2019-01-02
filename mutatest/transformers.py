@@ -19,6 +19,13 @@ class LocIndex(NamedTuple):
     op_type: type
 
 
+class MutationOpSet(NamedTuple):
+    """Container for compatible mutation operations. Also used in the CLI display."""
+
+    name: str
+    operations: Set[type]
+
+
 class MutateAST(ast.NodeTransformer):
     """AST NodeTransformer to replace nodes with mutations by visits."""
 
@@ -117,17 +124,17 @@ class MutateAST(ast.NodeTransformer):
             return node
 
 
-def get_mutations_for_target(target: LocIndex) -> Set[type]:
-    """Given a target, find all the mutations that could apply from the AST definitions.
+def get_compatible_operation_sets() -> List[MutationOpSet]:
+    """Utility function to return a list of compatible AST mutations with names.
 
     All of the mutation transformation sets that are supported by mutatest are defined here.
     See: https://docs.python.org/3/library/ast.html#abstract-grammar
 
-    Args:
-        target: the location index target
+    This is used to create the search space in finding mutations for a target, and
+    also to list the support operations in the CLI help function.
 
     Returns:
-        Set of types that can mutated into the target op
+        List of MutationOpSets that have substitutable operations
     """
     binop_types: Set[type] = {ast.Add, ast.Sub, ast.Div, ast.Mult, ast.Pow, ast.Mod, ast.FloorDiv}
     binop_bit_cmp_types: Set[type] = {ast.BitAnd, ast.BitOr, ast.BitXor}
@@ -135,14 +142,26 @@ def get_mutations_for_target(target: LocIndex) -> Set[type]:
     cmpop_types: Set[type] = {ast.Eq, ast.NotEq, ast.Lt, ast.LtE, ast.Gt, ast.GtE}
     boolop_types: Set[type] = {ast.And, ast.Or}
 
-    search_space: List[Set[type]] = [
-        binop_types,
-        binop_bit_cmp_types,
-        binop_bit_shift_types,
-        cmpop_types,
-        boolop_types,
+    return [
+        MutationOpSet(name="BinOp", operations=binop_types),
+        MutationOpSet(name="BinOp Bit Comparison", operations=binop_bit_cmp_types),
+        MutationOpSet(name="BinOp Bit Shifts", operations=binop_bit_shift_types),
+        MutationOpSet(name="Compare", operations=cmpop_types),
+        MutationOpSet(name="BoolOp", operations=boolop_types),
     ]
 
+
+def get_mutations_for_target(target: LocIndex) -> Set[type]:
+    """Given a target, find all the mutations that could apply from the AST definitions.
+
+
+    Args:
+        target: the location index target
+
+    Returns:
+        Set of types that can mutated into the target op
+    """
+    search_space: List[Set[type]] = [m.operations for m in get_compatible_operation_sets()]
     mutation_ops: Set[type] = set()
 
     for potential_ops in search_space:
