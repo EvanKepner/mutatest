@@ -13,6 +13,7 @@ from typing import NamedTuple
 
 from setuptools import find_packages  # type:ignore
 
+import mutatest
 from mutatest.cache import check_cache_invalidation_mode
 from mutatest.controller import clean_trial, run_mutation_trials
 from mutatest.report import analyze_mutant_trials, write_report
@@ -119,7 +120,25 @@ def cli_epilog() -> str:
     for mutop in get_compatible_operation_sets():
         mutation_epilog.extend([mutop.name, "-" * len(mutop.name), f" - {str(mutop.operations)}\n"])
 
-    return "\n".join([main_epilog] + mutation_epilog)
+    meta_info = dedent(
+        """
+    Mutatest information
+    ====================
+     - Version: {version}
+     - License: {license}
+     - URL: {url}
+     - {copyright}
+    """
+    ).format_map(
+        {
+            "version": mutatest.__version__,
+            "license": mutatest.__license__,
+            "url": mutatest.__uri__,
+            "copyright": mutatest.__copyright__,
+        }
+    )
+
+    return "\n".join([main_epilog] + mutation_epilog + [meta_info])
 
 
 def cli_args() -> argparse.Namespace:
