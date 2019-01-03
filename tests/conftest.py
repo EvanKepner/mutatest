@@ -66,6 +66,31 @@ def binop_expected_locs():
 
 
 @pytest.fixture(scope="session")
+def compare_file(tmp_path_factory):
+    """A simple python file with binary operations."""
+    contents = dedent(
+        """\
+    def equal_test(a, b):
+        return a == b
+
+    print(equal_test(1,1))
+    """
+    )
+
+    fn = tmp_path_factory.mktemp("compare") / "compare.py"
+
+    with open(fn, "w") as output_fn:
+        output_fn.write(contents)
+
+    return fn
+
+
+@pytest.fixture(scope="session")
+def compare_expected_loc():
+    return LocIndex(ast_class="Compare", lineno=2, col_offset=11, op_type=ast.Eq)
+
+
+@pytest.fixture(scope="session")
 def single_binop_file_with_good_test(tmp_path_factory):
     """Single binop file and test file where mutants will be detected."""
     contents = dedent(

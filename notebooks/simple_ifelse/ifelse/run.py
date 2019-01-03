@@ -2,9 +2,6 @@
 """
 
 def equal_test(a, b):
-    if (a == b) == 1:
-        return "eq"
-    else:
-        return "not eq"
+    return a == b
 
 print(equal_test(1,1))
