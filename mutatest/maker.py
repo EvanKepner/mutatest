@@ -49,6 +49,21 @@ class MutantTrialResult(NamedTuple):
         return trial_status.get(self.return_code, "UNKNOWN")
 
 
+def capture_output(log_level: int) -> bool:
+    """Utility function used in subprocess for caputred output.
+
+    Available log levels are: https://docs.python.org/3/library/logging.html#levels
+    10 is the value for Debug, so if it's not "DEBUG", return true and capture output.
+
+    Args:
+        log_level: the logging level
+
+    Returns:
+        Bool indicator on capturing output
+    """
+    return log_level != 10
+
+
 def get_mutation_targets(tree: ast.Module) -> Set[LocIndex]:
     """Run the mutatest AST search with no targets or mutations to bring back target indicies.
 
@@ -124,9 +139,9 @@ def create_mutation_and_run_trial(
 
     write_mutant_cache_file(mutant)
 
-    # only capture output outside of debug mode
-    # https://docs.python.org/3/library/logging.html#levels
-    mutant_trial = subprocess.run(test_cmds, capture_output=LOGGER.getEffectiveLevel() != 10)
+    mutant_trial = subprocess.run(
+        test_cmds, capture_output=capture_output(LOGGER.getEffectiveLevel())
+    )
     remove_existing_cache_files(mutant.src_file)
 
     return MutantTrialResult(mutant=mutant, return_code=mutant_trial.returncode)

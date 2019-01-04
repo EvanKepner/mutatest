@@ -70,3 +70,53 @@ def test_MutateAST_visit_mutation(binop_file):
     for l in mast.locs:
         if l.lineno == 6 and l.col_offset == 11:
             assert l.op_type == test_mutation
+
+
+def test_MutateAST_visit_compare(compare_file, compare_expected_loc):
+    """Test mutation of the == to != in the compare op."""
+    tree = get_ast_from_src(compare_file)
+    test_mutation = ast.NotEq
+
+    # apply the mutation to the original tree copy
+    testing_tree = deepcopy(tree)
+    mutated_tree = MutateAST(target_idx=compare_expected_loc, mutation=test_mutation).visit(
+        testing_tree
+    )
+
+    # revisit in read-only mode to gather the locations of the new nodes
+    mast = MutateAST()
+    mast.visit(mutated_tree)
+
+    # four locations from the binary operations in binop_file
+    assert len(mast.locs) == 1
+
+    # there will only be one loc, but this still works
+    # basedon the col and line offset in the fixture for compare_expected_loc
+    for l in mast.locs:
+        if l.lineno == 2 and l.col_offset == 11:
+            assert l.op_type == test_mutation
+
+
+def test_MutateAST_visit_boolop(boolop_file, boolop_expected_loc):
+    """Test mutation of AND to OR in the boolop."""
+    tree = get_ast_from_src(boolop_file)
+    test_mutation = ast.Or
+
+    # apply the mutation to the original tree copy
+    testing_tree = deepcopy(tree)
+    mutated_tree = MutateAST(target_idx=boolop_expected_loc, mutation=test_mutation).visit(
+        testing_tree
+    )
+
+    # revisit in read-only mode to gather the locations of the new nodes
+    mast = MutateAST()
+    mast.visit(mutated_tree)
+
+    # four locations from the binary operations in binop_file
+    assert len(mast.locs) == 1
+
+    # there will only be one loc, but this still works
+    # basedon the col and line offset in the fixture for compare_expected_loc
+    for l in mast.locs:
+        if l.lineno == 2 and l.col_offset == 11:
+            assert l.op_type == test_mutation

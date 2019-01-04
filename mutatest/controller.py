@@ -75,10 +75,9 @@ def clean_trial(src_loc: Path, test_cmds: List[str]) -> timedelta:
 
     LOGGER.info("Running clean trial")
 
-    # only capture output outside of debug mode
-    # https://docs.python.org/3/library/logging.html#levels
+    # clean trial will show output all the time for diagnostic purposes
     start = datetime.now()
-    clean_run = subprocess.run(test_cmds, capture_output=LOGGER.getEffectiveLevel() != 10)
+    clean_run = subprocess.run(test_cmds, capture_output=False)
     end = datetime.now()
 
     if clean_run.returncode != 0:

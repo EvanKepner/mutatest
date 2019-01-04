@@ -16,15 +16,15 @@ Random sample details
 
 Running time details
 --------------------
- - Clean trial 1 run time: 0:00:00.323540
- - Clean trial 2 run time: 0:00:00.292261
- - Mutation trials total run time: 0:00:00.294787
+ - Clean trial 1 run time: 0:00:00.305396
+ - Clean trial 2 run time: 0:00:00.301328
+ - Mutation trials total run time: 0:00:00.294219
 
 Overall mutation trial summary
 ==============================
  - SURVIVED: 1
  - TOTAL RUNS: 1
- - RUN DATETIME: 2019-01-02 19:08:14.602475
+ - RUN DATETIME: 2019-01-03 18:58:56.058395
 
 
 Mutations by result status

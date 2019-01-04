@@ -67,7 +67,7 @@ def binop_expected_locs():
 
 @pytest.fixture(scope="session")
 def compare_file(tmp_path_factory):
-    """A simple python file with binary operations."""
+    """A simple python file with the compare."""
     contents = dedent(
         """\
     def equal_test(a, b):
@@ -87,7 +87,34 @@ def compare_file(tmp_path_factory):
 
 @pytest.fixture(scope="session")
 def compare_expected_loc():
+    """The compare expected location based on the fixture"""
     return LocIndex(ast_class="Compare", lineno=2, col_offset=11, op_type=ast.Eq)
+
+
+@pytest.fixture(scope="session")
+def boolop_file(tmp_path_factory):
+    """A simple python file with bool op operations."""
+    contents = dedent(
+        """\
+    def equal_test(a, b):
+        return a and b
+
+    print(equal_test(1,1))
+    """
+    )
+
+    fn = tmp_path_factory.mktemp("boolop") / "boolop.py"
+
+    with open(fn, "w") as output_fn:
+        output_fn.write(contents)
+
+    return fn
+
+
+@pytest.fixture(scope="session")
+def boolop_expected_loc():
+    """Expected location index of the boolop fixture"""
+    return LocIndex(ast_class="BoolOp", lineno=2, col_offset=11, op_type=ast.And)
 
 
 @pytest.fixture(scope="session")

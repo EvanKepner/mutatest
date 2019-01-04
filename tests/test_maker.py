@@ -14,6 +14,7 @@ from mutatest.maker import (
     create_mutation_and_run_trial,
     get_mutation_targets,
     write_mutant_cache_file,
+    capture_output,
 )
 from mutatest.transformers import LocIndex, get_ast_from_src
 
@@ -39,6 +40,13 @@ def add_five_to_mult_mutant(binop_file, stdoutIO):
         assert int(s.getvalue()) == 25
 
     return mutant
+
+
+def test_capture_output():
+    """Quick utility test on capturing output for DEBUG log level 10."""
+    assert capture_output(10) == False
+    assert capture_output(20) == True
+    assert capture_output(30) == True
 
 
 def test_get_mutation_targets(binop_file, binop_expected_locs):
