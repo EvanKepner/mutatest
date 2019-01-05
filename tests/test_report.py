@@ -1,16 +1,12 @@
 """Tests for report formatting.
 """
-import ast
-
 from datetime import datetime
-from pathlib import Path
 from textwrap import dedent
 
 import pytest
 
 from freezegun import freeze_time
 
-from mutatest.maker import Mutant, MutantTrialResult
 from mutatest.report import (
     analyze_mutant_trials,
     build_report_section,
@@ -18,33 +14,6 @@ from mutatest.report import (
     get_status_summary,
     write_report,
 )
-from mutatest.transformers import LocIndex
-
-
-@pytest.fixture
-def mock_Mutant():
-    """Mock mutant definition."""
-    return Mutant(
-        mutant_code=None,
-        src_file=Path("src.py"),
-        cfile=Path("__pycache__") / "src.pyc",
-        loader=None,
-        mode=1,
-        source_stats={"mtime": 1, "size": 1},
-        src_idx=LocIndex(ast_class="BinOp", lineno=1, col_offset=2, op_type=ast.Add),
-        mutation=ast.Mult,
-    )
-
-
-@pytest.fixture
-def mock_trial_results(mock_Mutant):
-    """Mock mutant trial results for each status code."""
-    return [
-        MutantTrialResult(mock_Mutant, return_code=0),  # SURVIVED
-        MutantTrialResult(mock_Mutant, return_code=1),  # DETECTED
-        MutantTrialResult(mock_Mutant, return_code=2),  # ERROR
-        MutantTrialResult(mock_Mutant, return_code=3),  # UNKNOWN
-    ]
 
 
 @pytest.mark.parametrize("status", ["SURVIVED", "DETECTED", "ERROR", "UNKNOWN"])

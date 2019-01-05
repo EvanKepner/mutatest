@@ -2,10 +2,39 @@
 """
 
 from pathlib import Path
+from typing import List, NamedTuple, Optional
+
 import pytest
 
 import mutatest.cli
+
 from mutatest.cli import RunMode, get_src_location
+
+
+class MockArgs(NamedTuple):
+    """Container for mocks of the cli arguments."""
+
+    exclude: Optional[List[str]]
+    mode: Optional[str]
+    nlocations: Optional[int]
+    output: Optional[Path]
+    rseed: Optional[int]
+    src: Optional[Path]
+    testcmds: Optional[List[str]]
+
+
+@pytest.fixture
+def mock_args(tmp_path, binop_file):
+    """Basic fixture with default settings using existing binop_file fixture."""
+    return MockArgs(
+        exclude=["__init__.py"],
+        mode="s",
+        nlocations=10,
+        output=tmp_path / "mock_mutation_report.rst",
+        rseed=None,
+        src=binop_file,
+        testcmds=["pytest"],
+    )
 
 
 @pytest.mark.parametrize(
@@ -67,3 +96,7 @@ def test_get_src_location_file(monkeypatch, binop_file):
     """If an existing file is passed it is returned without modification."""
     result = get_src_location(binop_file)
     assert result.resolve() == binop_file.resolve()
+
+
+def test_main(monkeypatch, mock_args):
+    pass

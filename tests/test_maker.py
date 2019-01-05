@@ -10,11 +10,11 @@ import pytest
 
 from mutatest.maker import (
     MutantTrialResult,
+    capture_output,
     create_mutant,
     create_mutation_and_run_trial,
     get_mutation_targets,
     write_mutant_cache_file,
-    capture_output,
 )
 from mutatest.transformers import LocIndex, get_ast_from_src
 

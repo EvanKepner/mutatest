@@ -14,6 +14,7 @@ from typing import NamedTuple, Optional
 from setuptools import find_packages  # type:ignore
 
 import mutatest
+
 from mutatest.cache import check_cache_invalidation_mode
 from mutatest.controller import clean_trial, run_mutation_trials
 from mutatest.report import analyze_mutant_trials, write_report

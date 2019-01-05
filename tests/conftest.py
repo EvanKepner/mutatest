@@ -11,7 +11,7 @@ from typing import NamedTuple
 
 import pytest
 
-from mutatest.maker import LocIndex
+from mutatest.maker import LocIndex, Mutant, MutantTrialResult
 
 
 class FileAndTest(NamedTuple):
@@ -195,3 +195,29 @@ def stdoutIO():
         sys.stdout = old
 
     return stdoutIO
+
+
+@pytest.fixture(scope="session")
+def mock_Mutant():
+    """Mock mutant definition."""
+    return Mutant(
+        mutant_code=None,
+        src_file=Path("src.py"),
+        cfile=Path("__pycache__") / "src.pyc",
+        loader=None,
+        mode=1,
+        source_stats={"mtime": 1, "size": 1},
+        src_idx=LocIndex(ast_class="BinOp", lineno=1, col_offset=2, op_type=ast.Add),
+        mutation=ast.Mult,
+    )
+
+
+@pytest.fixture(scope="session")
+def mock_trial_results(mock_Mutant):
+    """Mock mutant trial results for each status code."""
+    return [
+        MutantTrialResult(mock_Mutant, return_code=0),  # SURVIVED
+        MutantTrialResult(mock_Mutant, return_code=1),  # DETECTED
+        MutantTrialResult(mock_Mutant, return_code=2),  # ERROR
+        MutantTrialResult(mock_Mutant, return_code=3),  # UNKNOWN
+    ]
