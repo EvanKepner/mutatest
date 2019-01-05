@@ -88,7 +88,6 @@ if __name__ == "__main__":
         author=find_meta("author"),
         author_email=find_meta("email"),
         maintainer=find_meta("author"),
-        maintainer_email=find_meta("email"),
         keywords=KEYWORDS,
         long_description=LONG,
         packages=PACKAGES,
