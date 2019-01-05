@@ -9,7 +9,7 @@ import sys
 from datetime import timedelta
 from pathlib import Path
 from textwrap import dedent
-from typing import NamedTuple
+from typing import NamedTuple, Optional
 
 from setuptools import find_packages  # type:ignore
 
@@ -294,20 +294,36 @@ def cli_main() -> None:
     main(args)
 
 
-def main(args: argparse.Namespace) -> None:
+def get_src_location(src_loc: Optional[Path] = None) -> Path:
+    """Find packages if the src_loc is not set
 
-    # set the source path or auto-detect location if not specified
-    if not args.src:
+    Args:
+        src_loc: current source location, defaults to None
+
+    Returns:
+        Path to the source location
+
+    Raises:
+        FileNoeFoundError if the source location doesn't exist.
+    """
+    if not src_loc:
         find_pkgs = find_packages()
         if find_pkgs:
             src_loc = Path(find_pkgs[0])
-        else:
-            raise FileNotFoundError(
-                "No source directory specified or automatically detected. "
-                "Use --src or --help to see options."
-            )
+            return src_loc
     else:
-        src_loc = args.src
+        if src_loc.exists():
+            return src_loc
+
+    raise FileNotFoundError(
+        "No source directory specified or automatically detected. "
+        "Use --src or --help to see options."
+    )
+
+
+def main(args: argparse.Namespace) -> None:
+
+    src_loc = get_src_location(args.src)
 
     # set the logging level based on the debug flag in args
     # when in debug mode the test stdout is not captured by subprocess.run
