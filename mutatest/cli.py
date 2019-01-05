@@ -152,8 +152,7 @@ def cli_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog="Mutatest",
         description=(
-            "Confidence in test coverage through mutation testing. "
-            "Mutatest will manipulate local __pycache__ files."
+            "Python mutation testing. " "Mutatest will manipulate local __pycache__ files."
         ),
         formatter_class=argparse.RawTextHelpFormatter,
         epilog=cli_epilog(),

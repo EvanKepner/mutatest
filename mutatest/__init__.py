@@ -3,7 +3,7 @@
 __version__ = "0.1.0"
 
 __title__ = "mutatest"
-__description__ = "Mutation testing in Python."
+__description__ = "Python mutation testing."
 __url__ = "https://github.com/EvanKepner/m"
 __uri__ = __url__
 __doc__ = __description__ + " <" + __uri__ + ">"
