@@ -12,7 +12,7 @@ from freezegun import freeze_time
 
 import mutatest.cli
 
-from mutatest.cli import RunMode, cli_epilog, cli_main, get_src_location
+from mutatest.cli import RunMode, cli_main, get_src_location
 
 
 class MockArgs(NamedTuple):
