@@ -69,6 +69,7 @@ class PositiveIntegerAction(argparse.Action):
 
 
 def cli_epilog() -> str:
+
     main_epilog = dedent(
         """
     Additional command argument information:
@@ -82,11 +83,11 @@ def cli_epilog() -> str:
     Mode:
     ------
      - f: full mode, run all possible combinations (slowest but most thorough).
-     - s: break on first SURVIVOR per mutated line e.g. if there is a single surviving mutation
-          on a line move to the next line location without further testing.
+     - s: break on first SURVIVOR per mutated location e.g. if there is a single surviving mutation
+          at a location move to the next location without further testing.
           This is the default mode.
-     - d: break on the first DETECTION per mutated line e.g. if there is a detected mutation on
-          a line move to the next one.
+     - d: break on the first DETECTION per mutated location e.g. if there is a detected mutation on
+          at a location move to the next one.
      - sd: break on the first SURVIVOR or DETECTION (fastest, and least thorough).
 
      The API for mutatest.controller.run_mutation_trials offers finer control over the
@@ -94,16 +95,16 @@ def cli_epilog() -> str:
 
     Output:
     -------
-     - You can specify a file name or a path. The folders in the path will be created if they
+     - You can specify a file name or a full path. The folders in the path will be created if they
        do not already exist. The output is a text file formatted in RST headings.
 
     Src:
     ----
      - This can be a file or a directory. If it is a directory it is recursively searched for .py
        files. Note that the __pycache__ file associated with the file (or sub-files in a directory)
-       will be manipulated during mutation testing. If this argument is unspecified mutatest will
+       will be manipulated during mutation testing. If this argument is unspecified, mutatest will
        attempt to find Python packages (using setuptools.find_packages) and use the first
-       entry.
+       entry from that auto-detection attempt.
 
     Testcmds:
     ---------
@@ -150,7 +151,10 @@ def cli_args() -> argparse.Namespace:
     """
     parser = argparse.ArgumentParser(
         prog="Mutatest",
-        description="Run mutation tests on source code by manipulating __pycache__.",
+        description=(
+            "Confidence in test coverage through mutation testing. "
+            "Mutatest will manipulate local __pycache__ files."
+        ),
         formatter_class=argparse.RawTextHelpFormatter,
         epilog=cli_epilog(),
     )
@@ -205,8 +209,8 @@ def cli_args() -> argparse.Namespace:
         type=lambda x: Path(x),
         metavar="PATH",
         help=(
-            "Target source code directory for mutation testing. "
-            "The first result from find_packages() is used if unspecified."
+            "Source code (file or directory) for mutation testing. "
+            "(default: auto-detection attempt)."
         ),
     )
     parser.add_argument(

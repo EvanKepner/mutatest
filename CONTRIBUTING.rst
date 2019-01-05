@@ -48,6 +48,7 @@ in the development dependencies as part of the set up procedure.
     typing: commands succeeded
     pypi-description: commands succeeded
     manifest: commands succeeded
+    help: commands succeeded
     congratulations :)
 
 6. Install :code:`pre-commit` for the cloned repo. This ensures that every commit runs the
