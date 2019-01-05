@@ -8,9 +8,9 @@ have working code, submit a pull-request.
 What to submit
 --------------
 
-Anything! No contribution is too small. Even if you see a typo in a comment feel free to submit a PR
-to fix it. The rest of this document is dedicated to outlining the different development items and
-expectation to make submission review fast.
+Anything! No contribution is too small. Even if you see a typo in a comment feel free to submit a
+pull-request to fix it. The rest of this document is dedicated to outlining the different development
+items and expectation to make submission review fast.
 
 Development Guidelines
 ======================
@@ -21,8 +21,11 @@ The following guidelines are used in the style formatting of this package. Many 
 Development environment setup
 -----------------------------
 
+Here is how to get up and running for development on :code:`mutatest`. Referenced tools are included
+in the development dependencies as part of the set up procedure.
+
 1. Fork this repo, then clone your fork locally.
-2. Create a new Python virtual environment using Python 3.7.
+2. Create a new Python virtual environment using Python 3.7 and activate it.
 3. Change to the local directory of your clone. All commands are run in the top level directory
    where the :code:`setup.py` file is located.
 4. Install :code:`mutatest` in edit mode with all development dependencies using :code:`pip` v18.
@@ -47,22 +50,25 @@ Development environment setup
     manifest: commands succeeded
     congratulations :)
 
-6. Install :code:`pre-commit` for the cloned repo. This ensures that every commit runs the formatting
-   checks including :code:`black` and :code:`flake8`.
+6. Install :code:`pre-commit` for the cloned repo. This ensures that every commit runs the
+   formatting checks including :code:`black` and :code:`flake8`.
 
 .. code-block:: bash
 
     $ pre-commit install
 
 7. Start developing!
+8. Run :code:`tox` one more time before you open the PR to make sure your functionality passes the
+   original tests (and any new ones you have added).
 
 
 Style: all files
 ----------------
 
-    - Generally hard-wrap at 100 characters for all files, included text files or RST.
+    - Generally hard-wrap at 100 characters for all files, including text files or RST.
     - Prefer RST over markdown or plaintext for explanations and outputs.
-    - Accept the suggested edits from the :code:`pre-commit` configuration.
+    - Accept the edits from the :code:`pre-commit` configuration e.g. to trim trailing
+      whitespace.
 
 
 Style: Package Python code
@@ -80,8 +86,9 @@ for :code:`black` and :code:`flake8`. In general:
     - All code is hard-wrapped at 100 characters.
     - If you are adding a new development tool instead of a feature, prefix the module name
       with an underscore.
-    - Do not add new package install requirements without justification.
-    - Do not create in-module tests. All tests are stored in the :code:`tests/` directory.
+    - Provide justification for any new install requirements.
+    - All tests are stored in the :code:`tests/` directory.
+    - Accept the edits from the :code:`pre-commit` configuration.
 
 
 Style: Test Python code
@@ -102,6 +109,7 @@ Some style enforcing is relaxed on the test files
     - All test files are prefixed with :code:`test_`.
     - All test functions are prefixed with :code:`test_` and are descriptive.
     - Shared fixtures are stored in :code:`tests/conftest.py`.
+    - Accept the edits from the :code:`pre-commit` configuration.
 
 
 Commits
