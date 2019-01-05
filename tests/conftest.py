@@ -4,6 +4,7 @@ import ast
 import contextlib
 import sys
 
+from datetime import timedelta
 from io import StringIO
 from pathlib import Path
 from textwrap import dedent
@@ -11,6 +12,7 @@ from typing import NamedTuple
 
 import pytest
 
+from mutatest.controller import ResultsSummary
 from mutatest.maker import LocIndex, Mutant, MutantTrialResult
 
 
@@ -221,3 +223,14 @@ def mock_trial_results(mock_Mutant):
         MutantTrialResult(mock_Mutant, return_code=2),  # ERROR
         MutantTrialResult(mock_Mutant, return_code=3),  # UNKNOWN
     ]
+
+
+@pytest.fixture(scope="session")
+def mock_results_summary(mock_trial_results):
+    """Mock results summary from multiple trials."""
+    return ResultsSummary(
+        results=mock_trial_results,
+        n_locs_identified=4,
+        n_locs_mutated=4,
+        total_runtime=timedelta(days=0, seconds=6, microseconds=0),
+    )

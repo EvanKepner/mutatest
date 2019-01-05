@@ -1,14 +1,18 @@
 """Tests for the cli module.
 """
 
+from datetime import timedelta
 from pathlib import Path
+from textwrap import dedent
 from typing import List, NamedTuple, Optional
 
 import pytest
 
+from freezegun import freeze_time
+
 import mutatest.cli
 
-from mutatest.cli import RunMode, get_src_location
+from mutatest.cli import RunMode, cli_epilog, cli_main, get_src_location
 
 
 class MockArgs(NamedTuple):
@@ -21,6 +25,7 @@ class MockArgs(NamedTuple):
     rseed: Optional[int]
     src: Optional[Path]
     testcmds: Optional[List[str]]
+    debug: Optional[bool]
 
 
 @pytest.fixture
@@ -31,9 +36,10 @@ def mock_args(tmp_path, binop_file):
         mode="s",
         nlocations=10,
         output=tmp_path / "mock_mutation_report.rst",
-        rseed=None,
+        rseed=314,
         src=binop_file,
         testcmds=["pytest"],
+        debug=False,
     )
 
 
@@ -98,5 +104,84 @@ def test_get_src_location_file(monkeypatch, binop_file):
     assert result.resolve() == binop_file.resolve()
 
 
-def test_main(monkeypatch, mock_args):
-    pass
+@freeze_time("2019-01-01")
+def test_main(monkeypatch, mock_args, mock_results_summary):
+    """As of v0.1.0, if the report structure changes this will need to be updated."""
+    expected_final_report = dedent(
+        """\
+        Mutatest diagnostic summary
+        ===========================
+         - Source location: {src_loc}
+         - Test commands: ['pytest']
+         - Mode: s
+         - Excluded files: ['__init__.py']
+         - N locations input: 10
+         - Random seed: 314
+
+        Random sample details
+        ---------------------
+         - Total locations mutated: 4
+         - Total locations identified: 4
+         - Location sample coverage: 100.00 %
+
+
+        Running time details
+        --------------------
+         - Clean trial 1 run time: 0:00:01.000002
+         - Clean trial 2 run time: 0:00:01.000002
+         - Mutation trials total run time: 0:00:06
+
+        Overall mutation trial summary
+        ==============================
+         - SURVIVED: 1
+         - DETECTED: 1
+         - ERROR: 1
+         - UNKNOWN: 1
+         - TOTAL RUNS: 4
+         - RUN DATETIME: 2019-01-01 00:00:00
+
+
+        Mutations by result status
+        ==========================
+
+
+        SURVIVED
+        --------
+         - src.py: (l: 1, c: 2) - mutation from <class '_ast.Add'> to <class '_ast.Mult'>
+
+
+        DETECTED
+        --------
+         - src.py: (l: 1, c: 2) - mutation from <class '_ast.Add'> to <class '_ast.Mult'>
+
+
+        ERROR
+        -----
+         - src.py: (l: 1, c: 2) - mutation from <class '_ast.Add'> to <class '_ast.Mult'>
+
+
+        UNKNOWN
+        -------
+         - src.py: (l: 1, c: 2) - mutation from <class '_ast.Add'> to <class '_ast.Mult'>"""
+    ).format_map({"src_loc": mock_args.src.resolve()})
+
+    def mock_clean_trial(*args, **kwargs):
+        return timedelta(days=0, seconds=1, microseconds=2)
+
+    def mock_run_mutation_trials(*args, **kwargs):
+        return mock_results_summary
+
+    def mock_cli_args(*args, **kwargs):
+        return mock_args
+
+    monkeypatch.setattr(mutatest.cli, "clean_trial", mock_clean_trial)
+    monkeypatch.setattr(mutatest.cli, "run_mutation_trials", mock_run_mutation_trials)
+
+    monkeypatch.delenv("SOURCE_DATE_EPOCH", raising=False)
+    monkeypatch.setattr(mutatest.cli, "cli_args", mock_cli_args)
+
+    cli_main()
+
+    with open(mock_args.output, "r") as f:
+        results = f.read()
+        assert results == expected_final_report
