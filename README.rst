@@ -63,7 +63,7 @@ If you have a Python package in a directory with an associated :code:`tests/` fo
 with :code:`pytest`, then you can run :code:`mutatest` without any arguments.
 
 
-.. code-block::
+.. code-block:: bash
 
     $ mutatest
 
@@ -73,32 +73,64 @@ with the desired string.
 
 Here is the command to run :code:`pytest` and exclude tests marked with :code:`pytest.mark.slow`.
 
-.. code-block::
+.. code-block:: bash
 
     $ mutatest --testcmds "pytest -m 'not slow'"
 
-or in short-hand notation:
-
-.. code-block:: bash
-
+    # using shorthand arguments
     $ mutatest -t "pytest -m 'not slow'"
 
 You can use this syntax if you want to specify a single module in your package to run and test.
 
-.. code-block::
+.. code-block:: bash
 
     $ mutatest --src mypackage/run.py --testcmd "pytest tests/test_run.py"
 
-    # alternatively
-
+    # using shorthand arguments
     $ mutatest -s mypackage/run.py -t "pytest tests/test_run.py"
+
+
+There is an option to exclude files from the source set. By default, :code:`__init__.py` is
+excluded. Exclude files using the :code:`--exclude` argument with a space delimited list of files
+in a string.
+
+.. code-block:: bash
+
+    $ mutatest --exclude "__init__.py _devtools.py"
+
+    # using shorthand arguments
+    $ mutatest -e "__init__.py _devtools.py"
 
 
 Selecting a running mode
 ------------------------
 
-:code:`mutatest` has different running modes to make trials faster.
+:code:`mutatest` has different running modes to make trials faster. The running modes determine
+what will happen after a mutation trial. For example, ou can choose to stop further mutations at a
+location as soon as a survivor is detected. The different running mode choices are:
 
+Run modes:
+    - f: full mode, run all possible combinations (slowest but most thorough).
+    - s: break on first SURVIVOR per mutated location e.g. if there is a single surviving mutation
+      at a location move to the next location without further testing.
+      This is the default mode.
+    - d: break on the first DETECTION per mutated location e.g. if there is a detected mutation on
+      at a location move to the next one.
+    - sd: break on the first SURVIVOR or DETECTION (fastest, and least thorough).
+
+The API for :code:`mutatest.controller.run_mutation_trials` offers finer control over the run
+method beyond the CLI.
+
+A good practice when first starting is to set the mode to :code:`sd` which will stop if a mutation
+survives or is detected, effectively running a single mutation per candidate location. This is the
+fastest running mode and can give you a sense of investigation areas quickly.
+
+.. code-block::
+
+    $ mutatest --mode sd
+
+    # using shorthand arguments
+    $ mutatest -m sd
 
 
 Getting help
