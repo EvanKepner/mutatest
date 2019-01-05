@@ -32,12 +32,17 @@ Alternatively, clone this repo and install locally:
     $ pip install .
 
 
+When to use mutatest:
+    - You have a Python package with a high test coverage number.
+    - Your tests are in a separate file from the main Python source file.
+
+
 Using ``mutatest``
 ==================
 
 :code:`mutatest` is designed to be a diagnostic command line tool for your test coverage assessment.
 
-The mutation testing process is:
+The mutation trial process follows these steps when :code:`mutatest` is run:
 
 1. Scan for your existing Python package, or use the input source location.
 2. Create an abstract syntax tree (AST) from the source files.
@@ -131,6 +136,48 @@ fastest running mode and can give you a sense of investigation areas quickly.
 
     # using shorthand arguments
     $ mutatest -m sd
+
+Controlling randomization behavior and trial number
+---------------------------------------------------
+
+:code:`mutatest` uses random sampling, both of all candidate locations, and of potential mutations
+to substitute at a location. You can set a random seed for repeatable trials using the
+:code:`--rseed` argument. The :code:`--nlocations` argument controls the size of the sample
+of locations to mutate. If it exceeds the number of candidate locations then the full set of
+candidate locations is used.
+
+.. code-block::
+
+    $ mutatest --nlocations 5 --rseed 314
+
+    # using shorthand arguments
+    $ mutatest -n 5 -r 314
+
+
+Setting the output location
+---------------------------
+
+By default, :code:`mutatest` will write a :code:`mutation_report.rst` to the current working
+directory. You can set this file name and path location using the :code:`--output` argument.
+
+.. code-block::
+
+    $ mutatest --output path/to/my_custom_file.rst
+
+    # using shorthand arguments
+    $ mutatest -o path/to/my_custom_file.rst
+
+
+Putting it all together
+-----------------------
+
+If you want to run 5 trials, in fast :code:`sd` mode, with a random seed of 345 and an output
+file name of :code:`mutation_345.rst` you would do the following if your directory structure
+has a Python package folder and tests that are autodiscoverable and run by :code:`pytest`.
+
+.. code-block:: bash
+
+    $ mutatest -n 5 -m sd -r 345 -o mutation_345.rst
 
 
 Getting help
