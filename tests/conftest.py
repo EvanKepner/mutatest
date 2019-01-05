@@ -1,4 +1,4 @@
-"""Test suite large and shared fixtures.
+"""Test configuration, large and shared fixtures.
 """
 import ast
 import contextlib

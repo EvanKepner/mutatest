@@ -103,6 +103,7 @@ def test_MutantTrialResult(returncode, expected_status, add_five_to_mult_mutant)
 
 @pytest.mark.parametrize("returncode, expected_status", RETURN_CODE_MAPPINGS)
 def test_create_mutation_and_run_trial(returncode, expected_status, monkeypatch, binop_file):
+    """Mocked trial to ensure mutated cache files are removed after running."""
     tree = get_ast_from_src(binop_file)
 
     # this target is the add_five() function, changing add to mult

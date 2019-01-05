@@ -1,4 +1,4 @@
-"""Results analysis and report creation..
+"""Report creation.
 """
 import logging
 
