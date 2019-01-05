@@ -168,6 +168,12 @@ directory. You can set this file name and path location using the :code:`--outpu
     $ mutatest -o path/to/my_custom_file.rst
 
 
+The output report will include the arguments used to generate it along with the total runtimes.
+The SURVIVORS section of the output report is the one you should pay attention to. These are the
+mutations that were undetected by your test suite. The report includes file names, line numbers,
+column numbers, original operation, and mutation for ease of diagnostic investigation.
+
+
 Putting it all together
 -----------------------
 
@@ -209,3 +215,36 @@ Run :code:`mutatest --help` to see command line arguments and supported operatio
       -t STR_CMDS, --testcmds STR_CMDS
                             Test command string to execute. (default: 'pytest')
       --debug               Turn on DEBUG level logging output.
+
+Supported Mutations
+===================
+
+:code:`mutatest` is early in development and supports the following mutation operations based
+on the Python AST definitions:
+
+Supported operations:
+    1. :code:`BinOp` mutations e.g. :code:`+ - / *` including bit-operations.
+    2. :code:`Compare` mutations e.g. :code:`== >= < <= !=`.
+    3. :code:`BoolOp` mutations e.g. :code:`and or`.
+
+
+Adding more operations is a great area for contributions!
+
+Known limitations
+-----------------
+
+Since :code:`mutatest` operates on the local :code:`__pycache__` it is a serial execution process.
+This means it can be slow, and will take as long as running your test suite in series for the
+number of operations. It's designed as a diagnostic tool, not something you would run in your
+CICD pipeline.
+
+Additionally, if you kill the :code:`mutatest` process before the trials complete you may end up
+with partially mutated :code:`__pycache__` files. If this happens the best fix is to remove the
+:code:`__pycache__` directories and let them rebuild automatically the next time your package is
+imported (for instance, by re-running your test suite).
+
+The mutation status is based on the return code of the test suite e.g. 0 for success, 1 for failure.
+:code:`mutatest` can theoretically be run with any test suite that you pass with the
+:code:`--testcmds` argument; however, only :code:`pytest` has been tested to date. The
+:code:`mutatest.maker.MutantTrialResult` namedtuple contains the definitions for translating
+return codes into mutation trial statuses.
