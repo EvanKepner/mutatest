@@ -91,7 +91,7 @@ You can use this syntax if you want to specify a single module in your package t
 
 .. code-block:: bash
 
-    $ mutatest --src mypackage/run.py --testcmd "pytest tests/test_run.py"
+    $ mutatest --src mypackage/run.py --testcmds "pytest tests/test_run.py"
 
     # using shorthand arguments
     $ mutatest -s mypackage/run.py -t "pytest tests/test_run.py"
