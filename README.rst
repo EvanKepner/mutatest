@@ -147,7 +147,7 @@ Selecting a running mode
 ------------------------
 
 :code:`mutatest` has different running modes to make trials faster. The running modes determine
-what will happen after a mutation trial. For example, ou can choose to stop further mutations at a
+what will happen after a mutation trial. For example, you can choose to stop further mutations at a
 location as soon as a survivor is detected. The different running mode choices are:
 
 Run modes:
