@@ -66,36 +66,9 @@ Specifying source files and test commands
 -----------------------------------------
 
 If you have a Python package in a directory with an associated :code:`tests/` folder
-(or internal :code:`test_` prefixed files) that runs
+(or internal :code:`test_` prefixed files, see the examples below) that runs
 with :code:`pytest`, then you can run :code:`mutatest` without any arguments.
 
-Example with internal tests
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. code-block:: bash
-
-    .
-    └── examplepkg
-        ├── __init__.py
-        ├── run.py
-        └── test_run.py
-
-
-Example with external tests
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. code-block:: bash
-
-    .
-    ├── examplepkg
-    │   ├── __init__.py
-    │   └── run.py
-    └── tests
-        └── test_run.py
-
-
-Command line usage
-~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -134,6 +107,40 @@ in a string. Only list the file name, not paths.
 
     # using shorthand arguments
     $ mutatest -e "__init__.py _devtools.py"
+
+
+Auto-detected package structures
+--------------------------------
+
+The following package structures would be auto-detected if you ran :code:`mutatest` from the
+same directory holding :code:`examplepkg/`. You can always point to a specific directory using
+the :code:`--source` argument.
+
+
+Example with internal tests
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+    .
+    └── examplepkg
+        ├── __init__.py
+        ├── run.py
+        └── test_run.py
+
+
+Example with external tests
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+    .
+    ├── examplepkg
+    │   ├── __init__.py
+    │   └── run.py
+    └── tests
+        └── test_run.py
+
 
 
 Selecting a running mode
