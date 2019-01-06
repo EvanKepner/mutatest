@@ -176,7 +176,7 @@ fastest running mode and can give you a sense of investigation areas quickly.
 Controlling randomization behavior and trial number
 ---------------------------------------------------
 
-:code:`mutatest` uses random sampling, both of all candidate locations, and of potential mutations
+:code:`mutatest` uses random sampling of all source candidate locations and of potential mutations
 to substitute at a location. You can set a random seed for repeatable trials using the
 :code:`--rseed` argument. The :code:`--nlocations` argument controls the size of the sample
 of locations to mutate. If it exceeds the number of candidate locations then the full set of
@@ -214,7 +214,7 @@ Putting it all together
 -----------------------
 
 If you want to run 5 trials, in fast :code:`sd` mode, with a random seed of 345 and an output
-file name of :code:`mutation_345.rst` you would do the following if your directory structure
+file name of :code:`mutation_345.rst`, you would do the following if your directory structure
 has a Python package folder and tests that are autodiscoverable and run by :code:`pytest`.
 
 .. code-block:: bash
