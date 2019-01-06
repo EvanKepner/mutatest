@@ -34,7 +34,7 @@ CLASSIFIERS = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Software Development :: Quality Assurance",
     "Topic :: Software Development :: Testing",
-    "Topic :: Software Development :: Testing :: Mutation",
+    "Topic :: Software Development :: Testing :: Unit",
 ]
 
 INSTALL_REQUIRES = []
