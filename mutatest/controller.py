@@ -175,7 +175,9 @@ def get_mutation_sample_locations(
 
         else:
             # set here for final reporting, though not used in rest of trial controls
-            LOGGER.info("%s exceeds sample space, using full sample.", n_locations)
+            LOGGER.info(
+                "%s exceeds sample space, using full sample: %s.", n_locations, len(sample_space)
+            )
 
     return mutation_sample
 

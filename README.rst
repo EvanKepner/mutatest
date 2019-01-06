@@ -9,6 +9,7 @@ slip past your continuous integration checks and are undetectable by your tests.
 Features:
     - Simple command line tool.
     - Pure Python, there are no external dependencies.
+    - Built on Python's Abstract Syntax Tree (AST) grammar.
     - Does not modify your source code, only the :code:`__pycache__`.
     - Flexible enough to run on a whole package or a single file.
 
@@ -32,7 +33,7 @@ Alternatively, clone this repo and install locally:
     $ pip install .
 
 
-When to use mutatest:
+When to use :code:`mutatest`:
     - You have a Python package with a high test coverage number.
     - Your tests are in a separate file from the main Python source file.
 
@@ -220,7 +221,7 @@ Supported Mutations
 ===================
 
 :code:`mutatest` is early in development and supports the following mutation operations based
-on the Python AST definitions:
+on the `Python AST grammar`_:
 
 Supported operations:
     1. :code:`BinOp` mutations e.g. :code:`+ - / *` including bit-operations.
@@ -236,9 +237,10 @@ Known limitations
 Since :code:`mutatest` operates on the local :code:`__pycache__` it is a serial execution process.
 This means it can be slow, and will take as long as running your test suite in series for the
 number of operations. It's designed as a diagnostic tool, not something you would run in your
-CICD pipeline.
+CICD pipeline. You could achieve parallel execution by orchestrating containers to hold
+individual copies of your module and executing subsets of your tests.
 
-Additionally, if you kill the :code:`mutatest` process before the trials complete you may end up
+If you kill the :code:`mutatest` process before the trials complete you may end up
 with partially mutated :code:`__pycache__` files. If this happens the best fix is to remove the
 :code:`__pycache__` directories and let them rebuild automatically the next time your package is
 imported (for instance, by re-running your test suite).
@@ -248,3 +250,7 @@ The mutation status is based on the return code of the test suite e.g. 0 for suc
 :code:`--testcmds` argument; however, only :code:`pytest` has been tested to date. The
 :code:`mutatest.maker.MutantTrialResult` namedtuple contains the definitions for translating
 return codes into mutation trial statuses.
+
+
+.. target-notes::
+.. _Python AST grammar: https://docs.python.org/3/library/ast.html#abstract-grammar
