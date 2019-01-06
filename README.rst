@@ -65,9 +65,37 @@ attempting to detect surviving mutations.
 Specifying source files and test commands
 -----------------------------------------
 
-If you have a Python package in a directory with an associated :code:`tests/` folder that runs
+If you have a Python package in a directory with an associated :code:`tests/` folder
+(or internal :code:`test_` prefixed files) that runs
 with :code:`pytest`, then you can run :code:`mutatest` without any arguments.
 
+Example with internal tests
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+    .
+    └── examplepkg
+        ├── __init__.py
+        ├── run.py
+        └── test_run.py
+
+
+Example with external tests
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+    .
+    ├── examplepkg
+    │   ├── __init__.py
+    │   └── run.py
+    └── tests
+        └── test_run.py
+
+
+Command line usage
+~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
@@ -98,7 +126,7 @@ You can use this syntax if you want to specify a single module in your package t
 
 There is an option to exclude files from the source set. By default, :code:`__init__.py` is
 excluded. Exclude files using the :code:`--exclude` argument with a space delimited list of files
-in a string.
+in a string. Only list the file name, not paths.
 
 .. code-block:: bash
 
