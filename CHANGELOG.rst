@@ -4,6 +4,13 @@ Changelog
 :code:`mutatest` is alpha software, and backwards compatibility between releases is
 not guaranteed while under development.
 
+0.2.0
+-----
+
+    - Added new compare mutation support for:
+        1. :code:`Compare Is` mutations e.g. :code:`is, is not`.
+        2. :code:`Compare In` mutations e.g. :code:`in, not in`.
+
 0.1.0
 -----
 

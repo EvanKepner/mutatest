@@ -158,7 +158,6 @@ def get_compatible_operation_sets() -> List[MutationOpSet]:
 def get_mutations_for_target(target: LocIndex) -> Set[type]:
     """Given a target, find all the mutations that could apply from the AST definitions.
 
-
     Args:
         target: the location index target
 

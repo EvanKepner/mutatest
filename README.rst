@@ -262,6 +262,8 @@ Supported operations:
     1. :code:`BinOp` mutations e.g. :code:`+ - / *` including bit-operations.
     2. :code:`Compare` mutations e.g. :code:`== >= < <= !=`.
     3. :code:`BoolOp` mutations e.g. :code:`and or`.
+    4. :code:`Compare Is` mutations e.g. :code:`is, is not`.
+    5. :code:`Compare In` mutations e.g. :code:`in, not in`.
 
 
 Adding more operations is a great area for contributions!
