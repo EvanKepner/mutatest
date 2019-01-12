@@ -53,20 +53,22 @@ The mutation trial process follows these steps when :code:`mutatest` is run:
    to the appropriate :code:`__pycache__` location with the source file statistics.
 6. Run the test suite. This will use the mutated :code:`__pycache__` file since the source statistics
    are the same for modification time.
-7. See if the test suite detected the change by a failed test.
+7. See if the test suite detected the mutation by a failed test.
 8. Remove the modified :code:`__pycache__` file.
 9. Repeat steps 5-9 for the remaining selected locations to mutate.
 10. Write an output report of the various mutation results.
 
-Before any mutations are run a "clean trial" of your tests are run, and this same "clean trial" is
+A "clean trial" of your tests are run before any mutations are applied. This same "clean trial" is
 run at the end of the mutation testing. This ensures that your original test suite passes before
-attempting to detect surviving mutations.
+attempting to detect surviving mutations and that the :code:`__pycache__` has been appropriately
+reset when the mutation trials are finished.
+
 
 Specifying source files and test commands
 -----------------------------------------
 
 If you have a Python package in a directory with an associated :code:`tests/` folder
-(or internal :code:`test_` prefixed files, see the examples below) that runs
+(or internal :code:`test_` prefixed files, see the examples below) that are auto-detected
 with :code:`pytest`, then you can run :code:`mutatest` without any arguments.
 
 
@@ -215,7 +217,7 @@ Putting it all together
 
 If you want to run 5 trials, in fast :code:`sd` mode, with a random seed of 345 and an output
 file name of :code:`mutation_345.rst`, you would do the following if your directory structure
-has a Python package folder and tests that are autodiscoverable and run by :code:`pytest`.
+has a Python package folder and tests that are auto-discoverable and run by :code:`pytest`.
 
 .. code-block:: bash
 
@@ -259,7 +261,7 @@ Supported Mutations
 on the `Python AST grammar`_:
 
 Supported operations:
-    1. :code:`BinOp` mutations e.g. :code:`+ - / *` including bit-operations.
+    1. :code:`BinOp` mutations e.g. :code:`+ - / *` including bit-operations like :code:`<< >>`.
     2. :code:`Compare` mutations e.g. :code:`== >= < <= !=`.
     3. :code:`BoolOp` mutations e.g. :code:`and or`.
     4. :code:`Compare Is` mutations e.g. :code:`is, is not`.
