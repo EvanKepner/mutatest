@@ -140,6 +140,8 @@ def get_compatible_operation_sets() -> List[MutationOpSet]:
     binop_bit_cmp_types: Set[type] = {ast.BitAnd, ast.BitOr, ast.BitXor}
     binop_bit_shift_types: Set[type] = {ast.LShift, ast.RShift}
     cmpop_types: Set[type] = {ast.Eq, ast.NotEq, ast.Lt, ast.LtE, ast.Gt, ast.GtE}
+    cmpop_is_types: Set[type] = {ast.Is, ast.IsNot}
+    cmpop_in_types: Set[type] = {ast.In, ast.NotIn}
     boolop_types: Set[type] = {ast.And, ast.Or}
 
     return [
@@ -147,6 +149,8 @@ def get_compatible_operation_sets() -> List[MutationOpSet]:
         MutationOpSet(name="BinOp Bit Comparison", operations=binop_bit_cmp_types),
         MutationOpSet(name="BinOp Bit Shifts", operations=binop_bit_shift_types),
         MutationOpSet(name="Compare", operations=cmpop_types),
+        MutationOpSet(name="Compare Is", operations=cmpop_is_types),
+        MutationOpSet(name="Compare In", operations=cmpop_in_types),
         MutationOpSet(name="BoolOp", operations=boolop_types),
     ]
 
