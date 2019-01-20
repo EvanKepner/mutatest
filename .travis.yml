@@ -3,6 +3,29 @@ language: python
 python:
   - "3.7"
 
+matrix:
+  fast_finish: true
+
+  include:
+    - python: "3.7"
+      env: TOXENV=lint
+    - python: "3.7"
+      env: TOXENV=manifest
+    - python: "3.7"
+      env: TOXENV=typing
+    - python: "3.7"
+      env: TOXENV=help
+    - python: "3.7"
+      env: TOXENV=pypi-description
+
+   # Prevent breakage by new releases
+    - python: "3.7-dev"
+      env: TOXENV=py37
+
+  allow_failures:
+    - python: "3.7-dev"
+
+
 install:
   - pip install tox
 
