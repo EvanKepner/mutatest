@@ -6,7 +6,7 @@ and features. They are not used by the main program, and are not covered in stan
 import ast
 
 
-class NodeLister(ast.NodeVisitor):
+class NodeLister(ast.NodeVisitor):  # pragma: no cover
     """Generic node listing tool to investigate operations on testing files.
 
     Use interactively by passing an AST e.g.
