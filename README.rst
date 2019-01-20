@@ -10,6 +10,9 @@
   :target: https://codecov.io/gh/EvanKepner/mutatest
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
     :target: https://github.com/ambv/black
+.. image:: https://pepy.tech/badge/mutatest
+    :target:https://pepy.tech/project/mutatest
+
 
 
 Have a high test coverage number? Try out :code:`mutatest` and see if your tests will detect small
