@@ -6,7 +6,6 @@
     :target: https://travis-ci.org/EvanKepner/mutatest
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
     :target: https://github.com/ambv/black
-.. image:: https://img.shields.io/github/license/EvanKepner/mutatest.svg
 
 
 Have a high test coverage number? Try out :code:`mutatest` and see if your tests will detect small
