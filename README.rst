@@ -2,8 +2,12 @@
 ==========================================
 
 
+.. image:: https://img.shields.io/badge/Python_version-3.7-green.svg
+    :target: https://www.python.org/
 .. image:: https://travis-ci.org/EvanKepner/mutatest.svg?branch=master
     :target: https://travis-ci.org/EvanKepner/mutatest
+.. image:: https://codecov.io/gh/EvanKepner/mutatest/branch/master/graph/badge.svg
+  :target: https://codecov.io/gh/EvanKepner/mutatest
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
     :target: https://github.com/ambv/black
 
