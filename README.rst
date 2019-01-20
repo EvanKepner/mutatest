@@ -11,7 +11,7 @@
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
     :target: https://github.com/ambv/black
 .. image:: https://pepy.tech/badge/mutatest
-    :target:https://pepy.tech/project/mutatest
+    :target: https://pepy.tech/project/mutatest
 
 
 
