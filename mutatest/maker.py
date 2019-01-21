@@ -71,7 +71,7 @@ def get_mutation_targets(tree: ast.Module) -> Set[LocIndex]:
     Returns:
         Set of potential mutatest targets within AST
     """
-    ro_mast = MutateAST(target_idx=None, mutation=None)
+    ro_mast = MutateAST(target_idx=None, mutation=None, readonly=True)
     ro_mast.visit(tree)
     return ro_mast.locs
 
@@ -92,7 +92,7 @@ def create_mutant(
     """
 
     # mutate ast and create code binary
-    mutant_ast = MutateAST(target_idx=target_idx, mutation=mutation_op).visit(tree)
+    mutant_ast = MutateAST(target_idx=target_idx, mutation=mutation_op, readonly=False).visit(tree)
 
     mutant_code = compile(mutant_ast, str(src_file), "exec")
 
@@ -123,7 +123,7 @@ def create_mutation_and_run_trial(
     src_tree: ast.Module,
     src_file: str,
     target_idx: LocIndex,
-    mutation_op: type,
+    mutation_op: Any,
     test_cmds: List[str],
     tree_inplace: bool = False,
 ) -> MutantTrialResult:

@@ -4,7 +4,7 @@ import ast
 import logging
 
 from pathlib import Path
-from typing import List, NamedTuple, Optional, Set, Union
+from typing import Any, List, NamedTuple, Optional, Set, Union
 
 
 LOGGER = logging.getLogger(__name__)
@@ -23,29 +23,34 @@ class MutationOpSet(NamedTuple):
     """Container for compatible mutation operations. Also used in the CLI display."""
 
     name: str
-    operations: Set[type]
+    operations: Set[Any]
 
 
 class MutateAST(ast.NodeTransformer):
     """AST NodeTransformer to replace nodes with mutations by visits."""
 
     def __init__(
-        self, target_idx: Optional[LocIndex] = None, mutation: Optional[type] = None
+        self,
+        target_idx: Optional[LocIndex] = None,
+        mutation: Optional[Any] = None,
+        readonly: bool = False,
     ) -> None:
         """Create the AST node transformer for mutations.
 
-        If the target_idx and mutatest are set to None then no transformations are applied;
+        If readonly is set to None then no transformations are applied;
         however, the locs attribute is updated with the locations of nodes that could
         be transformed. This allows the class to function both as an inspection method
         and as a mutatest transformer.
 
         Args:
             target_idx: Location index for the mutatest in the AST
-            mutation: the mutatest to apply
+            mutation: the mutatest to apply, may be a type or a value
+            readonly: flag for read-only operations, used to visit nodes instead of transform
         """
         self.locs: Set[LocIndex] = set()
         self.target_idx = target_idx
         self.mutation = mutation
+        self.readonly = readonly
 
     def visit_BinOp(self, node: ast.BinOp) -> ast.AST:
         """BinOp nodes are bit-shifts and general operators like add, divide, etc."""
@@ -54,7 +59,7 @@ class MutateAST(ast.NodeTransformer):
         idx = LocIndex("BinOp", node.lineno, node.col_offset, type(node.op))
         self.locs.add(idx)
 
-        if idx == self.target_idx and self.mutation:
+        if idx == self.target_idx and self.mutation and not self.readonly:
             LOGGER.debug("Mutating idx: %s with %s", self.target_idx, self.mutation)
             return ast.copy_location(
                 ast.BinOp(left=node.left, op=self.mutation(), right=node.right), node
@@ -74,7 +79,7 @@ class MutateAST(ast.NodeTransformer):
         idx = LocIndex("Compare", node.lineno, node.col_offset, type(node.ops[0]))
         self.locs.add(idx)
 
-        if idx == self.target_idx and self.mutation:
+        if idx == self.target_idx and self.mutation and not self.readonly:
             LOGGER.debug("Mutating idx: %s with %s", self.target_idx, self.mutation)
 
             # TODO: Determine when/how this case would actually be called
@@ -115,9 +120,24 @@ class MutateAST(ast.NodeTransformer):
         idx = LocIndex("BoolOp", node.lineno, node.col_offset, type(node.op))
         self.locs.add(idx)
 
-        if idx == self.target_idx and self.mutation:
+        if idx == self.target_idx and self.mutation and not self.readonly:
             LOGGER.debug("Mutating idx: %s with %s", self.target_idx, self.mutation)
             return ast.copy_location(ast.BoolOp(op=self.mutation(), values=node.values), node)
+
+        else:
+            LOGGER.debug("No mutations applied")
+            return node
+
+    def visit_NameConstant(self, node: ast.NameConstant) -> ast.AST:
+        """NameConstants: True/False/None."""
+        self.generic_visit(node)
+
+        idx = LocIndex("NameConstant", node.lineno, node.col_offset, node.value)
+        self.locs.add(idx)
+
+        if idx == self.target_idx and not self.readonly:
+            LOGGER.debug("Mutating idx: %s with %s", self.target_idx, self.mutation)
+            return ast.copy_location(ast.NameConstant(value=self.mutation), node)
 
         else:
             LOGGER.debug("No mutations applied")
@@ -136,6 +156,8 @@ def get_compatible_operation_sets() -> List[MutationOpSet]:
     Returns:
         List of MutationOpSets that have substitutable operations
     """
+
+    # AST operations that are sensible mutations for each other
     binop_types: Set[type] = {ast.Add, ast.Sub, ast.Div, ast.Mult, ast.Pow, ast.Mod, ast.FloorDiv}
     binop_bit_cmp_types: Set[type] = {ast.BitAnd, ast.BitOr, ast.BitXor}
     binop_bit_shift_types: Set[type] = {ast.LShift, ast.RShift}
@@ -143,6 +165,9 @@ def get_compatible_operation_sets() -> List[MutationOpSet]:
     cmpop_is_types: Set[type] = {ast.Is, ast.IsNot}
     cmpop_in_types: Set[type] = {ast.In, ast.NotIn}
     boolop_types: Set[type] = {ast.And, ast.Or}
+
+    # Python built-in constants (singletons) that can be used with NameConstant AST node
+    named_const_singletons: Set[Union[bool, None]] = {True, False, None}
 
     return [
         MutationOpSet(name="BinOp", operations=binop_types),
@@ -152,10 +177,11 @@ def get_compatible_operation_sets() -> List[MutationOpSet]:
         MutationOpSet(name="Compare Is", operations=cmpop_is_types),
         MutationOpSet(name="Compare In", operations=cmpop_in_types),
         MutationOpSet(name="BoolOp", operations=boolop_types),
+        MutationOpSet(name="NameConstant", operations=named_const_singletons),
     ]
 
 
-def get_mutations_for_target(target: LocIndex) -> Set[type]:
+def get_mutations_for_target(target: LocIndex) -> Set[Any]:
     """Given a target, find all the mutations that could apply from the AST definitions.
 
     Args:
@@ -164,8 +190,8 @@ def get_mutations_for_target(target: LocIndex) -> Set[type]:
     Returns:
         Set of types that can mutated into the target op
     """
-    search_space: List[Set[type]] = [m.operations for m in get_compatible_operation_sets()]
-    mutation_ops: Set[type] = set()
+    search_space: List[Set[Any]] = [m.operations for m in get_compatible_operation_sets()]
+    mutation_ops: Set[Any] = set()
 
     for potential_ops in search_space:
         if target.op_type in potential_ops:

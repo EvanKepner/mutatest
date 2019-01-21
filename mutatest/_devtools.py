@@ -39,3 +39,8 @@ class NodeLister(ast.NodeVisitor):  # pragma: no cover
         print(f"Bool: {node}")
         print(ast.dump(node))
         self.generic_visit(node)
+
+    def visit_NameConstant(self, node: ast.NameConstant) -> None:
+        print(f"NameConstant: {node}")
+        print(ast.dump(node))
+        self.generic_visit(node)
