@@ -94,6 +94,40 @@ def compare_expected_loc():
 
 
 @pytest.fixture(scope="session")
+def nameconst_file(tmp_path_factory):
+    """A simple python file with the nameconst attributes."""
+    contents = dedent(
+        """\
+    MY_CONSTANT = True
+    OTHER_CONST = {"a":1}
+
+    def myfunc(value: bool = False):
+        if bool:
+            MY_CONSTANT = False
+            OTHER_CONST = None
+    """
+    )
+
+    fn = tmp_path_factory.mktemp("nameconst") / "nameconst.py"
+
+    with open(fn, "w") as output_fn:
+        output_fn.write(contents)
+
+    return fn
+
+
+@pytest.fixture(scope="session")
+def nameconst_expected_locs():
+    """The compare expected location based on the fixture"""
+    return [
+        LocIndex(ast_class="NameConstant", lineno=1, col_offset=14, op_type=True),
+        LocIndex(ast_class="NameConstant", lineno=4, col_offset=25, op_type=False),
+        LocIndex(ast_class="NameConstant", lineno=6, col_offset=22, op_type=False),
+        LocIndex(ast_class="NameConstant", lineno=7, col_offset=22, op_type=None),
+    ]
+
+
+@pytest.fixture(scope="session")
 def boolop_file(tmp_path_factory):
     """A simple python file with bool op operations."""
     contents = dedent(

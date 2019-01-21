@@ -16,7 +16,7 @@ class LocIndex(NamedTuple):
     ast_class: str
     lineno: int
     col_offset: int
-    op_type: type
+    op_type: Any
 
 
 class MutationOpSet(NamedTuple):

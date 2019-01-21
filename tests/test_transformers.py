@@ -37,7 +37,7 @@ def test_get_mutations_for_target(test_op):
 def test_MutateAST_visit_read_only(binop_file):
     """Read only test to ensure locations are aggregated."""
     tree = get_ast_from_src(binop_file)
-    mast = MutateAST()
+    mast = MutateAST(readonly=True)
     testing_tree = deepcopy(tree)
     mast.visit(testing_tree)
 
@@ -60,7 +60,7 @@ def test_MutateAST_visit_mutation(binop_file):
     mutated_tree = MutateAST(target_idx=test_idx, mutation=test_mutation).visit(testing_tree)
 
     # revisit in read-only mode to gather the locations of the new nodes
-    mast = MutateAST()
+    mast = MutateAST(readonly=True)
     mast.visit(mutated_tree)
 
     # four locations from the binary operations in binop_file
@@ -84,7 +84,7 @@ def test_MutateAST_visit_compare(compare_file, compare_expected_loc):
     )
 
     # revisit in read-only mode to gather the locations of the new nodes
-    mast = MutateAST()
+    mast = MutateAST(readonly=True)
     mast.visit(mutated_tree)
 
     # four locations from the binary operations in binop_file
@@ -109,7 +109,7 @@ def test_MutateAST_visit_boolop(boolop_file, boolop_expected_loc):
     )
 
     # revisit in read-only mode to gather the locations of the new nodes
-    mast = MutateAST()
+    mast = MutateAST(readonly=True)
     mast.visit(mutated_tree)
 
     # four locations from the binary operations in binop_file
@@ -120,3 +120,28 @@ def test_MutateAST_visit_boolop(boolop_file, boolop_expected_loc):
     for l in mast.locs:
         if l.lineno == 2 and l.col_offset == 11:
             assert l.op_type == test_mutation
+
+
+def test_MutateAST_visit_nameconst(nameconst_file, nameconst_expected_locs):
+    """Test mutation for nameconst: True, False, None."""
+    tree = get_ast_from_src(nameconst_file)
+    test_mutation = False
+
+    testing_tree = deepcopy(tree)
+    mutated_tree = MutateAST(target_idx=nameconst_expected_locs[0], mutation=test_mutation).visit(
+        testing_tree
+    )
+
+    mast = MutateAST(readonly=True)
+    mast.visit(mutated_tree)
+
+    assert len(mast.locs) == 4
+
+    for l in mast.locs:
+        # spot check on mutation from True to False
+        if l.lineno == 1 and l.col_offset == 14:
+            assert l.op_type == test_mutation
+
+        # spot check on not-mutated location still being None
+        if l.lineno == 7 and l.col_offset == 22:
+            assert l.op_type is None
