@@ -72,7 +72,7 @@ The mutation trial process follows these steps when :code:`mutatest` is run:
 9. Repeat steps 5-9 for the remaining selected locations to mutate.
 10. Write an output report of the various mutation results.
 
-A "clean trial" of your tests are run before any mutations are applied. This same "clean trial" is
+A "clean trial" of your tests is run before any mutations are applied. This same "clean trial" is
 run at the end of the mutation testing. This ensures that your original test suite passes before
 attempting to detect surviving mutations and that the :code:`__pycache__` has been appropriately
 reset when the mutation trials are finished.
