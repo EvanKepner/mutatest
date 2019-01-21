@@ -4,6 +4,19 @@ Changelog
 :code:`mutatest` is alpha software, and backwards compatibility between releases is
 not guaranteed while under development.
 
+
+0.3.0
+-----
+
+    - Added new mutation support for :code:`NameConstant` in AST.
+    - This includes substitutions for singleton assignments such as: :code:`True`, :code:`False`,
+      and :code:`None`.
+    - This is the first non-type mutation and required adding a :code:`readonly` parameter
+      to the :code:`transformers.MutateAST` class. Additionally, the type-hints for the
+      :code:`LocIndex` and :code:`MutationOpSet` were updated to :code:`Any` to support
+      the mixed types. This was more flexible than a series of :code:`overload` signatures.
+
+
 0.2.0
 -----
 
