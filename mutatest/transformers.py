@@ -16,7 +16,7 @@ class LocIndex(NamedTuple):
     ast_class: str
     lineno: int
     col_offset: int
-    op_type: Any
+    op_type: Any  # varies based on the visit_Node definition in MutateAST
 
 
 class MutationOpSet(NamedTuple):
@@ -42,6 +42,10 @@ class MutateAST(ast.NodeTransformer):
         be transformed. This allows the class to function both as an inspection method
         and as a mutatest transformer.
 
+        Note that different nodes hand the LocIndex differently based on the context. For
+        example, visit_BinOp uses direct AST types, while visit_NameConstant uses values,
+        and visit_AugAssign uses custom strings in a dictionary mapping.
+
         Args:
             target_idx: Location index for the mutatest in the AST
             mutation: the mutatest to apply, may be a type or a value
@@ -66,7 +70,7 @@ class MutateAST(ast.NodeTransformer):
             )
 
         else:
-            LOGGER.debug("No mutations applied")
+            LOGGER.debug("visit_BinOp: no mutations applied")
             return node
 
     def visit_Compare(self, node: ast.Compare) -> ast.AST:
@@ -110,7 +114,7 @@ class MutateAST(ast.NodeTransformer):
                 )
 
         else:
-            LOGGER.debug("No mutations applied")
+            LOGGER.debug("visit_Compare: no mutations applied")
             return node
 
     def visit_BoolOp(self, node: ast.BoolOp) -> ast.AST:
@@ -125,7 +129,7 @@ class MutateAST(ast.NodeTransformer):
             return ast.copy_location(ast.BoolOp(op=self.mutation(), values=node.values), node)
 
         else:
-            LOGGER.debug("No mutations applied")
+            LOGGER.debug("visit_BoolOp: no mutations applied")
             return node
 
     def visit_NameConstant(self, node: ast.NameConstant) -> ast.AST:
@@ -140,7 +144,49 @@ class MutateAST(ast.NodeTransformer):
             return ast.copy_location(ast.NameConstant(value=self.mutation), node)
 
         else:
-            LOGGER.debug("No mutations applied")
+            LOGGER.debug("visit_NameConstant: no mutations applied")
+            return node
+
+    def visit_AugAssign(self, node: ast.AugAssign) -> ast.AST:
+        """AugAssign is -=, +=, /=, *= for augmented assignment."""
+
+        # TODO: TEST THIS CALL
+        self.generic_visit(node)
+
+        # custom mapping of string keys to ast operations that can be used
+        # in the nodes since these overlap with BinOp types
+        aug_mappings = {
+            "AugAssign_Add": ast.Add,
+            "AugAssign_Sub": ast.Sub,
+            "AugAssign_Mult": ast.Mult,
+            "AugAssign_Div": ast.Div,
+        }
+
+        rev_mappings = {v: k for k, v in aug_mappings.items()}
+        idx_op = rev_mappings.get(type(node.op), None)
+
+        # edge case protection in case the mapping isn't known for substitution
+        # in that instance, return the node and take no action
+        if not idx_op:
+            LOGGER.debug("visit_AugAssign: unknown aug_assignment: %s", type(node.op))
+            return node
+
+        idx = LocIndex("AugAssign", node.lineno, node.col_offset, idx_op)
+        self.locs.add(idx)
+
+        if idx == self.target_idx and self.mutation in aug_mappings and not self.readonly:
+            LOGGER.debug("Mutating idx: %s with %s", self.target_idx, self.mutation)
+            return ast.copy_location(
+                ast.AugAssign(
+                    target=node.target,
+                    op=aug_mappings[self.mutation](),  # awkward syntax to call type
+                    value=node.value,
+                ),
+                node,
+            )
+
+        else:
+            LOGGER.debug("visit_AugAssign: no mutations applied")
             return node
 
 
@@ -169,6 +215,10 @@ def get_compatible_operation_sets() -> List[MutationOpSet]:
     # Python built-in constants (singletons) that can be used with NameConstant AST node
     named_const_singletons: Set[Union[bool, None]] = {True, False, None}
 
+    # Custom augmentation ops to differentiate from bin_op types
+    # these are defined for substitution within the visit_AugAssign node and need to match
+    aug_assigns: Set[str] = {"AugAssign_Add", "AugAssign_Sub", "AugAssign_Mult", "AugAssign_Div"}
+
     return [
         MutationOpSet(name="BinOp", operations=binop_types),
         MutationOpSet(name="BinOp Bit Comparison", operations=binop_bit_cmp_types),
@@ -178,6 +228,7 @@ def get_compatible_operation_sets() -> List[MutationOpSet]:
         MutationOpSet(name="Compare In", operations=cmpop_in_types),
         MutationOpSet(name="BoolOp", operations=boolop_types),
         MutationOpSet(name="NameConstant", operations=named_const_singletons),
+        MutationOpSet(name="AugAssign", operations=aug_assigns),
     ]
 
 
