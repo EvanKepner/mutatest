@@ -47,14 +47,14 @@ class NodeLister(ast.NodeVisitor):  # pragma: no cover
         print(ast.dump(node))
         self.generic_visit(node)
 
-    # IN DEVELOPMENT
-    ################################################################################################
-
     def visit_AugAssign(self, node: ast.AugAssign) -> None:
         # +=, -=, /=, *=
         print(f"AugAssign: {node}")
         print(ast.dump(node))
         self.generic_visit(node)
+
+    # IN DEVELOPMENT
+    ################################################################################################
 
     # FUTURE DEVELOPMENT
     ################################################################################################
