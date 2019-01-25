@@ -281,6 +281,7 @@ Supported operations:
     4. :code:`Compare Is` mutations e.g. :code:`is, is not`.
     5. :code:`Compare In` mutations e.g. :code:`in, not in`.
     6. :code:`NameConstant` mutations e.g. :code:`True`, :code:`False`, and :code:`None`.
+    7. :code:`AugAssign` mutations e.g. :code:`+= -= *= /=`.
 
 
 Adding more operations is a great area for contributions!

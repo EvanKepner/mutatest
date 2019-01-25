@@ -23,6 +23,7 @@ class MutationOpSet(NamedTuple):
     """Container for compatible mutation operations. Also used in the CLI display."""
 
     name: str
+    desc: str
     operations: Set[Any]
 
 
@@ -220,15 +221,39 @@ def get_compatible_operation_sets() -> List[MutationOpSet]:
     aug_assigns: Set[str] = {"AugAssign_Add", "AugAssign_Sub", "AugAssign_Mult", "AugAssign_Div"}
 
     return [
-        MutationOpSet(name="BinOp", operations=binop_types),
-        MutationOpSet(name="BinOp Bit Comparison", operations=binop_bit_cmp_types),
-        MutationOpSet(name="BinOp Bit Shifts", operations=binop_bit_shift_types),
-        MutationOpSet(name="Compare", operations=cmpop_types),
-        MutationOpSet(name="Compare Is", operations=cmpop_is_types),
-        MutationOpSet(name="Compare In", operations=cmpop_in_types),
-        MutationOpSet(name="BoolOp", operations=boolop_types),
-        MutationOpSet(name="NameConstant", operations=named_const_singletons),
-        MutationOpSet(name="AugAssign", operations=aug_assigns),
+        MutationOpSet(
+            name="AugAssign", desc="Augmented assignment e.g. += -= /= *=", operations=aug_assigns
+        ),
+        MutationOpSet(
+            name="BinOp", desc="Binary operations e.g. + - * / %", operations=binop_types
+        ),
+        MutationOpSet(
+            name="BinOp Bit Comparison",
+            desc="Bitwise comparison operators e.g. x & y, x | y, x ^ y",
+            operations=binop_bit_cmp_types,
+        ),
+        MutationOpSet(
+            name="BinOp Bit Shifts",
+            desc="Bitwise shitf operators e.g. << >>",
+            operations=binop_bit_shift_types,
+        ),
+        MutationOpSet(
+            name="BoolOp", desc="Boolean operations e.g. and or", operations=boolop_types
+        ),
+        MutationOpSet(
+            name="Compare", desc="Comparison operations e.g. == >= <= > <", operations=cmpop_types
+        ),
+        MutationOpSet(
+            name="Compare In", desc="Compare membership e.g. in, not in", operations=cmpop_in_types
+        ),
+        MutationOpSet(
+            name="Compare Is", desc="Comapre identity e.g. is, is not", operations=cmpop_is_types
+        ),
+        MutationOpSet(
+            name="NameConstant",
+            desc="Named constant mutations e.g. True, False, None",
+            operations=named_const_singletons,
+        ),
     ]
 
 

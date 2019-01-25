@@ -4,6 +4,14 @@ Changelog
 :code:`mutatest` is alpha software, and backwards compatibility between releases is
 not guaranteed while under development.
 
+0.4.0
+-----
+
+    - Added new mutation support for :code:`AugAssign` in AST.
+    - This includes mutations for :code:`+= -= *= /=`.
+    - Added a :code:`desc` attribute to :code:`transformers.MutationOpSet` that is used in the
+      cli help display.
+    - Updated the cli help display to show the description and valid members.
 
 0.3.0
 -----
@@ -15,7 +23,6 @@ not guaranteed while under development.
       to the :code:`transformers.MutateAST` class. Additionally, the type-hints for the
       :code:`LocIndex` and :code:`MutationOpSet` were updated to :code:`Any` to support
       the mixed types. This was more flexible than a series of :code:`overload` signatures.
-
 
 0.2.0
 -----

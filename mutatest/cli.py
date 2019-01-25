@@ -120,7 +120,14 @@ def cli_epilog() -> str:
     description = "These are the current operations that are mutated as compatible sets."
     mutation_epilog = [header, "=" * len(header), description, "\n"]
     for mutop in get_compatible_operation_sets():
-        mutation_epilog.extend([mutop.name, "-" * len(mutop.name), f" - {str(mutop.operations)}\n"])
+        mutation_epilog.extend(
+            [
+                mutop.name,
+                "-" * len(mutop.name),
+                f" - Description: {mutop.desc}",
+                f" - Members: {str(mutop.operations)}\n",
+            ]
+        )
 
     meta_info = dedent(
         """
