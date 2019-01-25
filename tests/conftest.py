@@ -23,6 +23,69 @@ class FileAndTest(NamedTuple):
     test_file: Path
 
 
+####################################################################################################
+# GENERIC FIXTURES FOR MUTANTS
+####################################################################################################
+
+
+@pytest.fixture(scope="session")
+def stdoutIO():
+    """Stdout redirection as a context manager to evaluating code mutations."""
+
+    @contextlib.contextmanager
+    def stdoutIO(stdout=None):
+        old = sys.stdout
+        if stdout is None:
+            stdout = StringIO()
+        sys.stdout = stdout
+        yield stdout
+        sys.stdout = old
+
+    return stdoutIO
+
+
+@pytest.fixture(scope="session")
+def mock_Mutant():
+    """Mock mutant definition."""
+    return Mutant(
+        mutant_code=None,
+        src_file=Path("src.py"),
+        cfile=Path("__pycache__") / "src.pyc",
+        loader=None,
+        mode=1,
+        source_stats={"mtime": 1, "size": 1},
+        src_idx=LocIndex(ast_class="BinOp", lineno=1, col_offset=2, op_type=ast.Add),
+        mutation=ast.Mult,
+    )
+
+
+@pytest.fixture(scope="session")
+def mock_trial_results(mock_Mutant):
+    """Mock mutant trial results for each status code."""
+    return [
+        MutantTrialResult(mock_Mutant, return_code=0),  # SURVIVED
+        MutantTrialResult(mock_Mutant, return_code=1),  # DETECTED
+        MutantTrialResult(mock_Mutant, return_code=2),  # ERROR
+        MutantTrialResult(mock_Mutant, return_code=3),  # UNKNOWN
+    ]
+
+
+@pytest.fixture(scope="session")
+def mock_results_summary(mock_trial_results):
+    """Mock results summary from multiple trials."""
+    return ResultsSummary(
+        results=mock_trial_results,
+        n_locs_identified=4,
+        n_locs_mutated=4,
+        total_runtime=timedelta(days=0, seconds=6, microseconds=0),
+    )
+
+
+####################################################################################################
+# TRANSFORMERS: BINOP FIXTURES
+####################################################################################################
+
+
 @pytest.fixture(scope="session")
 def binop_file(tmp_path_factory):
     """A simple python file with binary operations."""
@@ -67,6 +130,11 @@ def binop_expected_locs():
     }
 
 
+####################################################################################################
+# TRANSFORMERS: COMPARE FIXTURES
+####################################################################################################
+
+
 @pytest.fixture(scope="session")
 def compare_file(tmp_path_factory):
     """A simple python file with the compare."""
@@ -91,6 +159,11 @@ def compare_file(tmp_path_factory):
 def compare_expected_loc():
     """The compare expected location based on the fixture"""
     return LocIndex(ast_class="Compare", lineno=2, col_offset=11, op_type=ast.Eq)
+
+
+####################################################################################################
+# TRANSFORMERS: NAMECONST FIXTURES
+####################################################################################################
 
 
 @pytest.fixture(scope="session")
@@ -118,13 +191,59 @@ def nameconst_file(tmp_path_factory):
 
 @pytest.fixture(scope="session")
 def nameconst_expected_locs():
-    """The compare expected location based on the fixture"""
+    """The nameconst expected location based on the fixture"""
     return [
         LocIndex(ast_class="NameConstant", lineno=1, col_offset=14, op_type=True),
         LocIndex(ast_class="NameConstant", lineno=4, col_offset=25, op_type=False),
         LocIndex(ast_class="NameConstant", lineno=6, col_offset=22, op_type=False),
         LocIndex(ast_class="NameConstant", lineno=7, col_offset=22, op_type=None),
     ]
+
+
+####################################################################################################
+# TRANSFORMERS: AUGASSIGN FIXTURES
+####################################################################################################
+
+
+@pytest.fixture(scope="session")
+def augassign_file(tmp_path_factory):
+    """A simple python file with the AugAssign attributes."""
+    contents = dedent(
+        """\
+    def my_func(a, b):
+        a += 6
+        b -= 4
+        b /= 2
+        b *= 3
+
+        return a, b
+    """
+    )
+
+    fn = tmp_path_factory.mktemp("augassign") / "augassign.py"
+
+    with open(fn, "w") as output_fn:
+        output_fn.write(contents)
+
+    return fn
+
+
+@pytest.fixture(scope="session")
+def augassign_expected_locs():
+    """The AugAssign expected location based on the fixture"""
+    return [
+        LocIndex(ast_class="AugAssign", lineno=2, col_offset=4, op_type="AugAssign_Add"),
+        LocIndex(ast_class="AugAssign", lineno=3, col_offset=4, op_type="AugAssign_Sub"),
+        LocIndex(ast_class="AugAssign", lineno=4, col_offset=4, op_type="AugAssign_Div"),
+        LocIndex(ast_class="AugAssign", lineno=5, col_offset=4, op_type="AugAssign_Mult"),
+    ]
+
+
+####################################################################################################
+# TRANSFORMERS: BOOLOP FIXTURES
+# This is a special case which has a tmp file with tests as a Python package to run the full pytest
+# suite. These tests are marked with the 'slow' marker for easy filtering.
+####################################################################################################
 
 
 @pytest.fixture(scope="session")
@@ -215,56 +334,3 @@ def single_binop_file_with_bad_test(tmp_path_factory):
             output_fn.write(c)
 
     return FileAndTest(fn, bad_test_fn)
-
-
-@pytest.fixture(scope="session")
-def stdoutIO():
-    """Stdout redirection as a context manager to evaluating code mutations."""
-
-    @contextlib.contextmanager
-    def stdoutIO(stdout=None):
-        old = sys.stdout
-        if stdout is None:
-            stdout = StringIO()
-        sys.stdout = stdout
-        yield stdout
-        sys.stdout = old
-
-    return stdoutIO
-
-
-@pytest.fixture(scope="session")
-def mock_Mutant():
-    """Mock mutant definition."""
-    return Mutant(
-        mutant_code=None,
-        src_file=Path("src.py"),
-        cfile=Path("__pycache__") / "src.pyc",
-        loader=None,
-        mode=1,
-        source_stats={"mtime": 1, "size": 1},
-        src_idx=LocIndex(ast_class="BinOp", lineno=1, col_offset=2, op_type=ast.Add),
-        mutation=ast.Mult,
-    )
-
-
-@pytest.fixture(scope="session")
-def mock_trial_results(mock_Mutant):
-    """Mock mutant trial results for each status code."""
-    return [
-        MutantTrialResult(mock_Mutant, return_code=0),  # SURVIVED
-        MutantTrialResult(mock_Mutant, return_code=1),  # DETECTED
-        MutantTrialResult(mock_Mutant, return_code=2),  # ERROR
-        MutantTrialResult(mock_Mutant, return_code=3),  # UNKNOWN
-    ]
-
-
-@pytest.fixture(scope="session")
-def mock_results_summary(mock_trial_results):
-    """Mock results summary from multiple trials."""
-    return ResultsSummary(
-        results=mock_trial_results,
-        n_locs_identified=4,
-        n_locs_mutated=4,
-        total_runtime=timedelta(days=0, seconds=6, microseconds=0),
-    )

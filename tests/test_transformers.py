@@ -1,4 +1,6 @@
 """Tests for the transformers module.
+
+These tests rely heavily on fixtures defined in conftest.py.
 """
 import ast
 
@@ -145,3 +147,28 @@ def test_MutateAST_visit_nameconst(nameconst_file, nameconst_expected_locs):
         # spot check on not-mutated location still being None
         if l.lineno == 7 and l.col_offset == 22:
             assert l.op_type is None
+
+
+def test_MutateAST_visit_augassign(augassign_file, augassign_expected_locs):
+    """Test mutation for AugAssign: +=, -=, /=, *=."""
+    tree = get_ast_from_src(augassign_file)
+    test_mutation = "AugAssign_Div"
+
+    testing_tree = deepcopy(tree)
+    mutated_tree = MutateAST(target_idx=augassign_expected_locs[0], mutation=test_mutation).visit(
+        testing_tree
+    )
+
+    mast = MutateAST(readonly=True)
+    mast.visit(mutated_tree)
+
+    assert len(mast.locs) == 4
+
+    for l in mast.locs:
+        # spot check on mutation from Add tp Div
+        if l.lineno == 1 and l.col_offset == 4:
+            assert l.op_type == test_mutation
+
+        # spot check on not-mutated location still being Mult
+        if l.lineno == 5 and l.col_offset == 4:
+            assert l.op_type == "AugAssign_Mult"
