@@ -9,6 +9,8 @@ not guaranteed while under development.
 
     - Added new mutation support for :code:`AugAssign` in AST.
     - This includes mutations for :code:`+= -= *= /=`.
+    - Added new mutation for support of index substituion in lists e.g. take a positive number
+      like :code:`i[1]` and mutate to zero and a negative number e.g. :code:`i[-1] i[0]`.
     - Added a :code:`desc` attribute to :code:`transformers.MutationOpSet` that is used in the
       cli help display.
     - Updated the cli help display to show the description and valid members.

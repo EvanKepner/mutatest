@@ -283,6 +283,7 @@ Supported operations:
     - :code:`Compare` mutations e.g. :code:`== >= < <= !=`.
     - :code:`Compare In` mutations e.g. :code:`in, not in`.
     - :code:`Compare Is` mutations e.g. :code:`is, is not`.
+    - :code:`Index` mutations e.g. :code:`i[0]` becomes :code:`i[1]` and :code:`i[-1]`.
     - :code:`NameConstant` mutations e.g. :code:`True`, :code:`False`, and :code:`None`.
 
 

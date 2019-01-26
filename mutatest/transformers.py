@@ -201,7 +201,7 @@ class MutateAST(ast.NodeTransformer):
             idx = LocIndex("Index_NumNeg", n_value.lineno, n_value.col_offset, "Index_NumNeg")
             self.locs.add(idx)
 
-        if idx == self.target_idx and not self.readonly:
+        if idx == self.target_idx and self.mutation and not self.readonly:
             LOGGER.debug("Mutating idx: %s with %s", self.target_idx, self.mutation)
             mutation = index_mutations[self.mutation]
 
