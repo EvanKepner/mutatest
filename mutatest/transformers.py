@@ -93,9 +93,8 @@ class MutateAST(ast.NodeTransformer):
                 node,
             )
 
-        else:
-            LOGGER.debug("visit_AugAssign: no mutations applied")
-            return node
+        LOGGER.debug("visit_AugAssign: no mutations applied")
+        return node
 
     def visit_BinOp(self, node: ast.BinOp) -> ast.AST:
         """BinOp nodes are bit-shifts and general operators like add, divide, etc."""
@@ -110,9 +109,8 @@ class MutateAST(ast.NodeTransformer):
                 ast.BinOp(left=node.left, op=self.mutation(), right=node.right), node
             )
 
-        else:
-            LOGGER.debug("visit_BinOp: no mutations applied")
-            return node
+        LOGGER.debug("visit_BinOp: no mutations applied")
+        return node
 
     def visit_BoolOp(self, node: ast.BoolOp) -> ast.AST:
         """Boolean operations, AND/OR."""
@@ -125,9 +123,8 @@ class MutateAST(ast.NodeTransformer):
             LOGGER.debug("Mutating idx: %s with %s", self.target_idx, self.mutation)
             return ast.copy_location(ast.BoolOp(op=self.mutation(), values=node.values), node)
 
-        else:
-            LOGGER.debug("visit_BoolOp: no mutations applied")
-            return node
+        LOGGER.debug("visit_BoolOp: no mutations applied")
+        return node
 
     def visit_Compare(self, node: ast.Compare) -> ast.AST:
         """Compare nodes are ==, >= etc."""
@@ -169,9 +166,51 @@ class MutateAST(ast.NodeTransformer):
                     node,
                 )
 
-        else:
-            LOGGER.debug("visit_Compare: no mutations applied")
-            return node
+        LOGGER.debug("visit_Compare: no mutations applied")
+        return node
+
+    def visit_Index(self, node: ast.Index) -> ast.AST:
+        """Index visit e.g. i[0], i[0][1]."""
+        self.generic_visit(node)
+
+        # Index Node has a value attribute that can be either Num node or UnaryOp node
+        # depending on whether the value is positive or negative.
+        n_value = node.value
+        idx = None
+
+        index_mutations = {
+            "Index_NumZero": ast.Num(n=0),
+            "Index_NumPos": ast.Num(n=1),
+            "Index_NumNeg": ast.UnaryOp(op=ast.USub(), operand=ast.Num(n=1)),
+        }
+
+        # index is a non-negative number e.g. i[0], i[1]
+        if isinstance(n_value, ast.Num):
+            # positive integer case
+            if n_value.n != 0:
+                idx = LocIndex("Index_NumPos", n_value.lineno, n_value.col_offset, "Index_NumPos")
+                self.locs.add(idx)
+
+            # zero value case
+            else:
+                idx = LocIndex("Index_NumZero", n_value.lineno, n_value.col_offset, "Index_NumZero")
+                self.locs.add(idx)
+
+        # index is a negative number e.g. i[-1]
+        if isinstance(n_value, ast.UnaryOp):
+            idx = LocIndex("Index_NumNeg", n_value.lineno, n_value.col_offset, "Index_NumNeg")
+            self.locs.add(idx)
+
+        if idx == self.target_idx and not self.readonly:
+            LOGGER.debug("Mutating idx: %s with %s", self.target_idx, self.mutation)
+            mutation = index_mutations[self.mutation]
+
+            # uses AST.fix_missing_locations since the values of ast.Num and  ast.UnaryOp also need
+            # lineno and col-offset values. This is a recursive fix.
+            return ast.fix_missing_locations(ast.copy_location(ast.Index(value=mutation), node))
+
+        LOGGER.debug("visit_Index: no mutations applied")
+        return node
 
     def visit_NameConstant(self, node: ast.NameConstant) -> ast.AST:
         """NameConstants: True/False/None."""
@@ -184,9 +223,8 @@ class MutateAST(ast.NodeTransformer):
             LOGGER.debug("Mutating idx: %s with %s", self.target_idx, self.mutation)
             return ast.copy_location(ast.NameConstant(value=self.mutation), node)
 
-        else:
-            LOGGER.debug("visit_NameConstant: no mutations applied")
-            return node
+        LOGGER.debug("visit_NameConstant: no mutations applied")
+        return node
 
 
 def get_compatible_operation_sets() -> List[MutationOpSet]:
@@ -218,6 +256,9 @@ def get_compatible_operation_sets() -> List[MutationOpSet]:
     # these are defined for substitution within the visit_AugAssign node and need to match
     aug_assigns: Set[str] = {"AugAssign_Add", "AugAssign_Sub", "AugAssign_Mult", "AugAssign_Div"}
 
+    # Custom references for substituions of zero, positive, and negative iterable indicies
+    index_types: Set[str] = {"Index_NumPos", "Index_NumNeg", "Index_NumZero"}
+
     return [
         MutationOpSet(
             name="AugAssign", desc="Augmented assignment e.g. += -= /= *=", operations=aug_assigns
@@ -246,6 +287,11 @@ def get_compatible_operation_sets() -> List[MutationOpSet]:
         ),
         MutationOpSet(
             name="Compare Is", desc="Comapre identity e.g. is, is not", operations=cmpop_is_types
+        ),
+        MutationOpSet(
+            name="Index",
+            desc="Index values for iterables e.g. i[-1], i[0], i[0][1]",
+            operations=index_types,
         ),
         MutationOpSet(
             name="NameConstant",

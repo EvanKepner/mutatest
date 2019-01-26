@@ -56,13 +56,18 @@ class NodeLister(ast.NodeVisitor):  # pragma: no cover
     # IN DEVELOPMENT
     ################################################################################################
 
+    def visit_Index(self, node: ast.Index) -> None:
+        # actual slicing
+        print(f"Index: {node}")
+        print(ast.dump(node))
+
     # FUTURE DEVELOPMENT
     ################################################################################################
 
     def visit_Assign(self, node: ast.Assign) -> None:
         # variable assignment
-        print(f"Assign: {node}")
-        print(ast.dump(node))
+        # print(f"Assign: {node}")
+        # print(ast.dump(node))
         self.generic_visit(node)
 
     def visit_If(self, node: ast.If) -> None:
