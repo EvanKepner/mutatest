@@ -23,15 +23,15 @@ class NodeLister(ast.NodeVisitor):  # pragma: no cover
     # ADDED AND TESTED
     ################################################################################################
 
-    def visit_BinOp(self, node: ast.BinOp) -> None:
-        # + - / * ^ %
-        print(f"BinOP: {node}")
+    def visit_AugAssign(self, node: ast.AugAssign) -> None:
+        # +=, -=, /=, *=
+        print(f"AugAssign: {node}")
         print(ast.dump(node))
         self.generic_visit(node)
 
-    def visit_Compare(self, node: ast.Compare) -> None:
-        # > < >= == <= !=, is is not
-        print(f"Compare: {node}")
+    def visit_BinOp(self, node: ast.BinOp) -> None:
+        # + - / * ^ %
+        print(f"BinOP: {node}")
         print(ast.dump(node))
         self.generic_visit(node)
 
@@ -41,15 +41,15 @@ class NodeLister(ast.NodeVisitor):  # pragma: no cover
         print(ast.dump(node))
         self.generic_visit(node)
 
-    def visit_NameConstant(self, node: ast.NameConstant) -> None:
-        # True, False, None
-        print(f"NameConstant: {node}")
+    def visit_Compare(self, node: ast.Compare) -> None:
+        # > < >= == <= !=, is is not
+        print(f"Compare: {node}")
         print(ast.dump(node))
         self.generic_visit(node)
 
-    def visit_AugAssign(self, node: ast.AugAssign) -> None:
-        # +=, -=, /=, *=
-        print(f"AugAssign: {node}")
+    def visit_NameConstant(self, node: ast.NameConstant) -> None:
+        # True, False, None
+        print(f"NameConstant: {node}")
         print(ast.dump(node))
         self.generic_visit(node)
 
@@ -58,18 +58,6 @@ class NodeLister(ast.NodeVisitor):  # pragma: no cover
 
     # FUTURE DEVELOPMENT
     ################################################################################################
-
-    def visit_Subscript(self, node: ast.Subscript) -> None:
-        # iterable indexing, has Slice operations
-        print(f"Subscript: {node}")
-        print(ast.dump(node))
-        self.generic_visit(node)
-
-    def visit_Slice(self, node: ast.Slice) -> None:
-        # actual slicing
-        print(f"Slice: {node}")
-        print(ast.dump(node))
-        self.generic_visit(node)
 
     def visit_Assign(self, node: ast.Assign) -> None:
         # variable assignment
@@ -80,5 +68,17 @@ class NodeLister(ast.NodeVisitor):  # pragma: no cover
     def visit_If(self, node: ast.If) -> None:
         # have is, is not already, not clear If directly is a valuable mutation
         print(f"If: {node}")
+        print(ast.dump(node))
+        self.generic_visit(node)
+
+    def visit_Slice(self, node: ast.Slice) -> None:
+        # actual slicing
+        print(f"Slice: {node}")
+        print(ast.dump(node))
+        self.generic_visit(node)
+
+    def visit_Subscript(self, node: ast.Subscript) -> None:
+        # iterable indexing, has Slice operations
+        print(f"Subscript: {node}")
         print(ast.dump(node))
         self.generic_visit(node)

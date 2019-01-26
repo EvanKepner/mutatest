@@ -57,6 +57,46 @@ class MutateAST(ast.NodeTransformer):
         self.mutation = mutation
         self.readonly = readonly
 
+    def visit_AugAssign(self, node: ast.AugAssign) -> ast.AST:
+        """AugAssign is -=, +=, /=, *= for augmented assignment."""
+        self.generic_visit(node)
+
+        # custom mapping of string keys to ast operations that can be used
+        # in the nodes since these overlap with BinOp types
+        aug_mappings = {
+            "AugAssign_Add": ast.Add,
+            "AugAssign_Sub": ast.Sub,
+            "AugAssign_Mult": ast.Mult,
+            "AugAssign_Div": ast.Div,
+        }
+
+        rev_mappings = {v: k for k, v in aug_mappings.items()}
+        idx_op = rev_mappings.get(type(node.op), None)
+
+        # edge case protection in case the mapping isn't known for substitution
+        # in that instance, return the node and take no action
+        if not idx_op:
+            LOGGER.debug("visit_AugAssign: unknown aug_assignment: %s", type(node.op))
+            return node
+
+        idx = LocIndex("AugAssign", node.lineno, node.col_offset, idx_op)
+        self.locs.add(idx)
+
+        if idx == self.target_idx and self.mutation in aug_mappings and not self.readonly:
+            LOGGER.debug("Mutating idx: %s with %s", self.target_idx, self.mutation)
+            return ast.copy_location(
+                ast.AugAssign(
+                    target=node.target,
+                    op=aug_mappings[self.mutation](),  # awkward syntax to call type from mapping
+                    value=node.value,
+                ),
+                node,
+            )
+
+        else:
+            LOGGER.debug("visit_AugAssign: no mutations applied")
+            return node
+
     def visit_BinOp(self, node: ast.BinOp) -> ast.AST:
         """BinOp nodes are bit-shifts and general operators like add, divide, etc."""
         self.generic_visit(node)
@@ -72,6 +112,21 @@ class MutateAST(ast.NodeTransformer):
 
         else:
             LOGGER.debug("visit_BinOp: no mutations applied")
+            return node
+
+    def visit_BoolOp(self, node: ast.BoolOp) -> ast.AST:
+        """Boolean operations, AND/OR."""
+        self.generic_visit(node)
+
+        idx = LocIndex("BoolOp", node.lineno, node.col_offset, type(node.op))
+        self.locs.add(idx)
+
+        if idx == self.target_idx and self.mutation and not self.readonly:
+            LOGGER.debug("Mutating idx: %s with %s", self.target_idx, self.mutation)
+            return ast.copy_location(ast.BoolOp(op=self.mutation(), values=node.values), node)
+
+        else:
+            LOGGER.debug("visit_BoolOp: no mutations applied")
             return node
 
     def visit_Compare(self, node: ast.Compare) -> ast.AST:
@@ -118,21 +173,6 @@ class MutateAST(ast.NodeTransformer):
             LOGGER.debug("visit_Compare: no mutations applied")
             return node
 
-    def visit_BoolOp(self, node: ast.BoolOp) -> ast.AST:
-        """Boolean operations, AND/OR."""
-        self.generic_visit(node)
-
-        idx = LocIndex("BoolOp", node.lineno, node.col_offset, type(node.op))
-        self.locs.add(idx)
-
-        if idx == self.target_idx and self.mutation and not self.readonly:
-            LOGGER.debug("Mutating idx: %s with %s", self.target_idx, self.mutation)
-            return ast.copy_location(ast.BoolOp(op=self.mutation(), values=node.values), node)
-
-        else:
-            LOGGER.debug("visit_BoolOp: no mutations applied")
-            return node
-
     def visit_NameConstant(self, node: ast.NameConstant) -> ast.AST:
         """NameConstants: True/False/None."""
         self.generic_visit(node)
@@ -146,48 +186,6 @@ class MutateAST(ast.NodeTransformer):
 
         else:
             LOGGER.debug("visit_NameConstant: no mutations applied")
-            return node
-
-    def visit_AugAssign(self, node: ast.AugAssign) -> ast.AST:
-        """AugAssign is -=, +=, /=, *= for augmented assignment."""
-
-        # TODO: TEST THIS CALL
-        self.generic_visit(node)
-
-        # custom mapping of string keys to ast operations that can be used
-        # in the nodes since these overlap with BinOp types
-        aug_mappings = {
-            "AugAssign_Add": ast.Add,
-            "AugAssign_Sub": ast.Sub,
-            "AugAssign_Mult": ast.Mult,
-            "AugAssign_Div": ast.Div,
-        }
-
-        rev_mappings = {v: k for k, v in aug_mappings.items()}
-        idx_op = rev_mappings.get(type(node.op), None)
-
-        # edge case protection in case the mapping isn't known for substitution
-        # in that instance, return the node and take no action
-        if not idx_op:
-            LOGGER.debug("visit_AugAssign: unknown aug_assignment: %s", type(node.op))
-            return node
-
-        idx = LocIndex("AugAssign", node.lineno, node.col_offset, idx_op)
-        self.locs.add(idx)
-
-        if idx == self.target_idx and self.mutation in aug_mappings and not self.readonly:
-            LOGGER.debug("Mutating idx: %s with %s", self.target_idx, self.mutation)
-            return ast.copy_location(
-                ast.AugAssign(
-                    target=node.target,
-                    op=aug_mappings[self.mutation](),  # awkward syntax to call type
-                    value=node.value,
-                ),
-                node,
-            )
-
-        else:
-            LOGGER.debug("visit_AugAssign: no mutations applied")
             return node
 
 
@@ -229,12 +227,12 @@ def get_compatible_operation_sets() -> List[MutationOpSet]:
         ),
         MutationOpSet(
             name="BinOp Bit Comparison",
-            desc="Bitwise comparison operators e.g. x & y, x | y, x ^ y",
+            desc="Bitwise comparison operations e.g. x & y, x | y, x ^ y",
             operations=binop_bit_cmp_types,
         ),
         MutationOpSet(
             name="BinOp Bit Shifts",
-            desc="Bitwise shitf operators e.g. << >>",
+            desc="Bitwise shift operations e.g. << >>",
             operations=binop_bit_shift_types,
         ),
         MutationOpSet(

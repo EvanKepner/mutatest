@@ -275,13 +275,15 @@ Supported Mutations
 on the `Python AST grammar`_:
 
 Supported operations:
-    1. :code:`BinOp` mutations e.g. :code:`+ - / *` including bit-operations like :code:`<< >>`.
-    2. :code:`Compare` mutations e.g. :code:`== >= < <= !=`.
-    3. :code:`BoolOp` mutations e.g. :code:`and or`.
-    4. :code:`Compare Is` mutations e.g. :code:`is, is not`.
-    5. :code:`Compare In` mutations e.g. :code:`in, not in`.
-    6. :code:`NameConstant` mutations e.g. :code:`True`, :code:`False`, and :code:`None`.
-    7. :code:`AugAssign` mutations e.g. :code:`+= -= *= /=`.
+    - :code:`AugAssign` mutations e.g. :code:`+= -= *= /=`.
+    - :code:`BinOp` mutations e.g. :code:`+ - / *`.
+    - :code:`BinOp Bitwise Comparison` mutations e.g. :code:`x&y x|y x^y`.
+    - :code:`BinOp Bitwise Shift` mutations e.g. :code:`<< >>`.
+    - :code:`BoolOp` mutations e.g. :code:`and or`.
+    - :code:`Compare` mutations e.g. :code:`== >= < <= !=`.
+    - :code:`Compare In` mutations e.g. :code:`in, not in`.
+    - :code:`Compare Is` mutations e.g. :code:`is, is not`.
+    - :code:`NameConstant` mutations e.g. :code:`True`, :code:`False`, and :code:`None`.
 
 
 Adding more operations is a great area for contributions!
