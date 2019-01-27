@@ -4,6 +4,11 @@ Changelog
 :code:`mutatest` is alpha software, and backwards compatibility between releases is
 not guaranteed while under development.
 
+0.4.1
+-----
+
+    - Updated the reporting functions to return colorized display results to CLI.
+
 0.4.0
 -----
 
