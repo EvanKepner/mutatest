@@ -47,6 +47,11 @@ class NodeLister(ast.NodeVisitor):  # pragma: no cover
         print(ast.dump(node))
         self.generic_visit(node)
 
+    def visit_Index(self, node: ast.Index) -> None:
+        # actual slicing
+        print(f"Index: {node}")
+        print(ast.dump(node))
+
     def visit_NameConstant(self, node: ast.NameConstant) -> None:
         # True, False, None
         print(f"NameConstant: {node}")
@@ -55,11 +60,6 @@ class NodeLister(ast.NodeVisitor):  # pragma: no cover
 
     # IN DEVELOPMENT
     ################################################################################################
-
-    def visit_Index(self, node: ast.Index) -> None:
-        # actual slicing
-        print(f"Index: {node}")
-        print(ast.dump(node))
 
     # FUTURE DEVELOPMENT
     ################################################################################################

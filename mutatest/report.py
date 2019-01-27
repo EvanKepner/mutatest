@@ -5,7 +5,7 @@ import logging
 from collections import Counter
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, NamedTuple, Union
+from typing import Dict, List, NamedTuple, Tuple, Union
 
 from mutatest.maker import Mutant, MutantTrialResult
 
@@ -18,6 +18,14 @@ class ReportedMutants(NamedTuple):
 
     status: str
     mutants: List[Mutant]
+
+
+class DisplayResults(NamedTuple):
+    """Results to display on the CLI with coloring."""
+
+    summary: str
+    survived: str
+    detected: str
 
 
 def get_reported_results(trial_results: List[MutantTrialResult], status: str) -> ReportedMutants:
@@ -50,8 +58,11 @@ def get_status_summary(trial_results: List[MutantTrialResult]) -> Dict[str, Unio
     return status
 
 
-def analyze_mutant_trials(trial_results: List[MutantTrialResult]) -> str:
+def analyze_mutant_trials(trial_results: List[MutantTrialResult]) -> Tuple[str, DisplayResults]:
     """Create the analysis text report string for the trials.
+
+    Additionally, return a DisplayResults NamedTuple that includes terminal coloring for the
+    output on the terminal.
 
     It will look like:
 
@@ -73,7 +84,7 @@ def analyze_mutant_trials(trial_results: List[MutantTrialResult]) -> str:
         trial_results: list of MutantTrial results
 
     Returns:
-        str, the text report
+        Tuple: (text report, DisplayResults)
     """
     status = get_status_summary(trial_results)
 
@@ -90,14 +101,30 @@ def analyze_mutant_trials(trial_results: List[MutantTrialResult]) -> str:
     for s, n in status.items():
         report_sections.append(f" - {s}: {n}")
 
+    # prepare display of summary results, no color applied
+    display_summary = "\n".join(report_sections)
+    display_survived, display_detected = "", ""
+
     # build the breakout sections for each type
     section_header = "Mutations by result status"
     report_sections.append("\n".join(["\n", section_header, "=" * len(section_header)]))
     for rpt_results in [survived, detected, errors, unknowns]:
         if rpt_results.mutants:
-            report_sections.append(build_report_section(rpt_results.status, rpt_results.mutants))
+            section = build_report_section(rpt_results.status, rpt_results.mutants)
+            report_sections.append(section)
 
-    return "\n".join(report_sections)
+            if rpt_results.status == "SURVIVED":
+                display_survived = f"\033[91m{section}\033[0m"  # Red
+
+            if rpt_results.status == "DETECTED":
+                display_detected = f"\033[92m{section}\033[0m"  # Green
+
+    return (
+        "\n".join(report_sections),
+        DisplayResults(
+            summary=display_summary, detected=display_detected, survived=display_survived
+        ),
+    )
 
 
 def build_report_section(title: str, mutants: List[Mutant]) -> str:
@@ -136,6 +163,7 @@ def build_report_section(title: str, mutants: List[Mutant]) -> str:
         fmt_list.append(fmt_template.format_map(summary))
 
     report = "\n".join(["\n", title, "-" * len(title)] + [s for s in fmt_list])
+
     return report
 
 

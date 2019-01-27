@@ -383,9 +383,12 @@ def main(args: argparse.Namespace) -> None:
         runtimes=runtimes,
     )
 
-    trial_report = analyze_mutant_trials(results_summary.results)
+    trial_report, display_results = analyze_mutant_trials(results_summary.results)
+
+    LOGGER.info("CLI Report:\n\n%s", cli_report)
+    LOGGER.info("Trial Summary Report:\n\n%s\n", display_results.summary)
+    LOGGER.info("Detected mutations:%s\n", display_results.detected)
+    LOGGER.info("Surviving mutations:%s\n", display_results.survived)
 
     report = "\n".join([cli_report, trial_report])
-    LOGGER.info("Status report: \n%s", report)
-
     write_report(report, args.output)

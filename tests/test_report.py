@@ -89,7 +89,7 @@ def test_analyze_mutant_trials(mock_trial_results):
      - src.py: (l: 1, c: 2) - mutation from <class '_ast.Add'> to <class '_ast.Mult'>"""
     )
 
-    report = analyze_mutant_trials(mock_trial_results[:2])
+    report, _ = analyze_mutant_trials(mock_trial_results[:2])
     assert report == expected
 
 
