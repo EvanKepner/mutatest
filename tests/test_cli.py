@@ -26,6 +26,7 @@ class MockArgs(NamedTuple):
     src: Optional[Path]
     testcmds: Optional[List[str]]
     debug: Optional[bool]
+    nocov: Optional[bool]
 
 
 @pytest.fixture
@@ -40,6 +41,7 @@ def mock_args(tmp_path, binop_file):
         src=binop_file,
         testcmds=["pytest"],
         debug=False,
+        nocov=True,
     )
 
 

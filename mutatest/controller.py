@@ -11,6 +11,7 @@ from typing import Dict, List, NamedTuple, Optional, Tuple, Union
 
 from mutatest.cache import remove_existing_cache_files
 from mutatest.maker import MutantTrialResult, create_mutation_and_run_trial, get_mutation_targets
+from mutatest.optimizers import DEFAULT_COVERAGE_FILE, CoverageOptimizer
 from mutatest.transformers import LocIndex, get_ast_from_src, get_mutations_for_target
 
 
@@ -136,8 +137,6 @@ def build_src_trees_and_targets(
         LOGGER.info("Get mutatest targets from AST.")
         targets = get_mutation_targets(tree, src_file)
 
-        # TODO: Apply COVERAGE FILTER HERE
-
         # only add files that have at least one valid target for mutatest
         if targets:
             src_trees[str(src_file)] = tree
@@ -211,6 +210,7 @@ def run_mutation_trials(
     break_on_detected: bool = False,
     break_on_error: bool = False,
     break_on_unknown: bool = False,
+    ignore_coverage: bool = False,
 ) -> ResultsSummary:
     """Run the mutatest trials. This uses random sampling for locations and operations.
 
@@ -231,6 +231,8 @@ def run_mutation_trials(
             defaults to False
         break_on_unknown: flag to stop further mutations at a location if the status is unknown,
             defaults to False
+        ignore_coverage: flag to ignore coverage optimization
+
     Returns:
         List of mutants and trial results
     """
@@ -238,12 +240,17 @@ def run_mutation_trials(
     LOGGER.info("Running mutation trials.")
     start = datetime.now()
 
-    # TODO: src_targets should only have coverage locations based on a flag passed to the function
-    # TODO: from the CLI
     src_trees, src_targets = build_src_trees_and_targets(
         src_loc=src_loc, exclude_files=exclude_files
     )
     sample_space = get_sample_space(src_targets)
+    LOGGER.info("Full sample space size: %s", len(sample_space))
+
+    # restrict the sample space down to locations marked by coverage
+    if not ignore_coverage and DEFAULT_COVERAGE_FILE.exists():
+        covered_sample = CoverageOptimizer().covered_sample_space(sample_space)
+        LOGGER.info("Coverage optimized sample space size: %s", len(covered_sample))
+        sample_space = covered_sample
 
     mutation_sample = get_mutation_sample_locations(
         sample_space=sample_space, n_locations=n_locations

@@ -230,6 +230,9 @@ def cli_args() -> argparse.Namespace:
         help="Test command string to execute. (default: 'pytest')",
     )
     parser.add_argument("--debug", action="store_true", help="Turn on DEBUG level logging output.")
+    parser.add_argument(
+        "--nocov", action="store_true", help="Ignore coverage files for optimization."
+    )
 
     return parser.parse_args()
 
@@ -347,9 +350,6 @@ def main(args: argparse.Namespace) -> None:
     # Run the pipeline with no mutations first to ensure later results are meaningful
     clean_runtime_1 = clean_trial(src_loc=src_loc, test_cmds=args.testcmds)
 
-    # TODO: DETECT .coverage file here, and if yes, apply flag to the run_mutation_trial
-    # TODO: Optional flag on CLI for --no-cov to skip this step
-
     # Run the mutation trials based on the input argument
     run_mode = RunMode(args.mode)
 
@@ -366,6 +366,7 @@ def main(args: argparse.Namespace) -> None:
         break_on_survival=run_mode.break_on_survival,
         break_on_error=run_mode.break_on_error,
         break_on_unknown=run_mode.break_on_unknown,
+        ignore_coverage=args.nocov,
     )
 
     # Run the pipeline with no mutations last to ensure cleared cache
