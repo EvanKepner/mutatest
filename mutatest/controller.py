@@ -30,6 +30,24 @@ class ResultsSummary(NamedTuple):
     total_runtime: timedelta
 
 
+def colorize_output(output: str, color: str) -> str:
+    """Color output for the terminal display as either red or green.
+
+    Args:
+        output: string to colorize
+        color: choice of terminal color, "red" vs. "green"
+
+    Returns:
+        colorized string, or original string for bad color choice.
+    """
+    colors = {
+        "red": f"\033[91m{output}\033[0m",  # Red
+        "green": f"\033[92m{output}\033[0m",  # Green
+    }
+
+    return colors.get(color, output)
+
+
 def get_py_files(src_loc: Union[str, Path]) -> List[Path]:
     """Find all .py files in src_loc and return absolute path
 
@@ -116,7 +134,7 @@ def build_src_trees_and_targets(
 
         # Get the locations for all mutatest potential for the given file
         LOGGER.info("Get mutatest targets from AST.")
-        targets = get_mutation_targets(tree)
+        targets = get_mutation_targets(tree, src_file)
 
         # only add files that have at least one valid target for mutatest
         if targets:
@@ -253,19 +271,40 @@ def run_mutation_trials(
             results.append(trial_results)
 
             if trial_results.status == "SURVIVED" and break_on_survival:
-                LOGGER.info("Surviving mutation detected, stopping further mutations for location.")
+                LOGGER.info(
+                    "%s",
+                    colorize_output(
+                        "Surviving mutation detected, stopping further mutations for location.",
+                        "red",
+                    ),
+                )
                 break
 
             if trial_results.status == "DETECTED" and break_on_detected:
-                LOGGER.info("Detected mutation, stopping further mutations for location.")
+                LOGGER.info(
+                    "%s",
+                    colorize_output(
+                        "Detected mutation, stopping further mutations for location.", "green"
+                    ),
+                )
                 break
 
             if trial_results.status == "ERROR" and break_on_error:
-                LOGGER.info("Error on mutation, stopping further mutations for location.")
+                LOGGER.info(
+                    "%s",
+                    colorize_output(
+                        "Error with mutation, stopping further mutations for location.", "red"
+                    ),
+                )
                 break
 
             if trial_results.status == "UNKNOWN" and break_on_unknown:
-                LOGGER.info("Unknown mutation result, stopping further mutations for location.")
+                LOGGER.info(
+                    "%s",
+                    colorize_output(
+                        "Unknown mutation result, stopping further mutations for location.", "red"
+                    ),
+                )
                 break
 
     end = datetime.now()

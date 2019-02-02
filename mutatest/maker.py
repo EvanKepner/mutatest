@@ -62,16 +62,17 @@ def capture_output(log_level: int) -> bool:
     return log_level != 10
 
 
-def get_mutation_targets(tree: ast.Module) -> Set[LocIndex]:
+def get_mutation_targets(tree: ast.Module, src_file: Path) -> Set[LocIndex]:
     """Run the mutatest AST search with no targets or mutations to bring back target indicies.
 
     Args:
         tree: the source file AST
+        src_file: source file name, used in logging
 
     Returns:
         Set of potential mutatest targets within AST
     """
-    ro_mast = MutateAST(target_idx=None, mutation=None, readonly=True)
+    ro_mast = MutateAST(target_idx=None, mutation=None, readonly=True, src_file=src_file)
     ro_mast.visit(tree)
     return ro_mast.locs
 
@@ -92,7 +93,9 @@ def create_mutant(
     """
 
     # mutate ast and create code binary
-    mutant_ast = MutateAST(target_idx=target_idx, mutation=mutation_op, readonly=False).visit(tree)
+    mutant_ast = MutateAST(
+        target_idx=target_idx, mutation=mutation_op, src_file=src_file, readonly=False
+    ).visit(tree)
 
     mutant_code = compile(mutant_ast, str(src_file), "exec")
 

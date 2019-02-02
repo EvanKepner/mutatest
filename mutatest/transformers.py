@@ -35,6 +35,7 @@ class MutateAST(ast.NodeTransformer):
         target_idx: Optional[LocIndex] = None,
         mutation: Optional[Any] = None,
         readonly: bool = False,
+        src_file: Optional[Union[Path, str]] = None,
     ) -> None:
         """Create the AST node transformer for mutations.
 
@@ -51,15 +52,18 @@ class MutateAST(ast.NodeTransformer):
             target_idx: Location index for the mutatest in the AST
             mutation: the mutatest to apply, may be a type or a value
             readonly: flag for read-only operations, used to visit nodes instead of transform
+            src_file: Source file name, used for logging purposes
         """
         self.locs: Set[LocIndex] = set()
         self.target_idx = target_idx
         self.mutation = mutation
         self.readonly = readonly
+        self.src_file = src_file
 
     def visit_AugAssign(self, node: ast.AugAssign) -> ast.AST:
         """AugAssign is -=, +=, /=, *= for augmented assignment."""
         self.generic_visit(node)
+        log_header = f"visit_AugAssign: {self.src_file}:"
 
         # custom mapping of string keys to ast operations that can be used
         # in the nodes since these overlap with BinOp types
@@ -76,14 +80,20 @@ class MutateAST(ast.NodeTransformer):
         # edge case protection in case the mapping isn't known for substitution
         # in that instance, return the node and take no action
         if not idx_op:
-            LOGGER.debug("visit_AugAssign: unknown aug_assignment: %s", type(node.op))
+            LOGGER.debug(
+                "%s (%s, %s): unknown aug_assignment: %s",
+                log_header,
+                node.lineno,
+                node.col_offset,
+                type(node.op),
+            )
             return node
 
         idx = LocIndex("AugAssign", node.lineno, node.col_offset, idx_op)
         self.locs.add(idx)
 
         if idx == self.target_idx and self.mutation in aug_mappings and not self.readonly:
-            LOGGER.debug("Mutating idx: %s with %s", self.target_idx, self.mutation)
+            LOGGER.debug("%s mutating idx: %s with %s", log_header, self.target_idx, self.mutation)
             return ast.copy_location(
                 ast.AugAssign(
                     target=node.target,
@@ -93,42 +103,45 @@ class MutateAST(ast.NodeTransformer):
                 node,
             )
 
-        LOGGER.debug("visit_AugAssign: no mutations applied")
+        LOGGER.debug("%s (%s, %s): no mutations applied.", log_header, node.lineno, node.col_offset)
         return node
 
     def visit_BinOp(self, node: ast.BinOp) -> ast.AST:
         """BinOp nodes are bit-shifts and general operators like add, divide, etc."""
         self.generic_visit(node)
+        log_header = f"visit_BinOp: {self.src_file}:"
 
         idx = LocIndex("BinOp", node.lineno, node.col_offset, type(node.op))
         self.locs.add(idx)
 
         if idx == self.target_idx and self.mutation and not self.readonly:
-            LOGGER.debug("Mutating idx: %s with %s", self.target_idx, self.mutation)
+            LOGGER.debug("%s mutating idx: %s with %s", log_header, self.target_idx, self.mutation)
             return ast.copy_location(
                 ast.BinOp(left=node.left, op=self.mutation(), right=node.right), node
             )
 
-        LOGGER.debug("visit_BinOp: no mutations applied")
+        LOGGER.debug("%s (%s, %s): no mutations applied.", log_header, node.lineno, node.col_offset)
         return node
 
     def visit_BoolOp(self, node: ast.BoolOp) -> ast.AST:
         """Boolean operations, AND/OR."""
         self.generic_visit(node)
+        log_header = f"visit_BoolOp: {self.src_file}:"
 
         idx = LocIndex("BoolOp", node.lineno, node.col_offset, type(node.op))
         self.locs.add(idx)
 
         if idx == self.target_idx and self.mutation and not self.readonly:
-            LOGGER.debug("Mutating idx: %s with %s", self.target_idx, self.mutation)
+            LOGGER.debug("%s mutating idx: %s with %s", log_header, self.target_idx, self.mutation)
             return ast.copy_location(ast.BoolOp(op=self.mutation(), values=node.values), node)
 
-        LOGGER.debug("visit_BoolOp: no mutations applied")
+        LOGGER.debug("%s (%s, %s): no mutations applied.", log_header, node.lineno, node.col_offset)
         return node
 
     def visit_Compare(self, node: ast.Compare) -> ast.AST:
         """Compare nodes are ==, >= etc."""
         self.generic_visit(node)
+        log_header = f"visit_Compare: {self.src_file}:"
 
         # taking only the first operation in the compare node
         # in basic testing, things like (a==b)==1 still end up with lists of 1,
@@ -137,12 +150,12 @@ class MutateAST(ast.NodeTransformer):
         self.locs.add(idx)
 
         if idx == self.target_idx and self.mutation and not self.readonly:
-            LOGGER.debug("Mutating idx: %s with %s", self.target_idx, self.mutation)
+            LOGGER.debug("%s mutating idx: %s with %s", log_header, self.target_idx, self.mutation)
 
             # TODO: Determine when/how this case would actually be called
             if len(node.ops) > 1:
                 # unlikely test case where the comparison has multiple values
-                LOGGER.debug("Multiple compare ops in node, len: %s", len(node.ops))
+                LOGGER.debug("%s multiple compare ops in node, len: %s", log_header, len(node.ops))
                 existing_ops = [i for i in node.ops]
                 mutation_ops = [self.mutation()] + existing_ops[1:]
 
@@ -153,11 +166,11 @@ class MutateAST(ast.NodeTransformer):
 
             else:
                 # typical comparison case, will also catch (a==b)==1 as an example.
-                LOGGER.debug("Single comparison node operation")
+                LOGGER.debug("%s single comparison node operation", log_header)
                 new_node = ast.Compare(
                     left=node.left, ops=[self.mutation()], comparators=node.comparators
                 )
-                LOGGER.debug("New node:\n%s", ast.dump(new_node))
+                LOGGER.debug("%s new node:\n%s", log_header, ast.dump(new_node))
 
                 return ast.copy_location(
                     ast.Compare(
@@ -166,12 +179,13 @@ class MutateAST(ast.NodeTransformer):
                     node,
                 )
 
-        LOGGER.debug("visit_Compare: no mutations applied")
+        LOGGER.debug("%s (%s, %s): no mutations applied.", log_header, node.lineno, node.col_offset)
         return node
 
     def visit_Index(self, node: ast.Index) -> ast.AST:
         """Index visit e.g. i[0], i[0][1]."""
         self.generic_visit(node)
+        log_header = f"visit_Index: {self.src_file}:"
 
         # Index Node has a value attribute that can be either Num node or UnaryOp node
         # depending on whether the value is positive or negative.
@@ -202,28 +216,31 @@ class MutateAST(ast.NodeTransformer):
             self.locs.add(idx)
 
         if idx == self.target_idx and self.mutation and not self.readonly:
-            LOGGER.debug("Mutating idx: %s with %s", self.target_idx, self.mutation)
+            LOGGER.debug("%s mutating idx: %s with %s", log_header, self.target_idx, self.mutation)
             mutation = index_mutations[self.mutation]
 
             # uses AST.fix_missing_locations since the values of ast.Num and  ast.UnaryOp also need
             # lineno and col-offset values. This is a recursive fix.
             return ast.fix_missing_locations(ast.copy_location(ast.Index(value=mutation), node))
 
-        LOGGER.debug("visit_Index: no mutations applied")
+        LOGGER.debug(
+            "%s (%s, %s): no mutations applied.", log_header, n_value.lineno, n_value.col_offset
+        )
         return node
 
     def visit_NameConstant(self, node: ast.NameConstant) -> ast.AST:
         """NameConstants: True/False/None."""
         self.generic_visit(node)
+        log_header = f"visit_NameConstant: {self.src_file}:"
 
         idx = LocIndex("NameConstant", node.lineno, node.col_offset, node.value)
         self.locs.add(idx)
 
         if idx == self.target_idx and not self.readonly:
-            LOGGER.debug("Mutating idx: %s with %s", self.target_idx, self.mutation)
+            LOGGER.debug("%s mutating idx: %s with %s", log_header, self.target_idx, self.mutation)
             return ast.copy_location(ast.NameConstant(value=self.mutation), node)
 
-        LOGGER.debug("visit_NameConstant: no mutations applied")
+        LOGGER.debug("%s (%s, %s): no mutations applied.", log_header, node.lineno, node.col_offset)
         return node
 
 

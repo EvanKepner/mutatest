@@ -52,7 +52,7 @@ def test_capture_output():
 def test_get_mutation_targets(binop_file, binop_expected_locs):
     """Test mutation target retrieval from the bin_op test fixture."""
     tree = get_ast_from_src(binop_file)
-    targets = get_mutation_targets(tree)
+    targets = get_mutation_targets(tree, binop_file)
 
     assert len(targets) == 4
     assert targets == binop_expected_locs

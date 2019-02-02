@@ -7,6 +7,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, NamedTuple, Tuple, Union
 
+from mutatest.controller import colorize_output
 from mutatest.maker import Mutant, MutantTrialResult
 
 
@@ -114,10 +115,10 @@ def analyze_mutant_trials(trial_results: List[MutantTrialResult]) -> Tuple[str, 
             report_sections.append(section)
 
             if rpt_results.status == "SURVIVED":
-                display_survived = f"\033[91m{section}\033[0m"  # Red
+                display_survived = colorize_output(section, "red")
 
             if rpt_results.status == "DETECTED":
-                display_detected = f"\033[92m{section}\033[0m"  # Green
+                display_detected = colorize_output(section, "green")
 
     return (
         "\n".join(report_sections),
