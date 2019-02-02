@@ -347,6 +347,9 @@ def main(args: argparse.Namespace) -> None:
     # Run the pipeline with no mutations first to ensure later results are meaningful
     clean_runtime_1 = clean_trial(src_loc=src_loc, test_cmds=args.testcmds)
 
+    # TODO: DETECT .coverage file here, and if yes, apply flag to the run_mutation_trial
+    # TODO: Optional flag on CLI for --no-cov to skip this step
+
     # Run the mutation trials based on the input argument
     run_mode = RunMode(args.mode)
 

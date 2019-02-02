@@ -136,6 +136,8 @@ def build_src_trees_and_targets(
         LOGGER.info("Get mutatest targets from AST.")
         targets = get_mutation_targets(tree, src_file)
 
+        # TODO: Apply COVERAGE FILTER HERE
+
         # only add files that have at least one valid target for mutatest
         if targets:
             src_trees[str(src_file)] = tree
@@ -236,6 +238,8 @@ def run_mutation_trials(
     LOGGER.info("Running mutation trials.")
     start = datetime.now()
 
+    # TODO: src_targets should only have coverage locations based on a flag passed to the function
+    # TODO: from the CLI
     src_trees, src_targets = build_src_trees_and_targets(
         src_loc=src_loc, exclude_files=exclude_files
     )
