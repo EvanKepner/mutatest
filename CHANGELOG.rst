@@ -4,6 +4,13 @@ Changelog
 :code:`mutatest` is alpha software, and backwards compatibility between releases is
 not guaranteed while under development.
 
+0.4.2
+-----
+
+    - More behind the scenes maintenance: updated debug level logging to include source file
+      names and line numbers for all visit operations and separated colorized output to a new
+      function.
+
 0.4.1
 -----
 
