@@ -201,6 +201,50 @@ def get_mutation_sample_locations(
     return mutation_sample
 
 
+def optimize_covered_sample(
+    sample_space: List[Tuple[str, LocIndex]], cov_file: Optional[Path] = None
+) -> List[Tuple[str, LocIndex]]:
+    """Optimize the overall sample space to only those marked with coverage.
+
+    Args:
+        sample_space: the raw sample space
+
+    Returns:
+        The subset list of the sample space that is marked by coverage.
+    """
+    covered_sample = CoverageOptimizer(cov_file=cov_file).covered_sample_space(sample_space)
+    LOGGER.info("Coverage optimized sample space size: %s", len(covered_sample))
+    return covered_sample
+
+
+def get_sources_with_sample(
+    src_loc: Union[str, Path],
+    exclude_files: Optional[List[str]] = None,
+    ignore_coverage: bool = False,
+) -> Tuple[Dict[str, ast.Module], List[Tuple[str, LocIndex]]]:
+    """Determines the sample for selecting mutations, which may be restricted by optimizers.
+
+    Args:
+        src_loc: source location path for the package to scan
+        exclude_files: list of file exclusions
+        ignore_coverage: flag to skip any found coverage files and only use raw sample
+
+    Returns:
+        Tuple of the source trees in a reference mapping and the sample space list
+    """
+    src_trees, src_targets = build_src_trees_and_targets(
+        src_loc=src_loc, exclude_files=exclude_files
+    )
+    sample_space = get_sample_space(src_targets)
+    LOGGER.info("Full sample space size: %s", len(sample_space))
+
+    # restrict the sample space down to locations marked by coverage
+    if not ignore_coverage and DEFAULT_COVERAGE_FILE.exists():
+        sample_space = optimize_covered_sample(sample_space)
+
+    return src_trees, sample_space
+
+
 def run_mutation_trials(
     src_loc: Union[str, Path],
     test_cmds: List[str],
@@ -240,17 +284,9 @@ def run_mutation_trials(
     LOGGER.info("Running mutation trials.")
     start = datetime.now()
 
-    src_trees, src_targets = build_src_trees_and_targets(
-        src_loc=src_loc, exclude_files=exclude_files
+    src_trees, sample_space = get_sources_with_sample(
+        src_loc=src_loc, exclude_files=exclude_files, ignore_coverage=ignore_coverage
     )
-    sample_space = get_sample_space(src_targets)
-    LOGGER.info("Full sample space size: %s", len(sample_space))
-
-    # restrict the sample space down to locations marked by coverage
-    if not ignore_coverage and DEFAULT_COVERAGE_FILE.exists():
-        covered_sample = CoverageOptimizer().covered_sample_space(sample_space)
-        LOGGER.info("Coverage optimized sample space size: %s", len(covered_sample))
-        sample_space = covered_sample
 
     mutation_sample = get_mutation_sample_locations(
         sample_space=sample_space, n_locations=n_locations

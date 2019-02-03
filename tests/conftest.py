@@ -82,6 +82,61 @@ def mock_results_summary(mock_trial_results):
 
 
 ####################################################################################################
+# OPTIMIZERS: MOCK COVERAGE FILE FIXTURES
+####################################################################################################
+
+
+@pytest.fixture(scope="session")
+def mock_coverage_file(tmp_path_factory):
+    """Mock .coverage file to read into the CoverageOptimizer."""
+    mock_contents = (
+        """!coverage.py: This is a private format, don't read it directly!"""
+        """{"lines":{"/simple_isnot/isnot/__init__.py":[1],"""
+        """"/simple_isnot/isnot/test_isnot.py":[1,3,4],"""
+        """"/simple_isnot/isnot/run.py":[1,4,2]}}"""
+    )
+
+    folder = tmp_path_factory.mktemp("cov")
+    mock_cov_file = folder / ".coverage"
+
+    with open(mock_cov_file, "w") as ostream:
+        ostream.write(mock_contents)
+
+    return mock_cov_file
+
+
+@pytest.fixture(scope="session")
+def mock_precov_sample():
+    """Mock pre-coverage sample that aligns to mock_coverage_file fixture."""
+    return [
+        (
+            "/simple_isnot/isnot/run.py",
+            LocIndex(ast_class="a", lineno=1, col_offset=1, op_type="o"),
+        ),
+        (
+            "/simple_isnot/isnot/run.py",
+            LocIndex(ast_class="a", lineno=2, col_offset=1, op_type="o"),
+        ),
+        (
+            "/simple_isnot/isnot/run.py",
+            LocIndex(ast_class="a", lineno=3, col_offset=1, op_type="o"),
+        ),
+        (
+            "/simple_isnot/isnot/run.py",
+            LocIndex(ast_class="a", lineno=4, col_offset=1, op_type="o"),
+        ),
+        (
+            "/simple_isnot/isnot/run.py",
+            LocIndex(ast_class="a", lineno=5, col_offset=1, op_type="o"),
+        ),
+        (
+            "/simple_isnot/isnot/run.py",
+            LocIndex(ast_class="a", lineno=5, col_offset=2, op_type="o"),
+        ),
+    ]
+
+
+####################################################################################################
 # TRANSFORMERS: AUGASSIGN FIXTURES
 ####################################################################################################
 

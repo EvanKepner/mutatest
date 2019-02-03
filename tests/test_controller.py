@@ -15,6 +15,7 @@ from mutatest.controller import (
     get_mutation_sample_locations,
     get_py_files,
     get_sample_space,
+    optimize_covered_sample,
     run_mutation_trials,
 )
 from mutatest.maker import LocIndex, MutantTrialResult
@@ -165,6 +166,21 @@ def test_get_mutation_sample_locations(popsize, nlocs, nexp):
     # special case when nlocs is None, result_sample is mock_sample
     if not nlocs:
         assert result_sample == mock_sample
+
+
+def test_optimize_covered_sample(mock_coverage_file, mock_precov_sample):
+    """Similar function as test_optimizers::test_covered_sample for coverage optimization."""
+    result_sample = optimize_covered_sample(mock_precov_sample, cov_file=mock_coverage_file)
+
+    assert len(result_sample) == 3
+
+    for _, li in result_sample:
+        assert li.lineno in [1, 4, 2]
+
+
+####################################################################################################
+# SLOW TESTS: RUN THE FULL TRIAL FUNCTION ACROSS TMP_PATH_FACTORY FILES
+####################################################################################################
 
 
 @pytest.mark.slow
