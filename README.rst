@@ -141,7 +141,7 @@ running:
     $ mutatest -t "pytest --cov=mypackage tests/test_run.py"
 
 
-Would generate the :code:`.coverage` file based on :code:`tests/test_run.py`. Therefore, even though
+would generate the :code:`.coverage` file based on :code:`tests/test_run.py`. Therefore, even though
 the entire package is seen only the lines covered by :code:`tests/test_run.py` will be mutated
 during the trials. You can override this behavior with the :code:`--nocov` flag on the command line.
 

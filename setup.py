@@ -39,7 +39,7 @@ CLASSIFIERS = [
 
 INSTALL_REQUIRES = [
     # Reference: https://coverage.readthedocs.io/en/v4.5.x/api_coveragedata.html#the-coveragedata-class
-    "coverage >= 4.0"
+    "coverage>=4.4"
 ]
 EXTRAS_REQUIRE = {
     "docs": ["sphinx"],
