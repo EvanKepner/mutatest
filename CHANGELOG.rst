@@ -4,6 +4,15 @@ Changelog
 :code:`mutatest` is alpha software, and backwards compatibility between releases is
 not guaranteed while under development.
 
+0.5.0
+-----
+
+    - Addition of :code:`optimizers`, including the new class :code:`CoverageOptimizer`.
+    - This optimizer restricts the full sample space only to source locations that are marked
+      as covered in the :code:`.coverage` file. If you have a :code:`pytest.ini` that includes
+      the :code:`--cov=` command it will automatically generate during the clean-trial run.
+
+
 0.4.2
 -----
 

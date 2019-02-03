@@ -15,15 +15,15 @@
 
 
 
-Have a high test coverage number? Try out :code:`mutatest` and see if your tests will detect small
+Are you confident in your tests? Try out :code:`mutatest` and see if your tests will detect small
 modifications (mutations) in the code. Surviving mutations represent subtle changes that might
 slip past your continuous integration checks and are undetectable by your tests.
 
 
 Features:
     - Simple command line tool.
-    - Pure Python, there are no external dependencies.
-    - Built on Python's Abstract Syntax Tree (AST) grammar.
+    - Integrated with :code:`coverage` to only create meaningful mutants.
+    - Built on Python's Abstract Syntax Tree (AST) grammar to ensure mutants are valid.
     - Does not modify your source code, only the :code:`__pycache__`.
     - Flexible enough to run on a whole package or a single file.
 
@@ -47,9 +47,8 @@ Alternatively, clone this repo and install locally:
     $ pip install .
 
 
-When to use :code:`mutatest`:
-    - You have a Python package with a high test coverage number.
-    - Your tests are in a separate file from the main Python source file.
+:code:`mutatest` is designed to work when your test files are separated from your source directory
+and are prefixed with :code:`test_`. See `Pytest Test Layout`_ for more details.
 
 
 Using ``mutatest``
@@ -61,7 +60,9 @@ The mutation trial process follows these steps when :code:`mutatest` is run:
 
 1. Scan for your existing Python package, or use the input source location.
 2. Create an abstract syntax tree (AST) from the source files.
-3. Identify locations in the code that may be mutated (line and column).
+3. Identify locations in the code that may be mutated (line and column). If you are running with
+   :code:`coverage` the sample is restricted only to lines that are marked as covered in the
+   :code:`.coverage` file.
 4. Take a random sample of the identified locations.
 5. Apply a mutation at the location by modifying a copy of the AST and writing a new cache file
    to the appropriate :code:`__pycache__` location with the source file statistics.
@@ -125,12 +126,49 @@ in a string. Only list the file name, not paths.
     $ mutatest -e "__init__.py _devtools.py"
 
 
+Coverage optimization
+---------------------
+
+Any command combination that generates a :code:`.coverage` file will use that as a restriction
+mechanism for the sample space to only select mutation locations that are covered. For example,
+running:
+
+.. code-block:: bash
+
+    $ mutatest --testcmds "pytest --cov=mypackage tests/test_run.py"
+
+    # using shorthand arguments
+    $ mutatest -t "pytest --cov=mypackage tests/test_run.py"
+
+
+Would generate the :code:`.coverage` file based on :code:`tests/test_run.py`. Therefore, even though
+the entire package is seen only the lines covered by :code:`tests/test_run.py` will be mutated
+during the trials. You can override this behavior with the :code:`--nocov` flag on the command line.
+
+If you have a :code:`pytest.ini` file that includes the :code:`--cov` command the default behavior
+of :code:`mutatest` will generate the coverage file. You will see this in the CLI output at the
+beginning of the trials:
+
+.. code-block:: bash
+
+    $ mutatest -n 4 -t "pytest --cov=mypackage"
+
+    ... prior output...
+
+    ... Get mutatest targets from AST.
+    ... Full sample space size: 115
+    ... Coverage optimized sample space size: 75
+    ... Selecting 4 locations from 75 potentials.
+
+    ... continued output...
+
+
 Auto-detected package structures
 --------------------------------
 
 The following package structures would be auto-detected if you ran :code:`mutatest` from the
 same directory holding :code:`examplepkg/`. You can always point to a specific directory using
-the :code:`--source` argument.
+the :code:`--source` argument. These are outlined in the `Pytest Test Layout`_ documentation.
 
 
 Example with internal tests
@@ -238,6 +276,13 @@ has a Python package folder and tests that are auto-discoverable and run by :cod
     $ mutatest -n 5 -m sd -r 345 -o mutation_345.rst
 
 
+With :code:`coverage` optimization if your :code:`pytest.ini` file does not already specify it:
+
+.. code-block:: bash
+
+    $ mutatest -n 5 -m sd -r 345 -o mutation_345.rst -t "pytest --cov=mypackage"
+
+
 Getting help
 ------------
 
@@ -267,6 +312,7 @@ Run :code:`mutatest --help` to see command line arguments and supported operatio
       -t STR_CMDS, --testcmds STR_CMDS
                             Test command string to execute. (default: 'pytest')
       --debug               Turn on DEBUG level logging output.
+      --nocov               Ignore coverage files for optimization.
 
 Supported Mutations
 ===================
@@ -312,3 +358,4 @@ return codes into mutation trial statuses.
 
 .. target-notes::
 .. _Python AST grammar: https://docs.python.org/3/library/ast.html#abstract-grammar
+.. _Pytest Test Layout: https://docs.pytest.org/en/latest/goodpractices.html#choosing-a-test-layout-import-rules
