@@ -27,6 +27,7 @@ CLASSIFIERS = [
     "Intended Audience :: Developers",
     "Natural Language :: English",
     "Environment :: Console",
+    "Framework :: Pytest",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3.7",
@@ -37,10 +38,7 @@ CLASSIFIERS = [
     "Topic :: Software Development :: Testing :: Unit",
 ]
 
-INSTALL_REQUIRES = [
-    # Reference: https://coverage.readthedocs.io/en/v4.5.x/api_coveragedata.html#the-coveragedata-class
-    "coverage>=4.4"
-]
+INSTALL_REQUIRES = ["pytest", "coverage>=4.4"]
 EXTRAS_REQUIRE = {
     "docs": ["sphinx"],
     "tests": ["pytest >= 4.0.0", "freezegun", "coverage", "pytest-cov", "tox", "virtualenv"],

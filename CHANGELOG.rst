@@ -4,6 +4,16 @@ Changelog
 :code:`mutatest` is alpha software, and backwards compatibility between releases is
 not guaranteed while under development.
 
+0.5.1
+-----
+
+    - Updated :code:`controller` for test file exclusion to explicitly match prefix or suffix cases
+      for :code:`"test_"` and :code:`"_test"` per :code:`pytest` conventions.
+    - Including :code:`pytest` in the installation requirements. Technically, any test runner can
+      be used but with all base package assumptions being built around :code:`pytest` this feels
+      like the right assumption to call out as an install dependency. It is the default behavior.
+    - Changed error and unknown status results to console color as yellow instead of red.
+
 0.5.0
 -----
 

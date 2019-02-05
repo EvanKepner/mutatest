@@ -29,6 +29,8 @@ def test_get_py_files_flat(tmp_path):
         "third.py",
         "test_first.py",
         "test_second.py",
+        "third_test.py",
+        "fourth_test.py",
         "first.pyc",
         "first.pyo",
         "first.pyi",
@@ -54,6 +56,7 @@ def test_get_py_files_recursive(tmp_path):
         tmp_path / "second.py",
         tmp_path / "test_first.py",
         tmp_path / "test_second.py",
+        tmp_path / "third_test.py",
         f / "third.py",
         f / "test_third.py",
     ]
@@ -116,6 +119,7 @@ def test_build_src_trees_and_targets_exclusions(tmp_path):
         tmp_path / "second.py",
         tmp_path / "test_first.py",
         tmp_path / "test_second.py",
+        tmp_path / "third_test.py",
         f / "third.py",
         f / "test_third.py",
     ]

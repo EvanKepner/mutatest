@@ -24,6 +24,7 @@ Features:
     - Simple command line tool.
     - Integrated with :code:`coverage` to only create meaningful mutants.
     - Built on Python's Abstract Syntax Tree (AST) grammar to ensure mutants are valid.
+    - Built for efficiency with multiple running modes and random sampling of mutation targets.
     - Does not modify your source code, only the :code:`__pycache__`.
     - Flexible enough to run on a whole package or a single file.
 

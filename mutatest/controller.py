@@ -42,11 +42,28 @@ def colorize_output(output: str, color: str) -> str:
         colorized string, or original string for bad color choice.
     """
     colors = {
-        "red": f"\033[91m{output}\033[0m",  # Red
-        "green": f"\033[92m{output}\033[0m",  # Green
+        "red": f"\033[91m{output}\033[0m",  # Red text
+        "green": f"\033[92m{output}\033[0m",  # Green text
+        "yellow": f"\033[93m{output}\033[0m",  # Yellow text
+        "blue": f"\033[94m{output}\033[0m",  # Blue text
     }
 
     return colors.get(color, output)
+
+
+def is_test_file(src_file: Path) -> bool:
+    """Utility function to match the test prefix or suffix in the stem. Ref:
+
+    https://docs.pytest.org/en/latest/goodpractices.html#conventions-for-python-test-discovery
+
+    Args:
+        src_file: Path object for the source file in question
+
+    Returns:
+        bool status of being a test file
+    """
+
+    return src_file.stem.startswith("test_") or src_file.stem.endswith("_test")
 
 
 def get_py_files(src_loc: Union[str, Path]) -> List[Path]:
@@ -66,13 +83,13 @@ def get_py_files(src_loc: Union[str, Path]) -> List[Path]:
         src_loc = Path(src_loc)
 
     # in case a single py file is passed
-    if src_loc.is_file() and src_loc.suffix == ".py" and not src_loc.stem.startswith("test_"):
+    if src_loc.is_file() and src_loc.suffix == ".py" and not is_test_file(src_loc):
         return [src_loc.resolve()]
 
     # if a directory is passed
     if src_loc.is_dir():
         relative_list = list(src_loc.rglob("*.py"))
-        return [p.resolve() for p in relative_list if not p.stem.startswith("test_")]
+        return [p.resolve() for p in relative_list if not is_test_file(p)]
 
     raise FileNotFoundError(f"{src_loc} is not a valid Python file or directory.")
 
@@ -340,7 +357,7 @@ def run_mutation_trials(
                 LOGGER.info(
                     "%s",
                     colorize_output(
-                        "Error with mutation, stopping further mutations for location.", "red"
+                        "Error with mutation, stopping further mutations for location.", "yellow"
                     ),
                 )
                 break
@@ -349,7 +366,8 @@ def run_mutation_trials(
                 LOGGER.info(
                     "%s",
                     colorize_output(
-                        "Unknown mutation result, stopping further mutations for location.", "red"
+                        "Unknown mutation result, stopping further mutations for location.",
+                        "yellow",
                     ),
                 )
                 break
