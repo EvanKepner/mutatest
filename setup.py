@@ -41,7 +41,15 @@ CLASSIFIERS = [
 INSTALL_REQUIRES = ["pytest", "coverage>=4.4"]
 EXTRAS_REQUIRE = {
     "docs": ["sphinx"],
-    "tests": ["pytest >= 4.0.0", "freezegun", "coverage", "pytest-cov", "tox", "virtualenv"],
+    "tests": [
+        "pytest >= 4.0.0",
+        "freezegun",
+        "coverage",
+        "pytest-cov",
+        "tox",
+        "virtualenv",
+        "hypothesis",
+    ],
     "qa": ["mypy", "black", "pre-commit", "isort"],
 }
 

@@ -52,6 +52,9 @@ def get_cache_file_loc(src_file: Union[str, Path]) -> Path:
     Raises:
         FileExistsError if the cache-file path is symlink or irregular file
     """
+    if not src_file:
+        raise ValueError("src_file cannot be an empty string.")
+
     cache_file = importlib.util.cache_from_source(str(src_file))
 
     if os.path.islink(cache_file):

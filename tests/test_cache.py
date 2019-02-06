@@ -6,7 +6,10 @@ import sys
 from pathlib import Path
 from py_compile import PycInvalidationMode  # type: ignore
 
+import hypothesis.strategies as st
 import pytest
+
+from hypothesis import given
 
 from mutatest.cache import (
     check_cache_invalidation_mode,
@@ -14,6 +17,11 @@ from mutatest.cache import (
     get_cache_file_loc,
     remove_existing_cache_files,
 )
+
+
+####################################################################################################
+# UNIT TESTS
+####################################################################################################
 
 
 def test_check_cache_invalidation_mode_error(monkeypatch):
@@ -40,6 +48,12 @@ def test_get_cache_file_loc():
     result = get_cache_file_loc(test_file)
 
     assert result == expected
+
+
+def test_get_cache_file_loc_invalid():
+    """Empty string will raise a ValueError."""
+    with pytest.raises(ValueError):
+        _ = get_cache_file_loc(src_file="")
 
 
 def test_get_cache_file_loc_link_exception(monkeypatch):
@@ -131,3 +145,21 @@ def test_remove_existing_cache_files_from_folder(tmp_path):
 
     for tcf in test_cache_files:
         assert not tcf.exists()
+
+
+####################################################################################################
+# PROPERTY TESTS
+####################################################################################################
+
+
+@given(st.text(alphabet=st.characters(blacklist_categories=("Cs", "Cc", "Po")), min_size=1))
+def test_get_cache_file_loc_invariant(s):
+    """Given minimally 1 character, that is not Cs, Cc, Po category e.g. null bytes, or punctuation,
+    the invariant properties are that the last .parts entry is __pycache__ and splitting the
+    stem of the file name on the tag and taking the first entry gives the original string.
+    """
+    result = get_cache_file_loc(s)
+    tag = sys.implementation.cache_tag
+
+    assert result.parent.parts[-1] == "__pycache__"
+    assert result.stem.split(tag)[0] == s
