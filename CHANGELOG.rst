@@ -4,7 +4,7 @@ Changelog
 :code:`mutatest` is alpha software, and backwards compatibility between releases is
 not guaranteed while under development.
 
-0.5.1
+0.6.0
 -----
 
     - Including :code:`pytest` in the installation requirements. Technically, any test runner can
