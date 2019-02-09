@@ -13,7 +13,7 @@ not guaranteed while under development.
     - Updated :code:`controller` for test file exclusion to explicitly match prefix or suffix cases
       for :code:`"test_"` and :code:`"_test"` per :code:`pytest` conventions.
     - Changed error and unknown status results to console color as yellow instead of red.
-    - Added mutiple invariant property tests, primarily to :code:`controller` and :code:`cache`.
+    - Added multiple invariant property tests, primarily to :code:`controller` and :code:`cache`.
     - Added :code:`hypothesis` to the test components of :code:`extras_require`.
     - Moved to :code:`@property` decorators for internal class properties that should only
       be set at initialization, may add custom :code:`setters` at a later time.
