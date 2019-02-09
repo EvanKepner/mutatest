@@ -280,7 +280,10 @@ def cli_summary_report(
     """
     )
 
-    coverage = (locs_mutated / locs_identified) * 100
+    coverage = 0
+
+    if locs_identified > 0:
+        coverage = (locs_mutated / locs_identified) * 100
 
     fmt_map = {
         "src_loc": str(src_loc.resolve()),

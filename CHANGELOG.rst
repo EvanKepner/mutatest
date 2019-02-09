@@ -7,12 +7,17 @@ not guaranteed while under development.
 0.5.1
 -----
 
-    - Updated :code:`controller` for test file exclusion to explicitly match prefix or suffix cases
-      for :code:`"test_"` and :code:`"_test"` per :code:`pytest` conventions.
     - Including :code:`pytest` in the installation requirements. Technically, any test runner can
       be used but with all base package assumptions being built around :code:`pytest` this feels
       like the right assumption to call out as an install dependency. It is the default behavior.
+    - Updated :code:`controller` for test file exclusion to explicitly match prefix or suffix cases
+      for :code:`"test_"` and :code:`"_test"` per :code:`pytest` conventions.
     - Changed error and unknown status results to console color as yellow instead of red.
+    - Added mutiple invariant property tests, primarily to :code:`controller` and :code:`cache`.
+    - Added :code:`hypothesis` to the test components of :code:`extras_require`.
+    - Moved to :code:`@property` decorators for internal class properties that should only
+      be set at initialization, may add custom :code:`setters` at a later time.
+    - Fixed a zero-division bug in the :code:`cli` when reporting coverage percentage.
 
 0.5.0
 -----
