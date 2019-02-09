@@ -19,7 +19,12 @@ class CoverageOptimizer:
 
     def __init__(self, cov_file: Optional[Path] = None) -> None:
 
-        self.cov_file = cov_file or DEFAULT_COVERAGE_FILE
+        self._cov_file = cov_file or DEFAULT_COVERAGE_FILE
+
+    @property
+    def cov_file(self) -> Path:
+        """Property accessor for _cov_file set at initialization."""
+        return self._cov_file
 
     @property
     def cov_data(self) -> CoverageData:

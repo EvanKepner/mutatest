@@ -55,10 +55,32 @@ class MutateAST(ast.NodeTransformer):
             src_file: Source file name, used for logging purposes
         """
         self.locs: Set[LocIndex] = set()
-        self.target_idx = target_idx
-        self.mutation = mutation
-        self.readonly = readonly
-        self.src_file = src_file
+
+        # managed via @property
+        self._target_idx = target_idx
+        self._mutation = mutation
+        self._readonly = readonly
+        self._src_file = src_file
+
+    @property
+    def target_idx(self) -> Optional[LocIndex]:
+        """target_idx: Location index for the mutatest in the AST"""
+        return self._target_idx
+
+    @property
+    def mutation(self) -> Optional[Any]:
+        """mutation: the mutatest to apply, may be a type or a value"""
+        return self._mutation
+
+    @property
+    def readonly(self) -> bool:
+        """readonly: flag for read-only operations, used to visit nodes instead of transform"""
+        return self._readonly
+
+    @property
+    def src_file(self) -> Optional[Union[Path, str]]:
+        """src_file: Source file name, used for logging purposes"""
+        return self._src_file
 
     def visit_AugAssign(self, node: ast.AugAssign) -> ast.AST:
         """AugAssign is -=, +=, /=, *= for augmented assignment."""

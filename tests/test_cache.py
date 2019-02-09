@@ -9,7 +9,7 @@ from py_compile import PycInvalidationMode  # type: ignore
 import hypothesis.strategies as st
 import pytest
 
-from hypothesis import given
+from hypothesis import assume, example, given
 
 from mutatest.cache import (
     check_cache_invalidation_mode,
@@ -152,14 +152,21 @@ def test_remove_existing_cache_files_from_folder(tmp_path):
 ####################################################################################################
 
 
-@given(st.text(alphabet=st.characters(blacklist_categories=("Cs", "Cc", "Po")), min_size=1))
+@given(st.text(alphabet=st.characters(blacklist_categories=("Cs", "Cc", "Po"))))
+@example("")
 def test_get_cache_file_loc_invariant(s):
-    """Given minimally 1 character, that is not Cs, Cc, Po category e.g. null bytes, or punctuation,
-    the invariant properties are that the last .parts entry is __pycache__ and splitting the
-    stem of the file name on the tag and taking the first entry gives the original string.
+    """Property:
+        1. Calling cache-file with an empty string raises a value-error.
+        2. Returned cache files include __pycache__ as the terminal directory.
+        3. Splitting the returned cache-file stem on the system tag yeids the original file stem.
     """
-    result = get_cache_file_loc(s)
-    tag = sys.implementation.cache_tag
+    if len(s) == 0:
+        with pytest.raises(ValueError):
+            _ = get_cache_file_loc(s)
 
-    assert result.parent.parts[-1] == "__pycache__"
-    assert result.stem.split(tag)[0] == s
+    else:
+        result = get_cache_file_loc(s)
+        tag = sys.implementation.cache_tag
+
+        assert result.parent.parts[-1] == "__pycache__"
+        assert result.stem.split(tag)[0] == s

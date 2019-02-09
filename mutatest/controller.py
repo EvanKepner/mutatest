@@ -67,7 +67,9 @@ def is_test_file(src_file: Path) -> bool:
 
 
 def get_py_files(src_loc: Union[str, Path]) -> List[Path]:
-    """Find all .py files in src_loc and return absolute path
+    """Find all .py files in src_loc and return absolute path.
+
+    Strings are coerced to Path objects, meaning '' will become ``Path('.')``.
 
     Args:
         src_loc: the source location to scan, can be file or folder
@@ -79,6 +81,7 @@ def get_py_files(src_loc: Union[str, Path]) -> List[Path]:
         FileNotFoundError, if src_loc is not a valid file or directory
     """
     # ensure Path object in case str is passed
+    # but also check that not an empty string, '' is coerced to '.' otherwise.
     if not isinstance(src_loc, Path):
         src_loc = Path(src_loc)
 
@@ -203,6 +206,9 @@ def get_mutation_sample_locations(
     mutation_sample = sample_space
 
     if n_locations:
+        if n_locations < 0:
+            raise ValueError("n_locations must be greater or equal to zero.")
+
         if n_locations <= len(sample_space):
             LOGGER.info(
                 "Selecting %s locations from %s potentials.", n_locations, len(sample_space)

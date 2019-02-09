@@ -6,15 +6,20 @@ import subprocess
 from pathlib import Path
 from subprocess import CompletedProcess
 
+import hypothesis.strategies as st
 import pytest
+
+from hypothesis import assume, given
 
 from mutatest.controller import (
     BaselineTestException,
     build_src_trees_and_targets,
     clean_trial,
+    colorize_output,
     get_mutation_sample_locations,
     get_py_files,
     get_sample_space,
+    is_test_file,
     optimize_covered_sample,
     run_mutation_trials,
 )
@@ -180,6 +185,104 @@ def test_optimize_covered_sample(mock_coverage_file, mock_precov_sample):
 
     for _, li in result_sample:
         assert li.lineno in [1, 4, 2]
+
+
+####################################################################################################
+# PROPERTY TESTS
+####################################################################################################
+
+TEXT_STRATEGY = st.text(alphabet=st.characters(blacklist_categories=("Cs", "Cc", "Po")), min_size=1)
+
+
+@given(TEXT_STRATEGY)
+def test_invariant_get_py_files(s):
+    """Property:
+        1. Any string that over 1 character and is not a valid file raises a FileNotFoundError.
+    """
+    with pytest.raises(FileNotFoundError):
+        _ = get_py_files(s)
+
+
+@given(TEXT_STRATEGY.map(lambda x: Path("test_" + x)))
+def test_is_testfile_prefix(s):
+    """Property:
+        1. A file path that starts with "test_" returns true as a test file
+    """
+    assert is_test_file(s)
+
+
+@given(TEXT_STRATEGY.map(lambda x: Path(x + "_test.py")))
+def test_is_testfile_suffix(s):
+    """Property:
+        1. A file path that ends with "_test.py" returns true as a test file
+    """
+    assert is_test_file(s)
+
+
+@given(TEXT_STRATEGY.map(lambda x: Path(x)))
+def test_is_testfile_negative_case(s):
+    """Property:
+        1. A file path with `test_` or `_test` is not identified as a test file.
+    """
+    assert not is_test_file(s)
+
+
+VALID_COLORS = ["red", "green", "yellow", "blue"]
+
+
+@given(TEXT_STRATEGY, TEXT_STRATEGY)
+def test_colorize_output_invariant_return(o, c):
+    """Property:
+        1. Colorized output always returns the unmodified string for invalid entries.
+    """
+    assume(c not in VALID_COLORS)
+
+    result = colorize_output(o, c)
+    assert result == o
+
+
+@pytest.mark.parametrize("color", VALID_COLORS)
+@given(TEXT_STRATEGY)
+def test_colorize_output_invariant_valid(color, o):
+    """Property:
+        1. Valid colorized output start and end with assumed terminal markers.
+    """
+    result = colorize_output(o, color)
+    assert result.startswith("\x1b[")
+    assert result.endswith("\x1b[0m")
+
+
+@given(st.lists(elements=TEXT_STRATEGY))
+def test_mutation_sample_loc_invariant_optional_n(l):
+    """Property:
+        1. If n-locations is not specified the returned sample is the original sample.
+    """
+    result = get_mutation_sample_locations(l)
+    assert result == l
+
+
+@given(st.lists(elements=TEXT_STRATEGY), st.integers(min_value=1))
+def test_mutation_sample_loc_invariant_valid_n(l, n):
+    """Property:
+        1. An n-value less than the size of the sample-input returns a list of size n
+        2. An n-value greater than the size of the sample returns a lit of the sample size
+    """
+    result = get_mutation_sample_locations(l, n)
+
+    if n <= len(l):
+        assert len(result) == n
+
+    else:
+        assert len(result) == len(l)
+
+
+@given(st.lists(elements=TEXT_STRATEGY), st.integers(max_value=-1))
+def test_mutation_sample_loc_invariant_invalid_n(l, n):
+    """Property:
+        1. An n-value less than 0 raises a ValueError.
+    """
+    with pytest.raises(ValueError):
+        _ = get_mutation_sample_locations(l, n)
 
 
 ####################################################################################################
