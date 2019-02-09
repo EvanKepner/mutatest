@@ -280,7 +280,7 @@ def cli_summary_report(
     """
     )
 
-    coverage = 0
+    coverage = 0.0
 
     if locs_identified > 0:
         coverage = (locs_mutated / locs_identified) * 100
