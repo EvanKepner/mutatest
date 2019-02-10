@@ -9,7 +9,7 @@ from subprocess import CompletedProcess
 import hypothesis.strategies as st
 import pytest
 
-from hypothesis import assume, given
+from hypothesis import assume, example, given
 
 from mutatest.controller import (
     BaselineTestException,
@@ -261,11 +261,13 @@ def test_mutation_sample_loc_invariant_optional_n(l):
     assert result == l
 
 
-@given(st.lists(elements=TEXT_STRATEGY), st.integers(min_value=1))
+@given(st.lists(elements=TEXT_STRATEGY), st.integers(min_value=0))
+@example(["a", "b", "c"], 0)
 def test_mutation_sample_loc_invariant_valid_n(l, n):
     """Property:
         1. An n-value less than the size of the sample-input returns a list of size n
         2. An n-value greater than the size of the sample returns a lit of the sample size
+        3. An n-value of zero returns an empty list
     """
     result = get_mutation_sample_locations(l, n)
 

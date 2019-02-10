@@ -9,7 +9,7 @@ import sys
 from datetime import timedelta
 from pathlib import Path
 from textwrap import dedent
-from typing import NamedTuple, Optional
+from typing import NamedTuple, Optional, Sequence
 
 from setuptools import find_packages  # type:ignore
 
@@ -150,7 +150,7 @@ def cli_epilog() -> str:
     return "\n".join([main_epilog] + mutation_epilog + [meta_info])
 
 
-def cli_args() -> argparse.Namespace:
+def cli_args(args: Optional[Sequence[str]]) -> argparse.Namespace:
     """Command line arguments.
 
     Returns:
@@ -234,7 +234,7 @@ def cli_args() -> argparse.Namespace:
         "--nocov", action="store_true", help="Ignore coverage files for optimization."
     )
 
-    return parser.parse_args()
+    return parser.parse_args(args)
 
 
 def cli_summary_report(
@@ -307,7 +307,7 @@ def cli_main() -> None:
     """Entry point to run CLI args and execute main function."""
     # Run a quick check at the beginning in case of later OS errors.
     check_cache_invalidation_mode()
-    args = cli_args()
+    args = cli_args(sys.argv[1:])
     main(args)
 
 

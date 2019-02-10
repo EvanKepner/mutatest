@@ -205,7 +205,8 @@ def get_mutation_sample_locations(
     # take a random sample without replacement
     mutation_sample = sample_space
 
-    if n_locations:
+    # natural Falsey evaluation of n_locations=0 requires exact None check
+    if n_locations is not None:
         if n_locations < 0:
             raise ValueError("n_locations must be greater or equal to zero.")
 

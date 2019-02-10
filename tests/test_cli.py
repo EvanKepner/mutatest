@@ -6,13 +6,25 @@ from pathlib import Path
 from textwrap import dedent
 from typing import List, NamedTuple, Optional
 
+import hypothesis.strategies as st
 import pytest
 
 from freezegun import freeze_time
+from hypothesis import given
 
 import mutatest.cli
 
-from mutatest.cli import RunMode, cli_main, get_src_location
+from mutatest.cli import (
+    RunMode,
+    TrialTimes,
+    cli_epilog,
+    cli_main,
+    cli_summary_report,
+    get_src_location,
+)
+
+# TODO: test this by passing arg lists
+# from mutatest.cli import cli_args
 
 
 class MockArgs(NamedTuple):
@@ -42,6 +54,16 @@ def mock_args(tmp_path, binop_file):
         testcmds=["pytest"],
         debug=False,
         nocov=True,
+    )
+
+
+@pytest.fixture()
+def mock_TrialTimes():
+    """Mock Trial Time fixture for the CLI."""
+    return TrialTimes(
+        clean_trial_1=timedelta(days=0, seconds=6, microseconds=0),
+        clean_trial_2=timedelta(days=0, seconds=6, microseconds=0),
+        mutation_trials=timedelta(days=0, seconds=6, microseconds=0),
     )
 
 
@@ -187,3 +209,35 @@ def test_main(monkeypatch, mock_args, mock_results_summary):
     with open(mock_args.output, "r") as f:
         results = f.read()
         assert results == expected_final_report
+
+
+####################################################################################################
+# PROPERTY TESTS
+####################################################################################################
+
+TEXT_STRATEGY = st.text(alphabet=st.characters(blacklist_categories=("Cs", "Cc", "Po")), min_size=1)
+
+
+# no arguments, so no given assumption
+def test_cli_epilog_invariant():
+    """Property:
+        1. cli-epilog always returns a string value for screen printing
+    """
+    result = cli_epilog()
+    assert isinstance(result, str)
+    assert len(result) > 1
+
+
+@given(TEXT_STRATEGY.map(lambda x: Path(x)), st.integers(), st.integers())
+def test_cli_summary_report_invariant(mock_args, mock_TrialTimes, s, lm, li):
+    """Property:
+        1. cli_summary report returns a valid string without errors given any set of integers for
+        locs_mutated and locs_identified.
+    """
+
+    results = cli_summary_report(
+        src_loc=s, args=mock_args, locs_mutated=lm, locs_identified=li, runtimes=mock_TrialTimes
+    )
+
+    assert isinstance(results, str)
+    assert len(results) > 1
