@@ -4,6 +4,13 @@ Changelog
 :code:`mutatest` is alpha software, and backwards compatibility between releases is
 not guaranteed while under development.
 
+0.6.1
+-----
+
+    - Added explicit tests for :code:`argparse` cli options.
+    - Added mechanism to sort reporting mutations by source file, then line number, then column
+      number.
+
 0.6.0
 -----
 

@@ -4,6 +4,7 @@ import logging
 
 from collections import Counter
 from datetime import datetime
+from operator import attrgetter
 from pathlib import Path
 from typing import Dict, List, NamedTuple, Tuple, Union
 
@@ -152,6 +153,10 @@ def build_report_section(title: str, mutants: List[Mutant]) -> str:
     fmt_template = (
         " - {src_file}: (l: {lineno}, c: {col_offset}) - mutation from {op_type} to {mutation}"
     )
+
+    # in place sort by source file, then location line then column
+    mutant_sort_keys = attrgetter("src_file.stem", "src_idx.lineno", "src_idx.col_offset")
+    mutants.sort(key=mutant_sort_keys)
 
     for mutant in mutants:
         summary = {}
