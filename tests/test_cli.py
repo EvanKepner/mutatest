@@ -285,3 +285,13 @@ def test_args_exclude_split(e, earg):
     """
     args = cli_args([e, earg[1]])
     assert len(args.exclude) == earg[0]
+
+
+@pytest.mark.parametrize("n", ["--nlocations", "-n", "-rseed", "-r"])
+@given(st.integers(max_value=-1))
+def test_syserror_negative_n_and_rseed(n, i):
+    """Property:
+        1. Given a negative n-value a SystemExit is raised.
+    """
+    with pytest.raises(SystemExit):
+        _ = cli_args([n, f"{i}"])
