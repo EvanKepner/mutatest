@@ -28,7 +28,7 @@ in the development dependencies as part of the set up procedure.
 2. Create a new Python virtual environment using Python 3.7 and activate it.
 3. Change to the local directory of your clone. All commands are run in the top level directory
    where the :code:`setup.py` file is located.
-4. Install :code:`mutatest` in edit mode with all development dependencies using :code:`pip` v18.
+4. Install :code:`mutatest` in edit mode with all development dependencies using :code:`pip`.
 
 .. code-block:: bash
 
