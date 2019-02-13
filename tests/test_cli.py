@@ -11,17 +11,20 @@ import pytest
 
 from freezegun import freeze_time
 from hypothesis import given
+from hypothesis.strategies import composite
 
 import mutatest.cli
 
 from mutatest.cli import (
     RunMode,
     TrialTimes,
+    cli_args,
     cli_epilog,
     cli_main,
     cli_summary_report,
     get_src_location,
 )
+
 
 # TODO: test this by passing arg lists
 # from mutatest.cli import cli_args
@@ -211,6 +214,24 @@ def test_main(monkeypatch, mock_args, mock_results_summary):
         assert results == expected_final_report
 
 
+def test_expected_arg_attrs():
+    """With an empty list we should always get args with the specified attributes."""
+    args = cli_args([])
+    expected_args = [
+        "exclude",
+        "mode",
+        "nlocations",
+        "output",
+        "rseed",
+        "src",
+        "testcmds",
+        "debug",
+        "nocov",
+    ]
+    for e in expected_args:
+        assert hasattr(args, e)
+
+
 ####################################################################################################
 # PROPERTY TESTS
 ####################################################################################################
@@ -241,3 +262,26 @@ def test_cli_summary_report_invariant(mock_args, mock_TrialTimes, s, lm, li):
 
     assert isinstance(results, str)
     assert len(results) > 1
+
+
+@composite
+def e_args(draw):
+    """Strategy for creating lists of space delimited strings."""
+    list_text = draw(
+        st.lists(
+            elements=TEXT_STRATEGY.map(lambda x: x.replace(" ", "_")).filter(lambda x: len(x) > 0),
+            min_size=2,
+        )
+    )
+
+    return (len(list_text), " ".join(list_text))
+
+
+@pytest.mark.parametrize("e", ["--exclude", "-e"])
+@given(e_args())
+def test_args_exclude_split(e, earg):
+    """Property:
+        1. Given a space delimited string in --exclude, the split list is always returned.
+    """
+    args = cli_args([e, earg[1]])
+    assert len(args.exclude) == earg[0]
