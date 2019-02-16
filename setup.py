@@ -46,6 +46,7 @@ EXTRAS_REQUIRE = {
         "freezegun",
         "coverage",
         "pytest-cov",
+        "pytest-xdist",
         "tox",
         "virtualenv",
         "hypothesis",
