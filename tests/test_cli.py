@@ -26,10 +26,6 @@ from mutatest.cli import (
 )
 
 
-# TODO: test this by passing arg lists
-# from mutatest.cli import cli_args
-
-
 class MockArgs(NamedTuple):
     """Container for mocks of the cli arguments."""
 
@@ -274,7 +270,8 @@ def e_args(draw):
         )
     )
 
-    return (len(list_text), " ".join(list_text))
+    arg_values = " ".join(list_text)
+    return (len(arg_values.split(" ")), arg_values)
 
 
 @pytest.mark.parametrize("e", ["--exclude", "-e"])
