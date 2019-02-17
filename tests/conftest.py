@@ -425,3 +425,45 @@ def nameconst_expected_locs():
         LocIndex(ast_class="NameConstant", lineno=6, col_offset=22, op_type=False),
         LocIndex(ast_class="NameConstant", lineno=7, col_offset=22, op_type=None),
     ]
+
+
+####################################################################################################
+# TRANSFORMERS: SLICE FIXTURES
+####################################################################################################
+
+
+@pytest.fixture(scope="session")
+def slice_file(tmp_path_factory):
+    """A simple python file with the slice attributes."""
+    contents = dedent(
+        """\
+    def my_func(x_list):
+        y_list = x_list[:-1]
+        z_list = x_list[0:2:-4]
+        zz_list = x_list[0::2]
+        zzs_list = x_list[-8:-3:2]
+        yz_list = y_list[0:]
+        a_list = x_list[::]
+
+        return yz_list
+    """
+    )
+
+    fn = tmp_path_factory.mktemp("slice") / "slice.py"
+
+    with open(fn, "w") as output_fn:
+        output_fn.write(contents)
+
+    return fn
+
+
+@pytest.fixture(scope="session")
+def slice_expected_locs():
+    """The slice expected locations based on the fixture."""
+    return [
+        LocIndex(ast_class="Slice_SwapNoneUL", lineno=2, col_offset=13, op_type="Slice_SwapNoneUL"),
+        LocIndex(ast_class="Slice_PosShrink", lineno=3, col_offset=13, op_type="Slice_PosShrink"),
+        LocIndex(ast_class="Slice_SwapNoneLU", lineno=4, col_offset=14, op_type="Slice_SwapNoneLU"),
+        LocIndex(ast_class="Slice_NegShrink", lineno=5, col_offset=15, op_type="Slice_NegShrink"),
+        LocIndex(ast_class="Slice_SwapNoneLU", lineno=6, col_offset=14, op_type="Slice_SwapNoneLU"),
+    ]
