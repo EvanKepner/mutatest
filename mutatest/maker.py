@@ -130,6 +130,19 @@ def create_mutation_and_run_trial(
     test_cmds: List[str],
     tree_inplace: bool = False,
 ) -> MutantTrialResult:
+    """Write the mutation to the cache location and runs the trial based on test_cmds
+
+    Args:
+        src_tree: the source AST
+        src_file:  the source file location to determine cache location
+        target_idx: the mutation target in the source AST
+        mutation_op: the mutation to apply
+        test_cmds: test command string for running the trial
+        tree_inplace: flag for in-place mutations, default to False
+
+    Returns:
+        MutationTrialResult from the trial run
+    """
 
     # mutatest requires deep-copy to avoid in-place reference changes to AST
     tree = src_tree if tree_inplace else deepcopy(src_tree)

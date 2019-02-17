@@ -61,21 +61,6 @@ class NodeLister(ast.NodeVisitor):  # pragma: no cover
     # IN DEVELOPMENT
     ################################################################################################
 
-    # FUTURE DEVELOPMENT
-    ################################################################################################
-
-    def visit_Assign(self, node: ast.Assign) -> None:
-        # variable assignment
-        # print(f"Assign: {node}")
-        # print(ast.dump(node))
-        self.generic_visit(node)
-
-    def visit_If(self, node: ast.If) -> None:
-        # have is, is not already, not clear If directly is a valuable mutation
-        print(f"If: {node}")
-        print(ast.dump(node))
-        self.generic_visit(node)
-
     def visit_Slice(self, node: ast.Slice) -> None:
         # actual slicing
         print(f"Slice: {node}")
@@ -86,4 +71,22 @@ class NodeLister(ast.NodeVisitor):  # pragma: no cover
         # iterable indexing, has Slice operations
         print(f"Subscript: {node}")
         print(ast.dump(node))
+        self.generic_visit(node)
+
+    # FUTURE DEVELOPMENT
+    ################################################################################################
+
+    def visit_Assign(self, node: ast.Assign) -> None:
+        # variable assignment
+        # print(f"Assign: {node}")
+        # print(ast.dump(node))
+        self.generic_visit(node)
+
+    # INVESTIGATED BUT NOT COVERED
+    ################################################################################################
+
+    def visit_If(self, node: ast.If) -> None:
+        # have is, is not already, not clear If directly is a valuable mutation
+        # print(f"If: {node}")
+        # print(ast.dump(node))
         self.generic_visit(node)

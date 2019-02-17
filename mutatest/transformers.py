@@ -4,7 +4,7 @@ import ast
 import logging
 
 from pathlib import Path
-from typing import Any, List, NamedTuple, Optional, Set, Union
+from typing import Any, Dict, List, NamedTuple, Optional, Set, Tuple, Union
 
 
 LOGGER = logging.getLogger(__name__)
@@ -265,6 +265,80 @@ class MutateAST(ast.NodeTransformer):
         LOGGER.debug("%s (%s, %s): no mutations applied.", log_header, node.lineno, node.col_offset)
         return node
 
+    def visit_Subscript(self, node: ast.Subscript) -> ast.AST:
+        """Subscript slice operations.g. x[1:] or y[::2]"""
+        log_header = f"visit_Subscript: {self.src_file}:"
+        idx = None
+
+        # Subscripts have slice properties with col/lineno, slice itself does not have line/col
+        # Index is also a valid Subscript slice property
+        slice = node.slice
+        if not isinstance(slice, ast.Slice):
+            LOGGER.debug("%s (%s, %s): not a slice node.", log_header, node.lineno, node.col_offset)
+            return node
+
+        # Built "on the fly" based on the various conditions for operation types
+        slice_mutations: Dict[str, Tuple[ast.Slice]] = {}
+
+        # NONE Swap Operation
+        # upper slice range e.g. x[:2] will become x[2:]
+        if slice.lower is None and slice.upper is not None:
+            idx = LocIndex("Slice_SwapNoneUL", node.lineno, node.col_offset, "Slice_SwapNoneUL")
+            slice_mutations["Slice_SwapNoneUL"] = (
+                ast.Slice(lower=slice.upper, upper=None, step=slice.step),
+            )
+            self.locs.add(idx)
+
+        # lower slice range e.g. x[1:] will become x[:1]
+        if slice.upper is None and slice.lower is not None:
+            idx = LocIndex("Slice_SwapNoneLU", node.lineno, node.col_offset, "Slice_SwapNoneLU")
+            slice_mutations["Slice_SwapNoneLU"] = (
+                ast.Slice(lower=None, upper=slice.lower, step=slice.step),
+            )
+            self.locs.add(idx)
+
+        # Shrink Operation
+        # range shrink e.g. x[2,4] becomes x[2,3]
+        # More likely to generate useful mutants than increasing the range
+        if slice.lower is not None and slice.upper is not None:
+            if isinstance(slice.upper, ast.Num):
+                idx = LocIndex("Slice_PosShrink", node.lineno, node.col_offset, "Slice_PosShrink")
+                slice_mutations["Slice_PosShrink"] = (
+                    ast.Slice(
+                        lower=slice.lower, upper=ast.Num(n=slice.upper.n - 1), step=slice.step
+                    ),
+                )
+                self.locs.add(idx)
+
+            if isinstance(slice.upper, ast.UnaryOp):
+                idx = LocIndex("Slice_NegShrink", node.lineno, node.col_offset, "Slice_NegShrink")
+                slice_mutations["Slice_NegShrink"] = (
+                    ast.Slice(
+                        lower=slice.lower,
+                        upper=ast.UnaryOp(
+                            op=ast.Sub(),
+                            operand=ast.Num(n=slice.upper.operand.n - 1),  # type: ignore
+                        ),
+                        step=slice.step,
+                    ),
+                )
+                self.locs.add(idx)
+
+        # Apply Mutation
+        if idx == self.target_idx and not self.readonly:
+            LOGGER.debug("%s mutating idx: %s with %s", log_header, self.target_idx, self.mutation)
+            mutation = slice_mutations[str(self.mutation)]  # self.mutation should be string already
+            # uses AST.fix_missing_locations since the values of ast.Num and  ast.UnaryOp also need
+            # lineno and col-offset values. This is a recursive fix.
+            return ast.fix_missing_locations(
+                ast.copy_location(
+                    ast.Subscript(value=node.value, slice=mutation, ctx=node.ctx), node
+                )
+            )
+
+        LOGGER.debug("%s (%s, %s): no mutations applied.", log_header, node.lineno, node.col_offset)
+        return node
+
 
 def get_compatible_operation_sets() -> List[MutationOpSet]:
     """Utility function to return a list of compatible AST mutations with names.
@@ -295,8 +369,16 @@ def get_compatible_operation_sets() -> List[MutationOpSet]:
     # these are defined for substitution within the visit_AugAssign node and need to match
     aug_assigns: Set[str] = {"AugAssign_Add", "AugAssign_Sub", "AugAssign_Mult", "AugAssign_Div"}
 
-    # Custom references for substituions of zero, positive, and negative iterable indicies
+    # Custom references for substitutions of zero, positive, and negative iterable indicies
     index_types: Set[str] = {"Index_NumPos", "Index_NumNeg", "Index_NumZero"}
+
+    # Custom references for subscript substitutions for slice mutations
+    slice_types: Set[str] = {
+        "Slice_SwapNoneLU",
+        "Slice_SwapNoneUL",
+        "Slice_PosShrink",
+        "Slice_NegShrink",
+    }
 
     return [
         MutationOpSet(
@@ -336,6 +418,14 @@ def get_compatible_operation_sets() -> List[MutationOpSet]:
             name="NameConstant",
             desc="Named constant mutations e.g. True, False, None",
             operations=named_const_singletons,
+        ),
+        MutationOpSet(
+            name="Slices",
+            desc=(
+                "Slice mutations to swap lower/upper values, or shrink range e.g. x[2:] to x[:2],"
+                " or x[1:5] to x[1:4]"
+            ),
+            operations=slice_types,
         ),
     ]
 
