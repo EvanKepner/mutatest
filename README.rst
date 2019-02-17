@@ -338,8 +338,15 @@ These are the current operations that are mutated as compatible sets.
 
 AugAssign
 ---------
- - Description: Augmented assignment e.g. += -= /= *=
- - Members: {'AugAssign_Sub', 'AugAssign_Add', 'AugAssign_Mult', 'AugAssign_Div'}
+Augmented assignment e.g. += -= /= *=
+
+Members:
+    - AugAssign_Add
+    - AugAssign_Div
+    - AugAssign_Mult
+    - AugAssign_Sub
+
+Example:
 
 .. code-block:: python
 
@@ -353,7 +360,8 @@ AugAssign
 
 BinOp
 -----
- - Description: Binary operations e.g. + - * / %
+Binary operations e.g. + - * / %
+
  - Members: {<class '_ast.Add'>, <class '_ast.Pow'>, <class '_ast.FloorDiv'>, <class '_ast.Mod'>, <class '_ast.Div'>, <class '_ast.Mult'>, <class '_ast.Sub'>}
 
 .. code-block:: python
