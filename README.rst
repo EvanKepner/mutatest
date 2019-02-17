@@ -315,8 +315,8 @@ Run :code:`mutatest --help` to see command line arguments and supported operatio
       --debug               Turn on DEBUG level logging output.
       --nocov               Ignore coverage files for optimization.
 
-Supported Mutations
-===================
+Mutations
+=========
 
 :code:`mutatest` is early in development and supports the following mutation operations based
 on the `Python AST grammar`_:
@@ -332,6 +332,84 @@ Supported operations:
     - :code:`Compare Is` mutations e.g. :code:`is, is not`.
     - :code:`Index` mutations e.g. :code:`i[0]` becomes :code:`i[1]` and :code:`i[-1]`.
     - :code:`NameConstant` mutations e.g. :code:`True`, :code:`False`, and :code:`None`.
+    - :code:`Slice` mutations e.g. changing :code:`x[:2]` to :code:`x[2:]`
+
+These are the current operations that are mutated as compatible sets.
+
+AugAssign
+---------
+ - Description: Augmented assignment e.g. += -= /= *=
+ - Members: {'AugAssign_Sub', 'AugAssign_Add', 'AugAssign_Mult', 'AugAssign_Div'}
+
+.. code-block:: python
+
+    # source code
+    x += y
+
+    # mutations
+    x -= y  # AugAssign_Sub
+    x *= y  # AugAssign_Mult
+    x /= y  # AugAssign_Div
+
+BinOp
+-----
+ - Description: Binary operations e.g. + - * / %
+ - Members: {<class '_ast.Add'>, <class '_ast.Pow'>, <class '_ast.FloorDiv'>, <class '_ast.Mod'>, <class '_ast.Div'>, <class '_ast.Mult'>, <class '_ast.Sub'>}
+
+.. code-block:: python
+
+    # source code
+    x = a + b
+
+    # mutations
+    x = a / b  # ast.Div
+    x = a - b  # ast.Sub
+
+BinOp Bit Comparison
+--------------------
+ - Description: Bitwise comparison operations e.g. x & y, x | y, x ^ y
+ - Members: {<class '_ast.BitXor'>, <class '_ast.BitAnd'>, <class '_ast.BitOr'>}
+
+BinOp Bit Shifts
+----------------
+ - Description: Bitwise shift operations e.g. << >>
+ - Members: {<class '_ast.LShift'>, <class '_ast.RShift'>}
+
+BoolOp
+------
+ - Description: Boolean operations e.g. and or
+ - Members: {<class '_ast.And'>, <class '_ast.Or'>}
+
+Compare
+-------
+ - Description: Comparison operations e.g. == >= <= > <
+ - Members: {<class '_ast.Eq'>, <class '_ast.GtE'>, <class '_ast.Gt'>, <class '_ast.LtE'>, <class '_ast.Lt'>, <class '_ast.NotEq'>}
+
+Compare In
+----------
+ - Description: Compare membership e.g. in, not in
+ - Members: {<class '_ast.In'>, <class '_ast.NotIn'>}
+
+Compare Is
+----------
+ - Description: Comapre identity e.g. is, is not
+ - Members: {<class '_ast.Is'>, <class '_ast.IsNot'>}
+
+Index
+-----
+ - Description: Index values for iterables e.g. i[-1], i[0], i[0][1]
+ - Members: {'Index_NumPos', 'Index_NumNeg', 'Index_NumZero'}
+
+NameConstant
+------------
+ - Description: Named constant mutations e.g. True, False, None
+ - Members: {False, True, None}
+
+Slices
+------
+ - Description: Slice mutations to swap lower/upper values, or shrink range e.g. x[2:] to x[:2], or x[1:5] to x[1:4]
+ - Members: {'Slice_SwapNoneUL', 'Slice_NegShrink', 'Slice_PosShrink', 'Slice_SwapNoneLU'}
+
 
 
 Adding more operations is a great area for contributions!
