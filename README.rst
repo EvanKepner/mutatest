@@ -618,7 +618,7 @@ Example:
     # mutation
     w = a[:2]
     x = a[4:]
-    y = a[1:4]  # Slice_UPosToZero, upper bound moves towards lower bound by 1 when positive
+    y = a[1:4]  # Slice_UPosToZero, upper bound moves towards zero bound by 1 when positive
     z = a[-5:-1]
 
     # mutation

@@ -4,6 +4,16 @@ Changelog
 :code:`mutatest` is alpha software, and backwards compatibility between releases is
 not guaranteed while under development.
 
+0.7.0
+-----
+
+    - Added new slice mutations:
+        1. :code:`Slice_SwapNoneUL` and :code:`Slice_SwapNoneLU` for swapping the upper and lower
+           bound values when only one is specified e.g. :code:`x[1:]` to :code:`x[:1]`.
+        2. :code:`Slice_UPosToZero` and :code:`Slice_UNegToZero` for moving the upper bound of a
+           slice by 1 unit e.g. :code:`x[1:5]` becomes :code:`x[1:4]`.
+
+
 0.6.1
 -----
 
