@@ -526,7 +526,7 @@ Index values for iterables e.g. :code:`i[-1], i[0], i[0][1]`. It is worth noting
 unique mutation form in that any index value that is positive will be marked as :code:`Index_NumPos`
 and the same relative behavior will happen for negative index values to :code:`Index_NumNeg`. During
 the mutation process there are three possible outcomes: the index is set to 0, -1 or 1.
-The alternative values are chosen as potential mutations e.g. if the original operation is classified
+The alternate values are chosen as potential mutations e.g. if the original operation is classified
 as :code:`Index_NumPos` such as :code:`x[10]` then valid mutations are to :code:`x[0]` or
 :code:`x[-1]`.
 
@@ -546,6 +546,7 @@ Example:
     # mutations
     x = [a[-1], a[-4], a[0]]  # a[10] mutated to Index_NumNeg
     x = [a[10], a[0], a[0]]  # a[-4] mutated to Index_NumZero
+    x = [a[10], a[1], a[0]]  # a[-4] mutated to Index_NumPos
     x = [a[10], a[-4], a[1]]  # a[0] mutated to Index_NumPos
 
 
@@ -575,7 +576,7 @@ Example:
 Slices
 ------
 
-Slice mutations to swap lower/upper values, or shrink range e.g. :code:`x[2:] to x[:2]`
+Slice mutations to swap lower/upper values, or change range e.g. :code:`x[2:] to x[:2]`
 or :code:`x[1:5] to x[1:4]`. This is a unique mutation. If the upper or lower bound is set to
 :code:`None` then the bound values are swapped. This is represented by the operations of
 :code:`Slice_SwapNoneUL` for swap None to the "upper" value  from "lower". The "ToZero" operations
@@ -602,14 +603,14 @@ Example:
     z = a[-5:-1]
 
     # mutation
-    w = a[2:]  # Slice_SwapNoneUL, upper/lower bound swap when upper is None
+    w = a[2:]  # Slice_SwapNoneUL, upper/lower bound swap when upper is originally not None
     x = a[4:]
     y = a[1:5]
     z = a[-5:-1]
 
     # mutation
     w = a[:2]
-    x = a[:4]  # Slice_SwapNoneLU, upper/lower bound swap when lower is Nonee
+    x = a[:4]  # Slice_SwapNoneLU upper/lower bound swap when lower is originally not None
     y = a[1:5]
     z = a[-5:-1]
 
@@ -617,14 +618,14 @@ Example:
     # mutation
     w = a[:2]
     x = a[4:]
-    y = a[1:4]  # Slice_UPosToZero, upper bound moves towards lower bound by 1
+    y = a[1:4]  # Slice_UPosToZero, upper bound moves towards lower bound by 1 when positive
     z = a[-5:-1]
 
     # mutation
     w = a[:2]
     x = a[4:]
     y = a[1:5]
-    z = a[-5:0]  # Slice_UNegToZero, upper bound moves by 1 from absolute value
+    z = a[-5:0]  # Slice_UNegToZero, upper bound moves by 1 from absolute value when negative
 
 
 Known limitations
