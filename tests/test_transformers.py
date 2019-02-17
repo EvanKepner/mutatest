@@ -38,7 +38,7 @@ def test_get_mutations_for_target(test_op):
 
 def test_get_mutations_for_target_slice():
     """Slice is a special case where the op type is returned as the mutation."""
-    expected = "Slice_PosShrink"
+    expected = "Slice_UPosToZero"
     mock_loc_idx = LocIndex(ast_class=expected, lineno=10, col_offset=11, op_type=expected)
     result = get_mutations_for_target(mock_loc_idx)
 
@@ -251,7 +251,7 @@ def test_MutateAST_visit_subscript(slice_file, slice_expected_locs):
     mast.visit(tree)
     assert len(mast.locs) == len(slice_expected_locs)
 
-    test_mutation = "Slice_NegShrink"
+    test_mutation = "Slice_UNegToZero"
 
     # loc index 3 is the Slice_NegShrink operation in the fixture
     mutated_tree = MutateAST(target_idx=slice_expected_locs[3], mutation=test_mutation).visit(tree)

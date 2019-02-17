@@ -304,21 +304,24 @@ class MutateAST(ast.NodeTransformer):
         # More likely to generate useful mutants than increasing the range
         if slice.lower is not None and slice.upper is not None:
             if isinstance(slice.upper, ast.Num):
-                idx = LocIndex("Slice_PosShrink", node.lineno, node.col_offset, "Slice_PosShrink")
-                slice_mutations["Slice_PosShrink"] = ast.Slice(
+                idx = LocIndex("Slice_UPosToZero", node.lineno, node.col_offset, "Slice_UPosToZero")
+                slice_mutations["Slice_UPosToZero"] = ast.Slice(
                     lower=slice.lower, upper=ast.Num(n=slice.upper.n - 1), step=slice.step
                 )
+                LOGGER.debug("UPosToZero: %s", ast.dump(slice_mutations["Slice_UPosToZero"]))
                 self.locs.add(idx)
 
             if isinstance(slice.upper, ast.UnaryOp):
-                idx = LocIndex("Slice_NegShrink", node.lineno, node.col_offset, "Slice_NegShrink")
-                slice_mutations["Slice_NegShrink"] = ast.Slice(
+                idx = LocIndex("Slice_UNegToZero", node.lineno, node.col_offset, "Slice_UNegToZero")
+
+                slice_mutations["Slice_UNegToZero"] = ast.Slice(
                     lower=slice.lower,
                     upper=ast.UnaryOp(
                         op=ast.USub(), operand=ast.Num(n=slice.upper.operand.n - 1)  # type: ignore
                     ),
                     step=slice.step,
                 )
+                LOGGER.debug("UNegToZero: %s", ast.dump(slice_mutations["Slice_UNegToZero"]))
 
                 self.locs.add(idx)
 
@@ -374,8 +377,8 @@ def get_compatible_operation_sets() -> List[MutationOpSet]:
     slice_types: Set[str] = {
         "Slice_SwapNoneLU",
         "Slice_SwapNoneUL",
-        "Slice_PosShrink",
-        "Slice_NegShrink",
+        "Slice_UPosToZero",
+        "Slice_UNegToZero",
     }
 
     return [
@@ -420,7 +423,7 @@ def get_compatible_operation_sets() -> List[MutationOpSet]:
         MutationOpSet(
             name="Slices",
             desc=(
-                "Slice mutations to swap lower/upper values, or shrink range e.g. x[2:] to x[:2],"
+                "Slice mutations to swap lower/upper values, or change range e.g. x[2:] to x[:2],"
                 " or x[1:5] to x[1:4]"
             ),
             operations=slice_types,

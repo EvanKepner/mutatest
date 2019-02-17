@@ -336,15 +336,18 @@ Supported operations:
 
 These are the current operations that are mutated as compatible sets.
 
+
 AugAssign
 ---------
-Augmented assignment e.g. += -= /= *=
+
+Augmented assignment e.g. :code:`+= -= /= *=`.
 
 Members:
-    - AugAssign_Add
-    - AugAssign_Div
-    - AugAssign_Mult
-    - AugAssign_Sub
+    - :code:`AugAssign_Add`
+    - :code:`AugAssign_Div`
+    - :code:`AugAssign_Mult`
+    - :code:`AugAssign_Sub`
+
 
 Example:
 
@@ -358,11 +361,23 @@ Example:
     x *= y  # AugAssign_Mult
     x /= y  # AugAssign_Div
 
+
 BinOp
 -----
-Binary operations e.g. + - * / %
 
- - Members: {<class '_ast.Add'>, <class '_ast.Pow'>, <class '_ast.FloorDiv'>, <class '_ast.Mod'>, <class '_ast.Div'>, <class '_ast.Mult'>, <class '_ast.Sub'>}
+Binary operations e.g. add, subtract, divide, etc.
+
+Members:
+    - :code:`ast.Add`
+    - :code:`ast.Div`
+    - :code:`ast.FloorDiv`
+    - :code:`ast.Mod`
+    - :code:`ast.Mult`
+    - :code:`ast.Pow`
+    - :code:`ast.Sub`
+
+
+Example:
 
 .. code-block:: python
 
@@ -373,54 +388,244 @@ Binary operations e.g. + - * / %
     x = a / b  # ast.Div
     x = a - b  # ast.Sub
 
+
 BinOp Bit Comparison
 --------------------
- - Description: Bitwise comparison operations e.g. x & y, x | y, x ^ y
- - Members: {<class '_ast.BitXor'>, <class '_ast.BitAnd'>, <class '_ast.BitOr'>}
+
+Bitwise comparison operations e.g. :code:`x & y, x | y, x ^ y`.
+
+Members:
+    - :code:`ast.BitAnd`
+    - :code:`ast.BitOr`
+    - :code:`ast.BitXor`
+
+
+Example:
+
+.. code-block:: python
+
+    # source code
+    x = a & y
+
+    # mutations
+    x = a | y  # ast.BitOr
+    x = a ^ y  # ast.BitXor
+
 
 BinOp Bit Shifts
 ----------------
- - Description: Bitwise shift operations e.g. << >>
- - Members: {<class '_ast.LShift'>, <class '_ast.RShift'>}
+
+Bitwise shift operations e.g. :code:`<< >>`.
+
+Members:
+    - :code:`ast.LShift`
+    - :code:`ast.RShift`
+
+Example:
+
+.. code-block:: python
+
+    # source code
+    x >> y
+
+    # mutation
+    x << y
 
 BoolOp
 ------
- - Description: Boolean operations e.g. and or
- - Members: {<class '_ast.And'>, <class '_ast.Or'>}
+
+Boolean operations e.g. :code:`and or`.
+
+Members:
+    - :code:`ast.And`
+    - :code:`ast.Or`
+
+
+Example:
+
+.. code-block:: python
+
+    # source code
+    if x and y:
+
+    # mutation
+    if x or y:
+
 
 Compare
 -------
- - Description: Comparison operations e.g. == >= <= > <
- - Members: {<class '_ast.Eq'>, <class '_ast.GtE'>, <class '_ast.Gt'>, <class '_ast.LtE'>, <class '_ast.Lt'>, <class '_ast.NotEq'>}
+
+Comparison operations e.g. :code:`== >= <= > <`.
+
+Members:
+    - :code:`ast.Eq`
+    - :code:`ast.Gt`
+    - :code:`ast.GtE`
+    - :code:`ast.Lt`
+    - :code:`ast.LtE`
+    - :code:`ast.NotEq`
+
+Example:
+
+.. code-block:: python
+
+    # source code
+    x >= y
+
+    # mutations
+    x < y  # ast.Lt
+    x > y  # ast.Gt
+    x != y  # ast.NotEq
+
 
 Compare In
 ----------
- - Description: Compare membership e.g. in, not in
- - Members: {<class '_ast.In'>, <class '_ast.NotIn'>}
+
+Compare membership e.g. :code:`in, not in`.
+
+Members:
+    - :code:`ast.In`
+    - :code:`ast.NotIn`
+
+
+Example:
+
+.. code-block:: python
+
+    # source code
+    x in [1, 2, 3, 4]
+
+    # mutation
+    x not in [1, 2, 3, 4]
+
 
 Compare Is
 ----------
- - Description: Comapre identity e.g. is, is not
- - Members: {<class '_ast.Is'>, <class '_ast.IsNot'>}
+
+Comapre identity e.g. :code:`is, is not`.
+
+Members:
+    - :code:`ast.Is`
+    - :code:`ast.IsNot`
+
+Example:
+
+.. code-block:: python
+
+    # source code
+    x is None
+
+    # mutation
+    x is not None
+
 
 Index
 -----
- - Description: Index values for iterables e.g. i[-1], i[0], i[0][1]
- - Members: {'Index_NumPos', 'Index_NumNeg', 'Index_NumZero'}
+
+Index values for iterables e.g. :code:`i[-1], i[0], i[0][1]`. It is worth noting that this is a
+unique mutation form in that any index value that is positive will be marked as :code:`Index_NumPos`
+and the same relative behavior will happen for negative index values to :code:`Index_NumNeg`. During
+the mutation process there are three possible outcomes: the index is set to 0, -1 or 1.
+The alternative values are chosen as potential mutations e.g. if the original operation is classified
+as :code:`Index_NumPos` such as :code:`x[10]` then valid mutations are to :code:`x[0]` or
+:code:`x[-1]`.
+
+Members:
+    - :code:`Index_NumNeg`
+    - :code:`Index_NumPos`
+    - :code:`Index_NumZero`
+
+
+Example:
+
+.. code-block:: python
+
+    # source code
+    x = [a[10], a[-4], a[0]]
+
+    # mutations
+    x = [a[-1], a[-4], a[0]]  # a[10] mutated to Index_NumNeg
+    x = [a[10], a[0], a[0]]  # a[-4] mutated to Index_NumZero
+    x = [a[10], a[-4], a[1]]  # a[0] mutated to Index_NumPos
+
 
 NameConstant
 ------------
- - Description: Named constant mutations e.g. True, False, None
- - Members: {False, True, None}
+
+Named constant mutations e.g. :code:`True, False, None`.
+
+Members:
+    - :code:`False`
+    - :code:`None`
+    - :code:`True`
+
+
+Example:
+
+.. code-block:: python
+
+    # source code
+    x = True
+
+    # mutations
+    x = False
+    X = None
+
 
 Slices
 ------
- - Description: Slice mutations to swap lower/upper values, or shrink range e.g. x[2:] to x[:2], or x[1:5] to x[1:4]
- - Members: {'Slice_SwapNoneUL', 'Slice_NegShrink', 'Slice_PosShrink', 'Slice_SwapNoneLU'}
+
+Slice mutations to swap lower/upper values, or shrink range e.g. :code:`x[2:] to x[:2]`
+or :code:`x[1:5] to x[1:4]`. This is a unique mutation. If the upper or lower bound is set to
+:code:`None` then the bound values are swapped. This is represented by the operations of
+:code:`Slice_SwapNoneUL` for swap None to the "upper" value  from "lower". The "ToZero" operations
+change the list by moving the upper bound by one unit towards zero from the absolute value and
+then applying the original sign e.g. :code:`x[0:2]` would become :code:`x[0:1]`, and
+:code:`x[-4:-1]` would become :code:`x[-4:0]`. In the positive case, which is assumed to be the
+more common pattern, this results in shrinking the index slice by 1.
+
+Members:
+    - :code:`Slice_SwapNoneLU`
+    - :code:`Slice_SwapNoneUL`
+    - :code:`Slice_UNegToZero`
+    - :code:`Slice_UPosToZero`
 
 
+Example:
 
-Adding more operations is a great area for contributions!
+.. code-block:: python
+
+    # source code
+    w = a[:2]
+    x = a[4:]
+    y = a[1:5]
+    z = a[-5:-1]
+
+    # mutation
+    w = a[2:]  # Slice_SwapNoneUL, upper/lower bound swap when upper is None
+    x = a[4:]
+    y = a[1:5]
+    z = a[-5:-1]
+
+    # mutation
+    w = a[:2]
+    x = a[:4]  # Slice_SwapNoneLU, upper/lower bound swap when lower is Nonee
+    y = a[1:5]
+    z = a[-5:-1]
+
+
+    # mutation
+    w = a[:2]
+    x = a[4:]
+    y = a[1:4]  # Slice_UPosToZero, upper bound moves towards lower bound by 1
+    z = a[-5:-1]
+
+    # mutation
+    w = a[:2]
+    x = a[4:]
+    y = a[1:5]
+    z = a[-5:0]  # Slice_UNegToZero, upper bound moves by 1 from absolute value
+
 
 Known limitations
 -----------------
@@ -428,8 +633,7 @@ Known limitations
 Since :code:`mutatest` operates on the local :code:`__pycache__` it is a serial execution process.
 This means it can be slow, and will take as long as running your test suite in series for the
 number of operations. It's designed as a diagnostic tool, not something you would run in your
-CICD pipeline. You could achieve parallel execution by orchestrating containers to hold
-individual copies of your module and executing subsets of your tests.
+CICD pipeline.
 
 If you kill the :code:`mutatest` process before the trials complete you may end up
 with partially mutated :code:`__pycache__` files. If this happens the best fix is to remove the
