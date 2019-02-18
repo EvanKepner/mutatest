@@ -579,11 +579,16 @@ Slices
 Slice mutations to swap lower/upper values, or change range e.g. :code:`x[2:] to x[:2]`
 or :code:`x[1:5] to x[1:4]`. This is a unique mutation. If the upper or lower bound is set to
 :code:`None` then the bound values are swapped. This is represented by the operations of
-:code:`Slice_UnboundedUpper` for swap None to the "upper" value  from "lower". The "ToZero" operations
+:code:`Slice_UnboundedUpper` for swap None to the "upper" value  from "lower".
+
+The "ToZero" operations
 change the list by moving the upper bound by one unit towards zero from the absolute value and
 then applying the original sign e.g. :code:`x[0:2]` would become :code:`x[0:1]`, and
 :code:`x[-4:-1]` would become :code:`x[-4:0]`. In the positive case, which is assumed to be the
-more common pattern, this results in shrinking the index slice by 1.
+more common pattern, this results in shrinking the index slice by 1. Note that these "ToZero"
+operations appear self-referential in the report output. This is because an operation identified
+as a :code:`Slice_UPosToZero` remains as a :code:`Slice_UPosToZero` but with updated values.
+
 
 Members:
     - :code:`Slice_Unbounded`

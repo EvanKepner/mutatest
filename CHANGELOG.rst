@@ -4,6 +4,14 @@ Changelog
 :code:`mutatest` is alpha software, and backwards compatibility between releases is
 not guaranteed while under development.
 
+
+0.7.1
+-----
+
+    - Internal changes to :code:`Slice` mutations for clearer categorization and report output.
+    - Includes clearing names to :code:`Slice_Swap` and :code:`Slice_RangeChange` for categories.
+    - Updates operation names to :code:`Slice_Unbounded...` with "lower" or "upper".
+
 0.7.0
 -----
 
