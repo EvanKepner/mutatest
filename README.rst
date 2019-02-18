@@ -579,15 +579,16 @@ Slices
 Slice mutations to swap lower/upper values, or change range e.g. :code:`x[2:] to x[:2]`
 or :code:`x[1:5] to x[1:4]`. This is a unique mutation. If the upper or lower bound is set to
 :code:`None` then the bound values are swapped. This is represented by the operations of
-:code:`Slice_SwapNoneUL` for swap None to the "upper" value  from "lower". The "ToZero" operations
+:code:`Slice_UnboundedUpper` for swap None to the "upper" value  from "lower". The "ToZero" operations
 change the list by moving the upper bound by one unit towards zero from the absolute value and
 then applying the original sign e.g. :code:`x[0:2]` would become :code:`x[0:1]`, and
 :code:`x[-4:-1]` would become :code:`x[-4:0]`. In the positive case, which is assumed to be the
 more common pattern, this results in shrinking the index slice by 1.
 
 Members:
-    - :code:`Slice_SwapNoneLU`
-    - :code:`Slice_SwapNoneUL`
+    - :code:`Slice_Unbounded`
+    - :code:`Slice_UnboundedLower`
+    - :code:`Slice_UnboundedUpper`
     - :code:`Slice_UNegToZero`
     - :code:`Slice_UPosToZero`
 
@@ -603,14 +604,20 @@ Example:
     z = a[-5:-1]
 
     # mutation
-    w = a[2:]  # Slice_SwapNoneUL, upper/lower bound swap when upper is originally not None
+    w = a[2:]  # Slice_UnboundedUpper, upper is now unbounded and lower has a value
     x = a[4:]
     y = a[1:5]
     z = a[-5:-1]
 
     # mutation
     w = a[:2]
-    x = a[:4]  # Slice_SwapNoneLU upper/lower bound swap when lower is originally not None
+    x = a[:4]  # Slice_UnboundedLower, lower is now unbounded and upper has a value
+    y = a[1:5]
+    z = a[-5:-1]
+
+    # mutation
+    w = a[:2]
+    x = a[:]  # Slice_Unbounded, both upper and lower are unbounded
     y = a[1:5]
     z = a[-5:-1]
 

@@ -266,4 +266,4 @@ def test_MutateAST_visit_subscript(slice_file, slice_expected_locs):
 
         # test one unmodified location
         if l.lineno == 4 and l.col_offset == 14:
-            assert l.op_type == "Slice_SwapNoneLU"
+            assert l.op_type == "Slice_UnboundUpper"
