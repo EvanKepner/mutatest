@@ -2,15 +2,27 @@ Contributing
 ============
 
 Up top, thanks for considering a contribution! :code:`mutatest` is in active development and
-new features are encouraged. You can either open an issue to discuss the idea first, or if you
-have working code, submit a pull-request.
+new features that align to the vision are welcome.
+You can either open an issue to discuss the idea first, or if you have working code,
+submit a pull-request.
 
-What to submit
---------------
+Vision
+------
 
-Anything! No contribution is too small. Even if you see a typo in a comment feel free to submit a
-pull-request to fix it. The rest of this document is dedicated to outlining the different development
-items and expectation to make submission review fast.
+The goal of :code:`mutatest` is to provide a simple tool for mutation testing. It started as a way
+for me to get familiar with the concept of mutation testing, but has continued to evolve as I've
+learned more about the AST and the cache.
+
+The top level priorities for the project as alpha software are:
+
+1. Collect useful mutation patterns without modifying the target source code.
+2. Make it fast.
+
+Once I'm past those two hurdles the next focus will be on generalization of the API. The codebase
+is largely a collection of functions in the spirit of the first two priorities. It needs a
+redesign and refactor for generalization of the features once a good collection of mutation patterns
+is established.
+
 
 Development Guidelines
 ======================
@@ -96,8 +108,9 @@ Style: Test Python code
 -----------------------
 
 :code:`Pytest` is used to manage unit tests, and :code:`tox` is used to run various environment
-tests. If you are adding a new feature ensure that tests are added to cover the functionality.
-Some style enforcing is relaxed on the test files
+tests. :code:`Hypothesis` is used for property testing in addition to the unit tests.
+If you are adding a new feature ensure that tests are added to cover the functionality.
+Some style enforcing is relaxed on the test files:
 
     - Use :code:`isort` for ordering :code:`import` statements in Python files.
     - Run :code:`black` for formatting all Python files.
