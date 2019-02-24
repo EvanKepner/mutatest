@@ -11,7 +11,7 @@ from typing import Dict, List, NamedTuple, Optional, Tuple, Union
 
 from mutatest.cache import remove_existing_cache_files
 from mutatest.maker import MutantTrialResult, create_mutation_and_run_trial, get_mutation_targets
-from mutatest.optimizers import DEFAULT_COVERAGE_FILE, CoverageOptimizer
+from mutatest.optimizers import DEFAULT_COVERAGE_FILE, CoverageOptimizer, WhoTestsWhat
 from mutatest.transformers import LocIndex, get_ast_from_src, get_mutations_for_target
 
 
@@ -272,6 +272,7 @@ def get_sources_with_sample(
 def run_mutation_trials(
     src_loc: Union[str, Path],
     test_cmds: List[str],
+    wtw: Optional[WhoTestsWhat],
     exclude_files: Optional[List[str]] = None,
     n_locations: Optional[int] = None,
     break_on_survival: bool = False,
@@ -288,6 +289,7 @@ def run_mutation_trials(
     Args:
         src_loc: the source file package directory
         test_cmds: the test runner commands for subprocess.run()
+        wtw: WhoTestsWhat optimizer instance
         exclude_files: optional list of files to exclude from mutation trials, default None
         n_locations: optional number of locations for mutations,
             if unspecified then the full sample space is used.
@@ -307,6 +309,9 @@ def run_mutation_trials(
     # Create the AST for each source file and make potential targets sample space
     LOGGER.info("Running mutation trials.")
     start = datetime.now()
+
+    # TODO: DETERMINE HOW WTW INSTANCE WILL AFFECT COVERAGE MUTATION SAMPLE
+    # TODO: NEED A VARIATION OF THIS THAT HAS WTW CREATE COVERED SAMPLE
 
     src_trees, sample_space = get_sources_with_sample(
         src_loc=src_loc, exclude_files=exclude_files, ignore_coverage=ignore_coverage

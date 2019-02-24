@@ -58,9 +58,6 @@ class NodeLister(ast.NodeVisitor):  # pragma: no cover
         print(ast.dump(node))
         self.generic_visit(node)
 
-    # IN DEVELOPMENT
-    ################################################################################################
-
     def visit_Slice(self, node: ast.Slice) -> None:
         # actual slicing
         print(f"Slice: {node}")
@@ -72,6 +69,9 @@ class NodeLister(ast.NodeVisitor):  # pragma: no cover
         print(f"Subscript: {node}")
         print(ast.dump(node))
         self.generic_visit(node)
+
+    # IN DEVELOPMENT
+    ################################################################################################
 
     # FUTURE DEVELOPMENT
     ################################################################################################

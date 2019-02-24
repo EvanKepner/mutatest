@@ -6,7 +6,7 @@ import random
 import shlex
 import sys
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
 from textwrap import dedent
 from typing import NamedTuple, Optional, Sequence
@@ -19,6 +19,7 @@ from mutatest.cache import check_cache_invalidation_mode
 from mutatest.controller import clean_trial, run_mutation_trials
 from mutatest.report import analyze_mutant_trials, write_report
 from mutatest.transformers import get_compatible_operation_sets
+from mutatest.optimizers import WhoTestsWhat
 
 
 LOGGER = logging.getLogger(__name__)
@@ -350,8 +351,26 @@ def main(args: argparse.Namespace) -> None:
         stream=sys.stdout,
     )
 
-    # Run the pipeline with no mutations first to ensure later results are meaningful
-    clean_runtime_1 = clean_trial(src_loc=src_loc, test_cmds=args.testcmds)
+    # determine if who-tests-what optimization can apply
+    wtw, clean_runtime_1 = None, timedelta(0)
+
+    try:
+        if not args.nocov:
+            start = datetime.now()
+            wtw = WhoTestsWhat(args.testcmds)
+            wtw.find_pytest_settings()
+            wtw.build_map()
+            clean_runtime_1 = datetime.now() - start
+            LOGGER.info("WTW Map build, size: %s", len(wtw.coverage_test_mapping))
+
+    except ValueError as e:
+        LOGGER.info("Who-Test-What exception: %s", e)
+
+    if wtw is None:
+        # Run the pipeline with no mutations first to ensure later results are meaningful
+        # This only has to happen if WhoTestsWhat is skipped
+        LOGGER.info("Who-Test-What optimization skipped, running clean trial.")
+        clean_runtime_1 = clean_trial(src_loc=src_loc, test_cmds=args.testcmds)
 
     # Run the mutation trials based on the input argument
     run_mode = RunMode(args.mode)
@@ -363,6 +382,7 @@ def main(args: argparse.Namespace) -> None:
     results_summary = run_mutation_trials(
         src_loc=src_loc,
         test_cmds=args.testcmds,
+        wtw=wtw,
         exclude_files=args.exclude,
         n_locations=args.nlocations,
         break_on_detected=run_mode.break_on_detection,
