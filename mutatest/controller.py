@@ -272,7 +272,7 @@ def get_sources_with_sample(
 def run_mutation_trials(
     src_loc: Union[str, Path],
     test_cmds: List[str],
-    wtw: Optional[WhoTestsWhat],
+    wtw: Optional[WhoTestsWhat] = None,
     exclude_files: Optional[List[str]] = None,
     n_locations: Optional[int] = None,
     break_on_survival: bool = False,
