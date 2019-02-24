@@ -4,10 +4,11 @@ This includes coverage, and controls for making tests run more efficiently betwe
 """
 
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any, Iterable
+from typing import Any, Dict, Iterable, List, Optional, Tuple
+
+import pytest  # type: ignore
 
 from coverage.data import CoverageData  # type: ignore
-import pytest
 
 from mutatest.transformers import LocIndex
 
