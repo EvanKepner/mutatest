@@ -17,9 +17,9 @@ import mutatest
 
 from mutatest.cache import check_cache_invalidation_mode
 from mutatest.controller import clean_trial, run_mutation_trials
+from mutatest.optimizers import WhoTestsWhat
 from mutatest.report import analyze_mutant_trials, write_report
 from mutatest.transformers import get_compatible_operation_sets
-from mutatest.optimizers import WhoTestsWhat
 
 
 LOGGER = logging.getLogger(__name__)
@@ -365,6 +365,7 @@ def main(args: argparse.Namespace) -> None:
 
     except ValueError as e:
         LOGGER.info("Who-Test-What exception: %s", e)
+        wtw = None
 
     if wtw is None:
         # Run the pipeline with no mutations first to ensure later results are meaningful

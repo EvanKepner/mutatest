@@ -40,29 +40,6 @@ class CoverageOptimizer:
         """Mapping of src_file to list of lines in coverage."""
         return {k: self.cov_data.lines(k) for k in self.cov_data.measured_files()}
 
-    def covered_sample_space(
-        self, sample_space: List[Tuple[str, LocIndex]]
-    ) -> List[Tuple[str, LocIndex]]:
-        """Restrict a full sample space down to only the covered samples.
-
-        The sample space is expected to be a list of tuples, where the values are the source
-        file location and the the LocIndex for the potential mutation.
-
-        Args:
-            sample_space: the original sample space
-
-        Returns:
-            The sample space with only LodIdx values that are covered.
-        """
-
-        covered_sample = []
-
-        for src_file, loc_idx in sample_space:
-            if loc_idx.lineno in self.cov_mapping.get(src_file, []):
-                covered_sample.append((src_file, loc_idx))
-
-        return covered_sample
-
 
 class MutatestInspectionPlugin:
     """Pytest plugin wrapper for finding collected tests and coverage plugin."""
@@ -103,12 +80,21 @@ class MutatestInspectionPlugin:
 class WhoTestsWhat:
     """Who tests what optimizer."""
 
-    def __init__(self, args_list: List[str]) -> None:
+    def __init__(self, args_list: List[str], join_key: str = "::") -> None:
+        """Initialize Who-Tests-What optimizer.
+
+        This optimizer determines the coverage mapping per test, and creates an
+        associated mapping to source files and lines to the appropriate tests.
+
+        Args:
+            args_list: the shlex.split() cli args from test-commands
+            join_key: optional string for joining source-file to line-number in mapping
+        """
 
         if args_list[0] != "pytest":
             raise ValueError("Pytest must be first arg for WhoTestsWhat.")
 
-        self._join_key = "::"
+        self._join_key = join_key
         self._args = args_list
         self._collected: List[str] = []
         self._cov_plugin_registered = False
@@ -147,7 +133,7 @@ class WhoTestsWhat:
 
     @property
     def cov_mapping(self) -> Dict[str, List[int]]:
-
+        """Create a coverage mapping of source-file to lines to be used in sample restriction."""
         mapping: Dict[str, List[int]] = {}
 
         for k in self.coverage_test_mapping:
@@ -160,6 +146,28 @@ class WhoTestsWhat:
                 mapping[src_file] = [int(line)]
 
         return mapping
+
+    def get_src_line_delection(self, src_file: str, lineno: int) -> List[str]:
+        """Given source and line, return args for deselection of all tests except relevant.
+
+        Args:
+            src_file: the source file
+            lineno: the line number for reference
+
+        Returns:
+            list of --deselect args to be added to test_cmds
+        """
+
+        key = f"{src_file}{self.join_key}{lineno}"
+        keep_tests = self.coverage_test_mapping.get(key, [])
+        remove_tests = [t for t in self.collected if t not in keep_tests]
+
+        deselected: List[str] = []
+
+        for t in remove_tests:
+            deselected.extend(["--deselect", t])
+
+        return deselected
 
     def find_pytest_settings(self) -> None:
         """Set the collected tests and pytest config options for coverage."""
@@ -243,6 +251,30 @@ class WhoTestsWhat:
             self.add_cov_map(test_node, cov_map)
 
 
+def covered_sample_space(
+    sample_space: List[Tuple[str, LocIndex]], cov_mapping: Dict[str, List[int]]
+) -> List[Tuple[str, LocIndex]]:
+    """Restrict a full sample space down to only the covered samples.
+
+    The sample space is expected to be a list of tuples, where the values are the source
+    file location and the the LocIndex for the potential mutation.
+
+    Args:
+        sample_space: the original sample space
+        cov_mapping: the source-to-covered line mapping
+
+    Returns:
+        The sample space with only LodIdx values that are covered.
+    """
+    covered_sample = []
+
+    for src_file, loc_idx in sample_space:
+        if loc_idx.lineno in cov_mapping.get(src_file, []):
+            covered_sample.append((src_file, loc_idx))
+
+    return covered_sample
+
+
 if __name__ == "__main__":
 
     import sys
@@ -261,4 +293,4 @@ if __name__ == "__main__":
 
     wtw.build_map()
 
-    pprint(wtw.__dict__)
+    pprint(wtw.cov_mapping)

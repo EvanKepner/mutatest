@@ -2,7 +2,7 @@
 """
 import pytest
 
-from mutatest.optimizers import CoverageOptimizer
+from mutatest.optimizers import CoverageOptimizer, covered_sample_space
 
 
 @pytest.fixture(scope="module")
@@ -26,7 +26,7 @@ def test_cov_mapping(mock_CoverageOptimizer):
 
 def test_coverage_sample(mock_CoverageOptimizer, mock_precov_sample):
     """The coverage sample should only be lines that are listed."""
-    result_sample = mock_CoverageOptimizer.covered_sample_space(mock_precov_sample)
+    result_sample = covered_sample_space(mock_precov_sample, mock_CoverageOptimizer.cov_mapping)
 
     assert len(result_sample) == 3
 

@@ -11,7 +11,12 @@ from typing import Dict, List, NamedTuple, Optional, Tuple, Union
 
 from mutatest.cache import remove_existing_cache_files
 from mutatest.maker import MutantTrialResult, create_mutation_and_run_trial, get_mutation_targets
-from mutatest.optimizers import DEFAULT_COVERAGE_FILE, CoverageOptimizer, WhoTestsWhat
+from mutatest.optimizers import (
+    DEFAULT_COVERAGE_FILE,
+    CoverageOptimizer,
+    WhoTestsWhat,
+    covered_sample_space,
+)
 from mutatest.transformers import LocIndex, get_ast_from_src, get_mutations_for_target
 
 
@@ -236,7 +241,9 @@ def optimize_covered_sample(
     Returns:
         The subset list of the sample space that is marked by coverage.
     """
-    covered_sample = CoverageOptimizer(cov_file=cov_file).covered_sample_space(sample_space)
+    copt = CoverageOptimizer(cov_file=cov_file)
+    covered_sample = covered_sample_space(sample_space, copt.cov_mapping)
+    LOGGER.debug("Coverage file mapping:\n%s", copt.cov_mapping)
     LOGGER.info("Coverage optimized sample space size: %s", len(covered_sample))
     return covered_sample
 
@@ -245,6 +252,7 @@ def get_sources_with_sample(
     src_loc: Union[str, Path],
     exclude_files: Optional[List[str]] = None,
     ignore_coverage: bool = False,
+    cov_mapping: Optional[Dict[str, List[int]]] = None,
 ) -> Tuple[Dict[str, ast.Module], List[Tuple[str, LocIndex]]]:
     """Determines the sample for selecting mutations, which may be restricted by optimizers.
 
@@ -263,7 +271,13 @@ def get_sources_with_sample(
     LOGGER.info("Full sample space size: %s", len(sample_space))
 
     # restrict the sample space down to locations marked by coverage
-    if not ignore_coverage and DEFAULT_COVERAGE_FILE.exists():
+    if not ignore_coverage and cov_mapping is not None:
+        LOGGER.info("Restricting sample based on pre-built coverage mapping.")
+        sample_space = covered_sample_space(sample_space, cov_mapping)
+
+    # if the input_cov mapping is None
+    if not ignore_coverage and DEFAULT_COVERAGE_FILE.exists() and cov_mapping is None:
+        LOGGER.info("Restricting sample based on existing coverage file.")
         sample_space = optimize_covered_sample(sample_space)
 
     return src_trees, sample_space
@@ -310,11 +324,15 @@ def run_mutation_trials(
     LOGGER.info("Running mutation trials.")
     start = datetime.now()
 
-    # TODO: DETERMINE HOW WTW INSTANCE WILL AFFECT COVERAGE MUTATION SAMPLE
-    # TODO: NEED A VARIATION OF THIS THAT HAS WTW CREATE COVERED SAMPLE
+    # if who-tests-what optimization is in place
+    pre_cov = wtw.cov_mapping if wtw is not None else None
+    LOGGER.debug("Prebuilt coverage mapping:\n%s", pre_cov)
 
     src_trees, sample_space = get_sources_with_sample(
-        src_loc=src_loc, exclude_files=exclude_files, ignore_coverage=ignore_coverage
+        src_loc=src_loc,
+        exclude_files=exclude_files,
+        ignore_coverage=ignore_coverage,
+        cov_mapping=pre_cov,
     )
 
     mutation_sample = get_mutation_sample_locations(
@@ -336,12 +354,21 @@ def run_mutation_trials(
 
             LOGGER.debug("Running trial for %s", current_mutation)
 
+            # creating a copy to avoid in-place modification of the original args
+            trial_test_cmds = [t for t in test_cmds]
+
+            if wtw is not None:
+                deselect_args = wtw.get_src_line_delection(sample_src, sample_idx.lineno)
+                LOGGER.debug("Deselected test count: %s", len(deselect_args) / 2)
+                LOGGER.debug("Deselection args: %s", deselect_args)
+                trial_test_cmds.extend(deselect_args)
+
             trial_results = create_mutation_and_run_trial(
                 src_tree=src_tree,
                 src_file=sample_src,
                 target_idx=sample_idx,
                 mutation_op=current_mutation,
-                test_cmds=test_cmds,
+                test_cmds=trial_test_cmds,
             )
 
             results.append(trial_results)
