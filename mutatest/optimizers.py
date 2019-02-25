@@ -108,11 +108,17 @@ class WhoTestsWhat:
         if args_list[0] != "pytest":
             raise ValueError("Pytest must be first arg for WhoTestsWhat.")
 
+        self._join_key = "::"
         self._args = args_list
         self._collected: List[str] = []
         self._cov_plugin_registered = False
         self._cov_source_present = False
         self._coverage_test_mapping: Dict[str, List[str]] = {}
+
+    @property
+    def join_key(self) -> str:
+        """Key joining character for source-lines in cov_test_mapping dict."""
+        return self._join_key
 
     @property
     def args(self) -> List[str]:
@@ -138,6 +144,22 @@ class WhoTestsWhat:
     def coverage_test_mapping(self) -> Dict[str, List[str]]:
         """Mapping of source_file::lineno to list of relevant tests."""
         return self._coverage_test_mapping
+
+    @property
+    def cov_mapping(self) -> Dict[str, List[int]]:
+
+        mapping: Dict[str, List[int]] = {}
+
+        for k in self.coverage_test_mapping:
+            src_file, line = k.split(self.join_key)
+
+            if src_file in mapping:
+                mapping[src_file].append(int(line))
+
+            else:
+                mapping[src_file] = [int(line)]
+
+        return mapping
 
     def find_pytest_settings(self) -> None:
         """Set the collected tests and pytest config options for coverage."""
@@ -200,7 +222,7 @@ class WhoTestsWhat:
 
         for src_file, line_lst in cov_map.items():
             for line in line_lst:
-                key = f"{src_file}::{line}"
+                key = f"{src_file}{self.join_key}{line}"
 
                 if key in self.coverage_test_mapping:
                     self._coverage_test_mapping[key].append(target)

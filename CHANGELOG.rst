@@ -5,6 +5,12 @@ Changelog
 not guaranteed while under development.
 
 
+0.8.0
+-----
+
+    - TODO: turn off automatic report writing, move to CLI only as default
+
+
 0.7.1
 -----
 
