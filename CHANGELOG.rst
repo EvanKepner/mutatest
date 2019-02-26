@@ -8,7 +8,17 @@ not guaranteed while under development.
 0.8.0
 -----
 
-    - TODO: turn off automatic report writing, move to CLI only as default
+    - New :code:`WhoTestWhat` optimizer:
+        1. Determines the coverage per individual test using :code:`pytest-cov` and :code:`coverage`.
+        2. Will select only relevant tests per mutated location, giving a major speed increase
+           for mutation trials on large test suites.
+        3. This optimizer is only for :code:`pytest`.
+        4. The restricted sample selection using :code:`coverage` is still available.
+
+    - Output files are now optional, the default behavior has changed from always writing an RST
+      file using the :code:`-o` option on the command line.
+    - Improved CLI reporting during trial runs, including selected test counts and line/col locations
+      for trial results while processing.
 
 
 0.7.1
