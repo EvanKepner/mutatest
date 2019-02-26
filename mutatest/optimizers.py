@@ -77,6 +77,42 @@ class MutatestInspectionPlugin:
         self._cov_source_present = len(config.option.cov_source) > 0
 
 
+class CovBaselineTestException(Exception):
+    """Used as an exception if assertion is caught during coverage builds."""
+
+
+class MutatestFailurePlugin:
+    """Plugin to raise exceptions during single test runs for failing tests."""
+
+    def __init__(self) -> None:
+        self._failed_tests: List[str] = []
+
+    @property
+    def failed_tests(self) -> List[str]:
+        return self._failed_tests
+
+    def pytest_runtest_makereport(self, item: Any, call: Any) -> None:
+        """At reporting inspect call and item for failure results."""
+        if call.when == "call":
+
+            if call.excinfo is not None:
+                mark = item._evalxfail._mark
+
+                if mark is not None:
+                    if mark.name != "xfail":
+                        self._failed_tests.append(item.nodeid)
+                        raise CovBaselineTestException(
+                            f"Baseline test failure detected, "
+                            f"mutation results will be meaningless. Error on test: {item.nodeid}"
+                        )
+                else:
+                    self._failed_tests.append(item.nodeid)
+                    raise CovBaselineTestException(
+                        f"Baseline test failure detected, "
+                        f"mutation results will be meaningless. Error on test: {item.nodeid}"
+                    )
+
+
 class WhoTestsWhat:
     """Who tests what optimizer."""
 
@@ -207,6 +243,7 @@ class WhoTestsWhat:
 
         Raises:
             ValueError if the pytest-cov plugin and cov_source option are not detected.
+            CovBaselineTestException from the MutatestFailurePlugin if failing tests is detected
         """
         if not (self.cov_plugin_registered and self.cov_source_present):
             raise ValueError(
@@ -214,7 +251,17 @@ class WhoTestsWhat:
                 "Ensure you ran find_pytest_settings to initialize."
             )
 
-        pytest.main(self.args[1:] + deselect_args)
+        mfp = MutatestFailurePlugin()
+        pytest.main(self.args[1:] + deselect_args, plugins=[mfp])
+
+        if len(mfp.failed_tests) > 0:
+            nodes = ", ".join(mfp.failed_tests)
+            raise CovBaselineTestException(
+                f"Failed tests detected in coverage generation. "
+                f"Mutation results will be meaningless. "
+                f"\nTests: {nodes}"
+            )
+
         return CoverageOptimizer().cov_mapping
 
     def add_cov_map(self, target: str, cov_map: Dict[str, List[int]]) -> None:
