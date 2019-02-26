@@ -30,11 +30,6 @@ Features:
     - Flexible enough to run on a whole package or a single file.
 
 
-.. contents:: Table of contents
-   :backlinks: top
-   :local:
-
-
 Installation
 ============
 
