@@ -147,7 +147,7 @@ class WhoTestsWhat:
 
         return mapping
 
-    def get_src_line_delection(self, src_file: str, lineno: int) -> List[str]:
+    def get_src_line_deselection(self, src_file: str, lineno: int) -> Tuple[List[str], List[str]]:
         """Given source and line, return args for deselection of all tests except relevant.
 
         Args:
@@ -155,7 +155,7 @@ class WhoTestsWhat:
             lineno: the line number for reference
 
         Returns:
-            list of --deselect args to be added to test_cmds
+            list of --deselect args to be added to test_cmds, list of kept tests
         """
 
         key = f"{src_file}{self.join_key}{lineno}"
@@ -167,7 +167,7 @@ class WhoTestsWhat:
         for t in remove_tests:
             deselected.extend(["--deselect", t])
 
-        return deselected
+        return deselected, keep_tests
 
     def find_pytest_settings(self) -> None:
         """Set the collected tests and pytest config options for coverage."""
@@ -273,24 +273,3 @@ def covered_sample_space(
             covered_sample.append((src_file, loc_idx))
 
     return covered_sample
-
-
-if __name__ == "__main__":
-
-    import sys
-    import shlex
-    from pprint import pprint
-
-    args_list = shlex.split(sys.argv[1])
-
-    wtw = WhoTestsWhat(args_list)
-
-    pprint(wtw.__dict__)
-
-    wtw.find_pytest_settings()
-
-    pprint(wtw.__dict__)
-
-    wtw.build_map()
-
-    pprint(wtw.cov_mapping)

@@ -23,6 +23,7 @@ from mutatest.cli import (
     cli_main,
     cli_summary_report,
     get_src_location,
+    wtw_optimizer,
 )
 
 
@@ -38,6 +39,13 @@ class MockArgs(NamedTuple):
     testcmds: Optional[List[str]]
     debug: Optional[bool]
     nocov: Optional[bool]
+
+
+class MockOptArgs(NamedTuple):
+    """Container for optimization mocks."""
+
+    nocov: Optional[bool]
+    testcmds: Optional[str]
 
 
 @pytest.fixture
@@ -127,6 +135,19 @@ def test_get_src_location_file(monkeypatch, binop_file):
     assert result.resolve() == binop_file.resolve()
 
 
+def test_wtw_optimizer_nocov():
+    noargs = MockOptArgs(nocov=True, testcmds="pytest")
+
+    result, _ = wtw_optimizer(noargs)
+    assert result is None
+
+
+def test_wtw_optimizer_exception():
+    mock_args = MockOptArgs(nocov=False, testcmds="Some bad string")
+    result, _ = wtw_optimizer(mock_args)
+    assert result is None
+
+
 @freeze_time("2019-01-01")
 def test_main(monkeypatch, mock_args, mock_results_summary):
     """As of v0.1.0, if the report structure changes this will need to be updated."""
@@ -197,6 +218,10 @@ def test_main(monkeypatch, mock_args, mock_results_summary):
     def mock_cli_args(*args, **kwargs):
         return mock_args
 
+    def mock_wtw_opt(*args, **kwargs):
+        return None, timedelta(0)
+
+    monkeypatch.setattr(mutatest.cli, "wtw_optimizer", mock_wtw_opt)
     monkeypatch.setattr(mutatest.cli, "clean_trial", mock_clean_trial)
     monkeypatch.setattr(mutatest.cli, "run_mutation_trials", mock_run_mutation_trials)
 
@@ -260,28 +285,13 @@ def test_cli_summary_report_invariant(mock_args, mock_TrialTimes, s, lm, li):
     assert len(results) > 1
 
 
-@composite
-def e_args(draw):
-    """Strategy for creating lists of space delimited strings."""
-    list_text = draw(
-        st.lists(
-            elements=TEXT_STRATEGY.map(lambda x: x.replace(" ", "_")).filter(lambda x: len(x) > 0),
-            min_size=2,
-        )
-    )
-
-    arg_values = " ".join(list_text)
-    return (len(arg_values.split(" ")), arg_values)
-
-
 @pytest.mark.parametrize("e", ["--exclude", "-e"])
-@given(e_args())
-def test_args_exclude_split(e, earg):
+def test_args_exclude_split(e):
     """Property:
-        1. Given a space delimited string in --exclude, the split list is always returned.
+        1. Shelx posix splits occur on -e and --exclude
     """
-    args = cli_args([e, earg[1]])
-    assert len(args.exclude) == earg[0]
+    args = cli_args([e, "tools.py _test.py __init__.py"])
+    assert len(args.exclude) == 3
 
 
 @pytest.mark.parametrize("n", ["--nlocations", "-n", "-rseed", "-r"])

@@ -283,7 +283,7 @@ def get_sources_with_sample(
     return src_trees, sample_space
 
 
-def run_mutation_trials(
+def run_mutation_trials(  # noqa: C901
     src_loc: Union[str, Path],
     test_cmds: List[str],
     wtw: Optional[WhoTestsWhat] = None,
@@ -347,21 +347,28 @@ def run_mutation_trials(
         mutant_operations = get_mutations_for_target(sample_idx)
         src_tree = src_trees[sample_src]
 
+        # creating a copy to avoid in-place modification of the original args
+        trial_test_cmds = [t for t in test_cmds]
+
+        if wtw is not None:
+            deselect_args, kept_tests = wtw.get_src_line_deselection(sample_src, sample_idx.lineno)
+            l_kept = len(kept_tests)
+            l_total = l_kept + int(len(deselect_args) / 2)
+
+            LOGGER.info(
+                "%s",
+                colorize_output(f"Keeping {l_kept}/{l_total} tests for mutation trial.", "yellow"),
+            )
+            LOGGER.debug("Deselected test count: %s", len(deselect_args) / 2)
+            LOGGER.debug("Deselection args: %s", deselect_args)
+            trial_test_cmds.extend(deselect_args)
+
         while mutant_operations:
             # random.choice doesn't support sets, but sample of 1 produces a list with one element
             current_mutation = random.sample(mutant_operations, k=1)[0]
             mutant_operations.remove(current_mutation)
 
             LOGGER.debug("Running trial for %s", current_mutation)
-
-            # creating a copy to avoid in-place modification of the original args
-            trial_test_cmds = [t for t in test_cmds]
-
-            if wtw is not None:
-                deselect_args = wtw.get_src_line_delection(sample_src, sample_idx.lineno)
-                LOGGER.debug("Deselected test count: %s", len(deselect_args) / 2)
-                LOGGER.debug("Deselection args: %s", deselect_args)
-                trial_test_cmds.extend(deselect_args)
 
             trial_results = create_mutation_and_run_trial(
                 src_tree=src_tree,
@@ -373,43 +380,85 @@ def run_mutation_trials(
 
             results.append(trial_results)
 
-            if trial_results.status == "SURVIVED" and break_on_survival:
+            if trial_results.status == "SURVIVED":
                 LOGGER.info(
                     "%s",
                     colorize_output(
-                        "Surviving mutation detected, stopping further mutations for location.",
+                        (
+                            f"Surviving mutation detected at "
+                            f"{sample_src}: ({sample_idx.lineno}, {sample_idx.col_offset})"
+                        ),
                         "red",
                     ),
                 )
-                break
+                if break_on_survival:
+                    LOGGER.info(
+                        "%s",
+                        colorize_output(
+                            "Break on survival: stopping further mutations at location.", "red"
+                        ),
+                    )
+                    break
 
-            if trial_results.status == "DETECTED" and break_on_detected:
+            if trial_results.status == "DETECTED":
                 LOGGER.info(
                     "%s",
                     colorize_output(
-                        "Detected mutation, stopping further mutations for location.", "green"
+                        (
+                            f"Detected mutation at "
+                            f"{sample_src}: ({sample_idx.lineno}, {sample_idx.col_offset})"
+                        ),
+                        "green",
                     ),
                 )
-                break
+                if break_on_detected:
+                    LOGGER.info(
+                        "%s",
+                        colorize_output(
+                            "Break on detected: stopping further mutations at location.", "green"
+                        ),
+                    )
+                    break
 
-            if trial_results.status == "ERROR" and break_on_error:
+            if trial_results.status == "ERROR":
                 LOGGER.info(
                     "%s",
                     colorize_output(
-                        "Error with mutation, stopping further mutations for location.", "yellow"
-                    ),
-                )
-                break
-
-            if trial_results.status == "UNKNOWN" and break_on_unknown:
-                LOGGER.info(
-                    "%s",
-                    colorize_output(
-                        "Unknown mutation result, stopping further mutations for location.",
+                        (
+                            f"Error with mutation at "
+                            f"{sample_src}: ({sample_idx.lineno}, {sample_idx.col_offset})"
+                        ),
                         "yellow",
                     ),
                 )
-                break
+                if break_on_error:
+                    LOGGER.info(
+                        "%s",
+                        colorize_output(
+                            "Break on error: stopping further mutations at location.", "yellow"
+                        ),
+                    )
+                    break
+
+            if trial_results.status == "UNKNOWN":
+                LOGGER.info(
+                    "%s",
+                    colorize_output(
+                        (
+                            f"Unknown mutation result at "
+                            f"{sample_src}: ({sample_idx.lineno}, {sample_idx.col_offset})"
+                        ),
+                        "yellow",
+                    ),
+                )
+                if break_on_unknown:
+                    LOGGER.info(
+                        "%s",
+                        colorize_output(
+                            "Break on unknown: stopping further mutations at location.", "yellow"
+                        ),
+                    )
+                    break
 
     end = datetime.now()
     return ResultsSummary(

@@ -9,7 +9,7 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 from textwrap import dedent
-from typing import NamedTuple, Optional, Sequence
+from typing import NamedTuple, Optional, Sequence, Tuple
 
 from setuptools import find_packages  # type:ignore
 
@@ -196,10 +196,9 @@ def cli_args(args: Optional[Sequence[str]]) -> argparse.Namespace:
     parser.add_argument(
         "-o",
         "--output",
-        type=lambda x: Path(x),
+        type=str,
         metavar="PATH",
-        default="mutation_report.rst",
-        help="Output file location for results. (default: mutation_report.rst)",
+        help="Output RST file location for results. (default: No output written)",
     )
     parser.add_argument(
         "-r",
@@ -339,6 +338,33 @@ def get_src_location(src_loc: Optional[Path] = None) -> Path:
     )
 
 
+def wtw_optimizer(args: argparse.Namespace) -> Tuple[Optional[WhoTestsWhat], timedelta]:
+    """CLI who-tests-what optimization based on args.
+
+    Args:
+        args: input args, must have at least nocov and testcmds
+
+    Returns:
+        (WhoTestsWhat, run_time), if not run returns (None, timedelta(0))
+    """
+    wtw, clean_runtime_1 = None, timedelta(0)
+
+    if not args.nocov:
+        try:
+            start = datetime.now()
+            wtw = WhoTestsWhat(args.testcmds)
+            wtw.find_pytest_settings()
+            wtw.build_map()
+            clean_runtime_1 = datetime.now() - start
+            LOGGER.info("WTW Map build, size: %s", len(wtw.coverage_test_mapping))
+
+        except ValueError as e:
+            LOGGER.info("Who-Test-What exception: %s", e)
+            wtw = None
+
+    return wtw, clean_runtime_1
+
+
 def main(args: argparse.Namespace) -> None:
 
     src_loc = get_src_location(args.src)
@@ -352,20 +378,7 @@ def main(args: argparse.Namespace) -> None:
     )
 
     # determine if who-tests-what optimization can apply
-    wtw, clean_runtime_1 = None, timedelta(0)
-
-    try:
-        if not args.nocov:
-            start = datetime.now()
-            wtw = WhoTestsWhat(args.testcmds)
-            wtw.find_pytest_settings()
-            wtw.build_map()
-            clean_runtime_1 = datetime.now() - start
-            LOGGER.info("WTW Map build, size: %s", len(wtw.coverage_test_mapping))
-
-    except ValueError as e:
-        LOGGER.info("Who-Test-What exception: %s", e)
-        wtw = None
+    wtw, clean_runtime_1 = wtw_optimizer(args)
 
     if wtw is None:
         # Run the pipeline with no mutations first to ensure later results are meaningful
@@ -418,5 +431,6 @@ def main(args: argparse.Namespace) -> None:
     LOGGER.info("Detected mutations:%s\n", display_results.detected)
     LOGGER.info("Surviving mutations:%s\n", display_results.survived)
 
-    report = "\n".join([cli_report, trial_report])
-    write_report(report, args.output)
+    if args.output:
+        report = "\n".join([cli_report, trial_report])
+        write_report(report, Path(args.output))
