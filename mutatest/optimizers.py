@@ -85,11 +85,19 @@ class MutatestFailurePlugin:
     """Plugin to raise exceptions during single test runs for failing tests."""
 
     def __init__(self) -> None:
+        """Initialize failure detection plugin."""
         self._failed_tests: List[str] = []
+        self._xfail_tests: List[str] = []
 
     @property
     def failed_tests(self) -> List[str]:
+        """List of failed test nodes"""
         return self._failed_tests
+
+    @property
+    def xfail_tests(self) -> List[str]:
+        """List of tests marked xfail."""
+        return self._xfail_tests
 
     def pytest_runtest_makereport(self, item: Any, call: Any) -> None:
         """At reporting inspect call and item for failure results."""
@@ -101,16 +109,12 @@ class MutatestFailurePlugin:
                 if mark is not None:
                     if mark.name != "xfail":
                         self._failed_tests.append(item.nodeid)
-                        raise CovBaselineTestException(
-                            f"Baseline test failure detected, "
-                            f"mutation results will be meaningless. Error on test: {item.nodeid}"
-                        )
+
+                    if mark.name == "xfail":
+                        self._xfail_tests.append(item.nodeid)
+
                 else:
                     self._failed_tests.append(item.nodeid)
-                    raise CovBaselineTestException(
-                        f"Baseline test failure detected, "
-                        f"mutation results will be meaningless. Error on test: {item.nodeid}"
-                    )
 
 
 class WhoTestsWhat:
@@ -251,9 +255,11 @@ class WhoTestsWhat:
                 "Ensure you ran find_pytest_settings to initialize."
             )
 
+        # Run a single test
         mfp = MutatestFailurePlugin()
         pytest.main(self.args[1:] + deselect_args, plugins=[mfp])
 
+        # if the test fails then raise an error, functions like "clean trial"
         if len(mfp.failed_tests) > 0:
             nodes = ", ".join(mfp.failed_tests)
             raise CovBaselineTestException(
@@ -262,7 +268,14 @@ class WhoTestsWhat:
                 f"\nTests: {nodes}"
             )
 
-        return CoverageOptimizer().cov_mapping
+        cov_map = CoverageOptimizer().cov_mapping
+
+        # set the coverage mapping to be empty for any xfail tests
+        # assumes that only a single tests is run at a time from this function
+        if len(mfp.xfail_tests) > 0:
+            cov_map = {k: [] for k in cov_map}
+
+        return cov_map
 
     def add_cov_map(self, target: str, cov_map: Dict[str, List[int]]) -> None:
         """Add a coverage map for a given target to the primary coverage_test_mapping.
