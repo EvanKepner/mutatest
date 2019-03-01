@@ -19,6 +19,8 @@ not guaranteed while under development.
       file using the :code:`-o` option on the command line.
     - Improved CLI reporting during trial runs, including selected test counts and line/col locations
       for trial results while processing.
+    - Set install requires of :code:`pytest` version to be :code:`>=3.6` given new plugins as
+      part of the optimizers.
 
 
 0.7.1

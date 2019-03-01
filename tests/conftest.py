@@ -137,6 +137,105 @@ def mock_precov_sample():
 
 
 ####################################################################################################
+# OPTIMIZERS: PLUGIN TEST FIXTURES
+####################################################################################################
+
+
+@pytest.fixture(scope="session")
+def mock_tests_to_collect(tmp_path_factory):
+    """Mock .coverage file to read into the CoverageOptimizer."""
+    mock_contents = dedent(
+        """\
+    import pytest
+
+    def test_first_thing():
+        return True
+
+    @pytest.mark.xfail
+    def test_second_thing():
+        assert False
+
+    @pytest.mark.xfail
+    def test_third_thing():
+        assert False
+
+    @pytest.mark.somethingfunky
+    def test_fourth_thing():
+        assert False
+    """
+    )
+
+    folder = tmp_path_factory.mktemp("collect")
+    mock_test_file = folder / "test_collection.py"
+
+    with open(mock_test_file, "w") as ostream:
+        ostream.write(mock_contents)
+
+    return mock_test_file
+
+
+@pytest.fixture(scope="session")
+def mock_expected_collection():
+    """Collected tests to go with the tests_to_collect fixture"""
+    return {
+        "test_collection.py::test_first_thing",
+        "test_collection.py::test_second_thing",
+        "test_collection.py::test_third_thing",
+        "test_collection.py::test_fourth_thing",
+    }
+
+
+@pytest.fixture(scope="session")
+def mock_expected_realfail_collection():
+    """Collected tests to go with the tests_to_collect fixture"""
+    return {"test_collection.py::test_fourth_thing"}
+
+
+@pytest.fixture(scope="session")
+def mock_expected_xfail_collection():
+    """Collected tests to go with the tests_to_collect fixture"""
+    return {"test_collection.py::test_second_thing", "test_collection.py::test_third_thing"}
+
+
+@pytest.fixture(scope="session")
+def mock_tests_for_coverage(tmp_path_factory):
+    """Mock .coverage file to read into the CoverageOptimizer."""
+    mock_contents_py = dedent(
+        """\
+    def first_thing():
+        return 1
+
+    def second_thing():
+        return 2
+    """
+    )
+    mock_contents_test = dedent(
+        """\
+    import pytest
+    from thisthing import first_thing
+
+    def test_first_thing():
+        assert first_thing() == 1
+
+    def test_second_thing():
+        assert True
+    """
+    )
+
+    folder = tmp_path_factory.mktemp("cov_and_test")
+    mock_py_file = folder / "thisthing.py"
+    mock_test_file = folder / "test_thisthing.py"
+
+    with open(mock_py_file, "w") as ostream:
+        ostream.write(mock_contents_py)
+
+    with open(mock_test_file, "w") as ostream:
+        ostream.write(mock_contents_test)
+
+    return folder
+
+
+####################################################################################################
 # TRANSFORMERS: AUGASSIGN FIXTURES
 ####################################################################################################
 

@@ -38,7 +38,7 @@ CLASSIFIERS = [
     "Topic :: Software Development :: Testing :: Unit",
 ]
 
-INSTALL_REQUIRES = ["pytest", "coverage>=4.4"]
+INSTALL_REQUIRES = ["pytest>=3.6", "coverage>=4.4"]
 EXTRAS_REQUIRE = {
     "docs": ["sphinx"],
     "tests": [
