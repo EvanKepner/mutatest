@@ -293,7 +293,8 @@ class WhoTestsWhat:
                 key = f"{src_file}{self.join_key}{line}"
 
                 if key in self.coverage_test_mapping:
-                    self._coverage_test_mapping[key].append(target)
+                    if target not in self._coverage_test_mapping[key]:
+                        self._coverage_test_mapping[key].append(target)
 
                 else:
                     self._coverage_test_mapping[key] = [target]

@@ -3,12 +3,17 @@
 import pytest
 
 from mutatest.optimizers import (
+    CovBaselineTestException,
     CoverageOptimizer,
     MutatestFailurePlugin,
     MutatestInspectionPlugin,
     covered_sample_space,
     WhoTestsWhat,
 )
+
+####################################################################################################
+# COVERAGE OPTIMIZER
+####################################################################################################
 
 
 @pytest.fixture(scope="module")
@@ -40,6 +45,12 @@ def test_coverage_sample(mock_CoverageOptimizer, mock_precov_sample):
         assert li.lineno in [1, 4, 2]
 
 
+####################################################################################################
+# MUTATEST INSPECTION PLUGINS
+####################################################################################################
+
+
+@pytest.mark.plugin
 def test_MutatestInspectionPlugin_coverage_detection(
     mock_tests_to_collect, mock_expected_collection
 ):
@@ -57,6 +68,7 @@ def test_MutatestInspectionPlugin_coverage_detection(
     assert mip.cov_plugin_registered
 
 
+@pytest.mark.plugin
 def test_MutatestInspectionPlugin_nocoverage_detection(
     mock_tests_to_collect, mock_expected_collection
 ):
@@ -74,6 +86,7 @@ def test_MutatestInspectionPlugin_nocoverage_detection(
     assert not mip.cov_source_present
 
 
+@pytest.mark.plugin
 def test_MutatestFailurePluing_detection(
     mock_tests_to_collect, mock_expected_realfail_collection, mock_expected_xfail_collection
 ):
@@ -89,6 +102,11 @@ def test_MutatestFailurePluing_detection(
     result_xfail = set(mfp.xfail_tests)
     assert len(mfp.xfail_tests) == len(mock_expected_xfail_collection)
     assert result_xfail == mock_expected_xfail_collection
+
+
+####################################################################################################
+# WHO TESTS WHAT
+####################################################################################################
 
 
 @pytest.fixture
@@ -155,6 +173,7 @@ def test_get_deselect_args(wtw):
         assert r == e
 
 
+@pytest.mark.plugin
 def test_find_pytest_settings(mock_tests_to_collect, mock_expected_collection):
     """Expection from mocks with the WTW wrapper."""
 
@@ -169,7 +188,8 @@ def test_find_pytest_settings(mock_tests_to_collect, mock_expected_collection):
     assert result == mock_expected_collection
 
 
-def test_coverage_settings(mock_tests_for_coverage):
+@pytest.mark.plugin
+def test_run_coverage(mock_tests_for_coverage):
     """Fixture returns a folder with tests and python files for coverage, assert mappings."""
 
     test_path = mock_tests_for_coverage.resolve()
@@ -185,3 +205,64 @@ def test_coverage_settings(mock_tests_for_coverage):
     key = str(mock_tests_for_coverage.resolve() / "thisthing.py")  # based on fixture definition
     # this key should have line-2 covered by the fixture mock test file
     assert cmap[key][0] == 2
+
+
+@pytest.mark.plugin
+def test_run_coverage_raise_ValueError(mock_tests_for_coverage):
+    """Without coverage source set a ValueError is raised by run_coverage.."""
+
+    test_path = mock_tests_for_coverage.resolve()
+    args = f"pytest {test_path}".split()
+
+    wtw = WhoTestsWhat(args)
+    wtw.find_pytest_settings()
+
+    with pytest.raises(ValueError):
+        _ = wtw.run_coverage(deselect_args=[])
+
+
+@pytest.mark.plugin
+def test_run_coverage_raise_CovBaselineTestException(mock_tests_to_collect):
+    """With failed tests detected raise a CovBaselineTestException."""
+
+    test_path = mock_tests_to_collect.resolve()
+    args = f"pytest {test_path} --cov={test_path}".split()
+
+    wtw = WhoTestsWhat(args)
+    wtw.find_pytest_settings()
+
+    with pytest.raises(CovBaselineTestException):
+        _ = wtw.run_coverage(deselect_args=[])
+
+
+def test_add_cov_map_existing_target(wtw):
+    """Adding an existing target test to a coverage map has no impact."""
+    target, covmap = "test1", {"source.py": [1]}
+
+    expected_k = "source.py::1"
+    expected_v = ["test1", "test2", "test3"]
+
+    wtw.add_cov_map(target=target, cov_map=covmap)
+
+    result = wtw.coverage_test_mapping[expected_k]
+
+    for r, e in zip(result, expected_v):
+        assert r == e
+
+
+def test_add_cov_map_new_item(wtw):
+    """A new source gets keys per line with the associated target."""
+    target, covmap = "test1", {"source5.py": [1, 2]}
+
+    expected_k_1 = "source5.py::1"
+    expected_k_2 = "source5.py::2"
+    expected_v = ["test1"]
+
+    wtw.add_cov_map(target=target, cov_map=covmap)
+
+    result_1 = wtw.coverage_test_mapping[expected_k_1]
+    result_2 = wtw.coverage_test_mapping[expected_k_2]
+
+    for r1, r2, e in zip(result_1, result_2, expected_v):
+        assert r1 == e
+        assert r2 == e
