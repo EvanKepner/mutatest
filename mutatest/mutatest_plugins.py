@@ -1,8 +1,7 @@
 """Mutatest  plugin registration.
 """
-from mutatest.optimizers import MutatestFailurePlugin, MutatestInspectionPlugin
+from mutatest.optimizers import MutatestWTWCoverage
 
 
 def pytest_configure(config):
-    config.pluginmanager.register(MutatestInspectionPlugin())
-    config.pluginmanager.register(MutatestFailurePlugin())
+    config.pluginmanager.register(MutatestWTWCoverage())

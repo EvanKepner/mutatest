@@ -4,7 +4,7 @@ htmlcov/
 pip-wheel-metadata/
 .ipynb
 .ipynb_checkpoints/*
-.mutatest
+.mutatest*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
