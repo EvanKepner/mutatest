@@ -266,3 +266,19 @@ def test_add_cov_map_new_item(wtw):
     for r1, r2, e in zip(result_1, result_2, expected_v):
         assert r1 == e
         assert r2 == e
+
+
+@pytest.mark.plugin
+def test_build_map(mock_tests_for_coverage):
+    """Build map is a composition of other functions, but final cov-mapping should be set."""
+
+    test_path = mock_tests_for_coverage.resolve()
+    args = f"pytest {test_path} --cov={test_path}".split()
+
+    wtw = WhoTestsWhat(args)
+    wtw.find_pytest_settings()
+    wtw.build_map()
+
+    key = str(mock_tests_for_coverage.resolve() / "thisthing.py")  # based on fixture definition
+    # this key should have line-2 covered by the fixture mock test file
+    assert wtw.cov_mapping[key][0] == 2

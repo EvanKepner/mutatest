@@ -103,7 +103,10 @@ if __name__ == "__main__":
         packages=PACKAGES,
         python_requires=">=3.7.0",
         zip_safe=False,
-        entry_points={"console_scripts": ["mutatest=mutatest.cli:cli_main"]},
+        entry_points={
+            "console_scripts": ["mutatest=mutatest.cli:cli_main"],
+            "pytest11": ["mutatestplugins=mutatest.mutatest_plugins"],
+        },
         classifiers=CLASSIFIERS,
         install_requires=INSTALL_REQUIRES,
         extras_require=EXTRAS_REQUIRE,
