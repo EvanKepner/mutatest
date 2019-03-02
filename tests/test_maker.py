@@ -22,11 +22,6 @@ from mutatest.transformers import LocIndex, get_ast_from_src
 RETURN_CODE_MAPPINGS = [(0, "SURVIVED"), (1, "DETECTED"), (2, "ERROR"), (3, "UNKNOWN")]
 
 
-@pytest.mark.xfail
-def tests_xfailed():
-    assert False
-
-
 @pytest.fixture
 def add_five_to_mult_mutant(binop_file, stdoutIO):
     """Mutant that takes add_five op ADD to MULT. Fails if mutation code does not work."""

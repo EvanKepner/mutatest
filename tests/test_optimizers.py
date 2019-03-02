@@ -201,7 +201,7 @@ def test_run_coverage(mock_tests_for_coverage):
     assert wtw.cov_source_present
     assert wtw.cov_plugin_registered
 
-    cmap = wtw.run_coverage(deselect_args=[])
+    cmap = wtw.run_single_test_coverage(deselect_args=[])
     key = str(mock_tests_for_coverage.resolve() / "thisthing.py")  # based on fixture definition
     # this key should have line-2 covered by the fixture mock test file
     assert cmap[key][0] == 2
@@ -209,7 +209,7 @@ def test_run_coverage(mock_tests_for_coverage):
 
 @pytest.mark.plugin
 def test_run_coverage_raise_ValueError(mock_tests_for_coverage):
-    """Without coverage source set a ValueError is raised by run_coverage.."""
+    """Without coverage source set a ValueError is raised by run_single_test_coverage.."""
 
     test_path = mock_tests_for_coverage.resolve()
     args = f"pytest {test_path}".split()
@@ -218,7 +218,7 @@ def test_run_coverage_raise_ValueError(mock_tests_for_coverage):
     wtw.find_pytest_settings()
 
     with pytest.raises(ValueError):
-        _ = wtw.run_coverage(deselect_args=[])
+        _ = wtw.run_single_test_coverage(deselect_args=[])
 
 
 @pytest.mark.plugin
@@ -232,7 +232,7 @@ def test_run_coverage_raise_CovBaselineTestException(mock_tests_to_collect):
     wtw.find_pytest_settings()
 
     with pytest.raises(CovBaselineTestException):
-        _ = wtw.run_coverage(deselect_args=[])
+        _ = wtw.run_single_test_coverage(deselect_args=[])
 
 
 def test_add_cov_map_existing_target(wtw):

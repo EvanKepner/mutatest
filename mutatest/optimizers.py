@@ -108,6 +108,7 @@ class MutatestFailurePlugin:
         """Initialize failure detection plugin."""
         self._failed_tests: List[str] = []
         self._xfail_tests: List[str] = []
+        self._skipped_tests: List[str] = []
         self._json_path = MUTATEST_FAILURES
 
     @property
@@ -121,31 +122,34 @@ class MutatestFailurePlugin:
         return self._failed_tests
 
     @property
+    def skipped_tests(self) -> List[str]:
+        return self._skipped_tests
+
+    @property
     def xfail_tests(self) -> List[str]:
         """List of tests marked xfail."""
         return self._xfail_tests
 
-    def pytest_runtest_makereport(self, item: Any, call: Any) -> None:
-        """At reporting inspect call and item for failure results."""
-        if call.when == "call":
+    def pytest_terminal_summary(self, terminalreporter, exitstatus, config):
+        stats = terminalreporter.stats
 
-            if call.excinfo is not None:
-                mark = item._evalxfail._mark
+        if "failed" in stats:
+            self._failed_tests = [t.nodeid for t in stats["failed"]]
 
-                if mark is not None:
-                    if mark.name != "xfail":
-                        self._failed_tests.append(item.nodeid)
+        if "skipped" in stats:
+            self._skipped_tests = [t.nodeid for t in stats["skipped"]]
 
-                    if mark.name == "xfail":
-                        self._xfail_tests.append(item.nodeid)
-
-                else:
-                    self._failed_tests.append(item.nodeid)
+        if "xfailed" in stats:
+            self._xfail_tests = [t.nodeid for t in stats["xfailed"]]
 
     def pytest_sessionfinish(self) -> None:
         """After the session completes write the local output to a dot file json."""
 
-        payload = {"failed_tests": self.failed_tests, "xfail_tests": self.xfail_tests}
+        payload = {
+            "failed_tests": self.failed_tests,
+            "xfail_tests": self.xfail_tests,
+            "skipped_tests": self.skipped_tests,
+        }
         write_plugin_json(self.json_path, payload)
 
 
@@ -279,11 +283,14 @@ class WhoTestsWhat:
 
         return deselect_args
 
-    def run_coverage(self, deselect_args: List[str]) -> Dict[str, List[int]]:
+    def run_single_test_coverage(self, deselect_args: List[str]) -> Dict[str, List[int]]:
         """Run pytest with the deselected tests to generate a .coverage file.
 
+        This function is built under the assumption that only a single tests is run with the
+        application of deselect args.
+
         Args:
-            deselect_args: list of --deselect tests to append to args.
+            deselect_args: list of --deselect tests to append to args and leave only 1 tests.
 
         Returns:
             Coverage Optimizer mapping.
@@ -309,7 +316,7 @@ class WhoTestsWhat:
 
         # if the test fails then raise an error, functions like "clean trial"
         if len(mfp["failed_tests"]) > 0:
-            nodes = ", ".join(mfp.failed_tests)
+            nodes = ", ".join(mfp["failed_tests"])
             raise CovBaselineTestException(
                 f"Failed tests detected in coverage generation. "
                 f"Mutation results will be meaningless. "
@@ -318,10 +325,14 @@ class WhoTestsWhat:
 
         cov_map = CoverageOptimizer().cov_mapping
 
-        # set the coverage mapping to be empty for any xfail tests
+        # set the coverage mapping to be empty for any xfail tests and skipped tests
         # assumes that only a single tests is run at a time from this function
         if len(mfp["xfail_tests"]) > 0:
             LOGGER.info("xfailing test detected, who-tests-what coverage set to 0 for test node.")
+            cov_map = {k: [] for k in cov_map}
+
+        if len(mfp["skipped_tests"]) > 0:
+            LOGGER.info("Skipped test detected, who-tests-what coverage set to 0 for test node.")
             cov_map = {k: [] for k in cov_map}
 
         return cov_map
@@ -354,12 +365,11 @@ class WhoTestsWhat:
         Returns:
             None, builds the coverage_test_mapping property.
         """
-
         for test_node in self.collected:
             deselect_args = self.get_deselect_args(test_node)
 
             LOGGER.info("Building who-tests-what coverage map for %s", test_node)
-            cov_map = self.run_coverage(deselect_args)
+            cov_map = self.run_single_test_coverage(deselect_args)
             self.add_cov_map(test_node, cov_map)
 
 
