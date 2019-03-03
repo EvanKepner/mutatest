@@ -267,6 +267,7 @@ def cli_summary_report(
      - Excluded files: {exclude}
      - N locations input: {n_locs}
      - Random seed: {seed}
+     - Who-tests-what: {wtw}
 
     Random sample details
     ---------------------
@@ -301,6 +302,7 @@ def cli_summary_report(
         "ct1": runtimes.clean_trial_1,
         "ct2": runtimes.clean_trial_2,
         "mt": runtimes.mutation_trials,
+        "wtw": args.wtw,
     }
 
     return cli_summary_template.format_map(fmt_map)

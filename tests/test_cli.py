@@ -163,6 +163,7 @@ def test_main(monkeypatch, mock_args, mock_results_summary):
          - Excluded files: ['__init__.py']
          - N locations input: 10
          - Random seed: 314
+         - Who-tests-what: False
 
         Random sample details
         ---------------------
