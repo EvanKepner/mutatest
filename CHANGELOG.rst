@@ -19,8 +19,6 @@ not guaranteed while under development.
 
     - Improved CLI reporting, including selected test counts and line/col locations
       for trial results while processing.
-    - Set install requires of :code:`pytest` version to be :code:`>=3.6` given new plugin as
-      part of the :code:`WhoTestsWhat` optimizer.
 
 
 0.7.1

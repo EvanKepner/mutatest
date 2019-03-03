@@ -681,5 +681,5 @@ return codes into mutation trial statuses.
 
 .. target-notes::
 .. _CHANGELOG: https://github.com/EvanKepner/mutatest/blob/master/CHANGELOG.rst
-.. _Python AST grammar: https://docs.python.org/3/library/ast.html#abstract-grammar
 .. _Pytest Test Layout: https://docs.pytest.org/en/latest/goodpractices.html#choosing-a-test-layout-import-rules
+.. _Python AST grammar: https://docs.python.org/3/library/ast.html#abstract-grammar
