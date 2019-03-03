@@ -116,16 +116,17 @@ You can use this syntax if you want to specify a single module in your package t
     $ mutatest -s mypackage/run.py -t "pytest tests/test_run.py"
 
 
-There is an option to exclude files from the source set. By default, :code:`__init__.py` is
-excluded. Exclude files using the :code:`--exclude` argument with a space delimited list of files
-in a string. Only list the file name, not paths.
+There is an option to exclude files from the source set.
+Exclude files using the :code:`--exclude` argument and pointing to the file.
+Multiple :code:`--exclude` statements may be used to exclude multiple files. The default behavior
+is that no files are excluded.
 
 .. code-block:: bash
 
-    $ mutatest --exclude "__init__.py _devtools.py"
+    $ mutatest --exclude mypackage/__init__.py -- exclude mypackage/_devtools.py
 
     # using shorthand arguments
-    $ mutatest -e "__init__.py _devtools.py"
+    $ mutatest -e mypackage/__init__.py -e mypackage/_devtools.py
 
 
 Coverage optimization
@@ -249,8 +250,9 @@ candidate locations is used.
 Setting the output location
 ---------------------------
 
-By default, :code:`mutatest` will write a :code:`mutation_report.rst` to the current working
-directory. You can set this file name and path location using the :code:`--output` argument.
+By default, :code:`mutatest` will only create CLI output to :code:`stdout`.
+You can set path location using the :code:`--output` argument for a written RST report of the
+mutation trial results.
 
 .. code-block::
 

@@ -13,14 +13,21 @@ not guaranteed while under development.
         2. Will select only relevant tests per mutated location, giving a major speed increase
            for mutation trials on long-running test suites.
         3. This optimizer is only for :code:`pytest`.
-        4. The restricted sample selection using :code:`coverage` is still available.
+        4. The restricted sample selection using :code:`.coverage` is still available.
 
-    - Output files are now optional, the default behavior has changed from always writing an RST
-      file using the :code:`-o` option on the command line.
-    - Improved CLI reporting during trial runs, including selected test counts and line/col locations
+    - Breaking changes to the CLI arguments and new defaults:
+        1. Output files are now optional, the default behavior has changed from always writing an RST
+          file using the :code:`-o` option on the command line.
+        2. Exclusions are still marked as :code:`-e`; however, now multiple :code:`-e` arguments are
+           supported and arguments must point to a Python file e.g. it used to be:
+           :code:`mutatest -e "__init__.py _devtools.py" and now it is
+           :code:`mutatest -e src/__init__.py -e src/_devtools.py`. There are no longer default
+           exclusions applied.
+
+    - Improved CLI reporting, including selected test counts and line/col locations
       for trial results while processing.
     - Set install requires of :code:`pytest` version to be :code:`>=3.6` given new plugin as
-      part of the optimizers.
+      part of the :code:`WhoTestsWhat` optimizer.
 
 
 0.7.1

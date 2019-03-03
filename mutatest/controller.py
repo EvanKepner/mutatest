@@ -134,7 +134,7 @@ def clean_trial(src_loc: Path, test_cmds: List[str]) -> timedelta:
 
 
 def build_src_trees_and_targets(
-    src_loc: Union[str, Path], exclude_files: Optional[List[str]] = None
+    src_loc: Union[str, Path], exclude_files: Optional[List[Path]] = None
 ) -> Tuple[Dict[str, ast.Module], Dict[str, List[LocIndex]]]:
     """Build the source AST references and find all mutatest target locations for each.
 
@@ -151,16 +151,19 @@ def build_src_trees_and_targets(
 
         # if the src_file is in the exclusion list then reset to the next iteration
         if exclude_files:
-            if src_file.name in exclude_files:
-                LOGGER.info("%s is in the exclusion list, skipping.", src_file.name)
+            if src_file in exclude_files:
+                LOGGER.info("%s", colorize_output(f"Exclusion: {src_file}", "yellow"))
                 continue
 
-        LOGGER.info("Creating AST from: %s", src_file)
         tree = get_ast_from_src(src_file)
-
-        # Get the locations for all mutatest potential for the given file
-        LOGGER.info("Get mutatest targets from AST.")
         targets = get_mutation_targets(tree, src_file)
+        LOGGER.info(
+            "%s",
+            colorize_output(
+                f"{len(targets)} mutation targets found in {src_file} AST.",
+                "green" if len(targets) > 0 else "yellow",
+            ),
+        )
 
         # only add files that have at least one valid target for mutatest
         if targets:
@@ -217,14 +220,22 @@ def get_mutation_sample_locations(
 
         if n_locations <= len(sample_space):
             LOGGER.info(
-                "Selecting %s locations from %s potentials.", n_locations, len(sample_space)
+                "%s",
+                colorize_output(
+                    f"Selecting {n_locations} locations from {len(sample_space)} potentials.",
+                    "green",
+                ),
             )
             mutation_sample = random.sample(sample_space, k=n_locations)
 
         else:
             # set here for final reporting, though not used in rest of trial controls
             LOGGER.info(
-                "%s exceeds sample space, using full sample: %s.", n_locations, len(sample_space)
+                "%s",
+                colorize_output(
+                    f"{n_locations} exceeds sample space, using full sample: {len(sample_space)}.",
+                    "yellow",
+                ),
             )
 
     return mutation_sample
@@ -250,7 +261,7 @@ def optimize_covered_sample(
 
 def get_sources_with_sample(
     src_loc: Union[str, Path],
-    exclude_files: Optional[List[str]] = None,
+    exclude_files: Optional[List[Path]] = None,
     ignore_coverage: bool = False,
     cov_mapping: Optional[Dict[str, List[int]]] = None,
 ) -> Tuple[Dict[str, ast.Module], List[Tuple[str, LocIndex]]]:
@@ -313,7 +324,10 @@ def get_trial_test_cmds(
         if l_kept > 0:
             LOGGER.info(
                 "%s",
-                colorize_output(f"Keeping {l_kept}/{l_total} tests for mutation trial.", "yellow"),
+                colorize_output(
+                    f"Who-tests-what: keeping {l_kept}/{l_total} tests for mutation trial.",
+                    "yellow",
+                ),
             )
             LOGGER.debug("Deselected test count: %s", len(deselect_args) / 2)
             trial_test_cmds.extend(deselect_args)
@@ -321,7 +335,7 @@ def get_trial_test_cmds(
         else:
             LOGGER.info(
                 colorize_output(
-                    "Who-tests-what resulted in 0 tests, "
+                    "Who-tests-what: optimization attempt resulted in 0 tests, "
                     "skipping deselection and running typical trial.",
                     "yellow",
                 )
@@ -334,7 +348,7 @@ def run_mutation_trials(  # noqa: C901
     src_loc: Union[str, Path],
     test_cmds: List[str],
     wtw: Optional[WhoTestsWhat] = None,
-    exclude_files: Optional[List[str]] = None,
+    exclude_files: Optional[List[Path]] = None,
     n_locations: Optional[int] = None,
     break_on_survival: bool = False,
     break_on_detected: bool = False,
@@ -368,7 +382,6 @@ def run_mutation_trials(  # noqa: C901
         List of mutants and trial results
     """
     # Create the AST for each source file and make potential targets sample space
-    LOGGER.info("Running mutation trials.")
     start = datetime.now()
 
     # if who-tests-what optimization is in place
@@ -387,6 +400,7 @@ def run_mutation_trials(  # noqa: C901
 
     results: List[MutantTrialResult] = []
 
+    LOGGER.info("Starting individual mutation trials!")
     for sample_src, sample_idx in mutation_sample:
 
         LOGGER.info("Current target location: %s, %s", Path(sample_src).name, sample_idx)

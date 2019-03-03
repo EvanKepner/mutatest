@@ -129,7 +129,7 @@ def test_build_src_trees_and_targets_exclusions(tmp_path):
         f / "test_third.py",
     ]
 
-    exclude = ["second.py", "third.py"]
+    exclude = [(tmp_path / "second.py").resolve(), (f / "third.py").resolve()]
     expected = "first.py"
 
     # need at least on valid location operation to return a value for trees/targets

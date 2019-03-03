@@ -288,15 +288,6 @@ def test_cli_summary_report_invariant(mock_args, mock_TrialTimes, s, lm, li):
     assert len(results) > 1
 
 
-@pytest.mark.parametrize("e", ["--exclude", "-e"])
-def test_args_exclude_split(e):
-    """Property:
-        1. Shelx posix splits occur on -e and --exclude
-    """
-    args = cli_args([e, "tools.py _test.py __init__.py"])
-    assert len(args.exclude) == 3
-
-
 @pytest.mark.parametrize("n", ["--nlocations", "-n", "-rseed", "-r"])
 @given(st.integers(max_value=-1))
 def test_syserror_negative_n_and_rseed(n, i):

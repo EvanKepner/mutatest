@@ -78,8 +78,9 @@ def cli_epilog() -> str:
 
     Exclude:
     --------
-     - Useful for excluding files that are not included in test coverage. Use a space delimited
-       list in a string for the files e.g. "__init__.py ignore.py also_ignore.py".
+     - Useful for excluding files that are not included in test coverage. You can set the arg
+       multiple times for additional files e.g. mutatest -e src/__init__.py -e src/_devtools.py
+       would exclude both src/__init__.py and src/_devtools.py from mutation processing.
 
     Mode:
     ------
@@ -168,10 +169,11 @@ def cli_args(args: Optional[Sequence[str]]) -> argparse.Namespace:
     parser.add_argument(
         "-e",
         "--exclude",
-        type=lambda x: x.split(),
-        default="__init__.py",
-        metavar="STR_LIST",
-        help="Space delimited string list of .py file names to exclude. (default: '__init__.py')",
+        type=lambda x: Path(x).resolve(),
+        action="append",
+        default=[],
+        metavar="PATH",
+        help="Path to .py file to exclude, multiple -e entries supported. (default: None)",
     )
     parser.add_argument(
         "-m",

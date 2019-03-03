@@ -42,7 +42,7 @@ INSTALL_REQUIRES = ["pytest>=3.6", "coverage>=4.4"]
 EXTRAS_REQUIRE = {
     "docs": ["sphinx"],
     "tests": [
-        "pytest >= 4.0.0",
+        "pytest >= 3.6",
         "freezegun",
         "coverage",
         "pytest-cov",
