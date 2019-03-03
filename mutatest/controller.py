@@ -11,12 +11,7 @@ from typing import Dict, List, NamedTuple, Optional, Tuple, Union
 
 from mutatest.cache import remove_existing_cache_files
 from mutatest.maker import MutantTrialResult, create_mutation_and_run_trial, get_mutation_targets
-from mutatest.optimizers import (
-    DEFAULT_COVERAGE_FILE,
-    CoverageOptimizer,
-    WhoTestsWhat,
-    covered_sample_space,
-)
+from mutatest.optimizers import DEFAULT_COVERAGE_FILE, CoverageOptimizer, covered_sample_space
 from mutatest.transformers import LocIndex, get_ast_from_src, get_mutations_for_target
 
 
@@ -299,55 +294,9 @@ def get_sources_with_sample(
     return src_trees, sample_space
 
 
-def get_trial_test_cmds(
-    test_cmds: List[str], sample_src: str, sample_idx: LocIndex, wtw: Optional[WhoTestsWhat] = None
-) -> List[str]:
-    """Generate trial test commands with potential wtw deselection.
-
-    Args:
-        test_cmds: original test command list
-        sample_src: the sample source file
-        sample_idx: sample location index
-        wtw: optional Who-Tests-What instance
-
-    Returns:
-        test commands for the trials
-    """
-
-    trial_test_cmds = [t for t in test_cmds]
-
-    if wtw is not None:
-        deselect_args, kept_tests = wtw.get_src_line_deselection(sample_src, sample_idx.lineno)
-        l_kept = len(kept_tests)
-        l_total = l_kept + int(len(deselect_args) / 2)
-
-        if l_kept > 0:
-            LOGGER.info(
-                "%s",
-                colorize_output(
-                    f"Who-tests-what: keeping {l_kept}/{l_total} tests for mutation trial.",
-                    "yellow",
-                ),
-            )
-            LOGGER.debug("Deselected test count: %s", len(deselect_args) / 2)
-            trial_test_cmds.extend(deselect_args)
-
-        else:
-            LOGGER.info(
-                colorize_output(
-                    "Who-tests-what: optimization attempt resulted in 0 tests, "
-                    "skipping deselection and running typical trial.",
-                    "yellow",
-                )
-            )
-
-    return trial_test_cmds
-
-
 def run_mutation_trials(  # noqa: C901
     src_loc: Union[str, Path],
     test_cmds: List[str],
-    wtw: Optional[WhoTestsWhat] = None,
     exclude_files: Optional[List[Path]] = None,
     n_locations: Optional[int] = None,
     break_on_survival: bool = False,
@@ -364,7 +313,6 @@ def run_mutation_trials(  # noqa: C901
     Args:
         src_loc: the source file package directory
         test_cmds: the test runner commands for subprocess.run()
-        wtw: WhoTestsWhat optimizer instance
         exclude_files: optional list of files to exclude from mutation trials, default None
         n_locations: optional number of locations for mutations,
             if unspecified then the full sample space is used.
@@ -385,13 +333,11 @@ def run_mutation_trials(  # noqa: C901
     start = datetime.now()
 
     # if who-tests-what optimization is in place
-    pre_cov = wtw.cov_mapping if wtw is not None else None
-
     src_trees, sample_space = get_sources_with_sample(
         src_loc=src_loc,
         exclude_files=exclude_files,
         ignore_coverage=ignore_coverage,
-        cov_mapping=pre_cov,
+        cov_mapping=None,
     )
 
     mutation_sample = get_mutation_sample_locations(
@@ -407,7 +353,7 @@ def run_mutation_trials(  # noqa: C901
         mutant_operations = get_mutations_for_target(sample_idx)
         src_tree = src_trees[sample_src]
 
-        trial_test_cmds = get_trial_test_cmds(test_cmds, sample_src, sample_idx, wtw)
+        trial_test_cmds = [t for t in test_cmds]
 
         while mutant_operations:
             # random.choice doesn't support sets, but sample of 1 produces a list with one element

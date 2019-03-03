@@ -6,10 +6,10 @@ import random
 import shlex
 import sys
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 from pathlib import Path
 from textwrap import dedent
-from typing import NamedTuple, Optional, Sequence, Tuple
+from typing import NamedTuple, Optional, Sequence
 
 from setuptools import find_packages  # type:ignore
 
@@ -17,7 +17,6 @@ import mutatest
 
 from mutatest.cache import check_cache_invalidation_mode
 from mutatest.controller import clean_trial, run_mutation_trials
-from mutatest.optimizers import WhoTestsWhat
 from mutatest.report import analyze_mutant_trials, write_report
 from mutatest.transformers import get_compatible_operation_sets
 
@@ -235,9 +234,6 @@ def cli_args(args: Optional[Sequence[str]]) -> argparse.Namespace:
     parser.add_argument(
         "--nocov", action="store_true", help="Ignore coverage files for optimization."
     )
-    parser.add_argument(
-        "--wtw", action="store_true", help="Use Who-Tests-What optimization for test selection."
-    )
 
     return parser.parse_args(args)
 
@@ -269,7 +265,6 @@ def cli_summary_report(
      - Excluded files: {exclude}
      - N locations input: {n_locs}
      - Random seed: {seed}
-     - Who-tests-what: {wtw}
 
     Random sample details
     ---------------------
@@ -304,7 +299,6 @@ def cli_summary_report(
         "ct1": runtimes.clean_trial_1,
         "ct2": runtimes.clean_trial_2,
         "mt": runtimes.mutation_trials,
-        "wtw": args.wtw,
     }
 
     return cli_summary_template.format_map(fmt_map)
@@ -345,34 +339,6 @@ def get_src_location(src_loc: Optional[Path] = None) -> Path:
     )
 
 
-def wtw_optimizer(args: argparse.Namespace) -> Tuple[Optional[WhoTestsWhat], timedelta]:
-    """CLI who-tests-what optimization based on args.
-
-    Args:
-        args: input args, must have at least nocov and testcmds
-
-    Returns:
-        (WhoTestsWhat, run_time), if not run returns (None, timedelta(0))
-    """
-    wtw, clean_runtime_1 = None, timedelta(0)
-
-    if args.wtw:
-        LOGGER.info("Who-Test-What optimization enabled.")
-        try:
-            start = datetime.now()
-            wtw = WhoTestsWhat(args.testcmds)
-            wtw.find_pytest_settings()
-            wtw.build_map()
-            clean_runtime_1 = datetime.now() - start
-            LOGGER.info("WTW Map build, size: %s", len(wtw.coverage_test_mapping))
-
-        except ValueError as e:
-            LOGGER.info("Who-Test-What exception: %s", e)
-            wtw = None
-
-    return wtw, clean_runtime_1
-
-
 def main(args: argparse.Namespace) -> None:
 
     src_loc = get_src_location(args.src)
@@ -385,10 +351,7 @@ def main(args: argparse.Namespace) -> None:
         stream=sys.stdout,
     )
 
-    wtw, clean_runtime_1 = wtw_optimizer(args)
-
-    if wtw is None:
-        clean_runtime_1 = clean_trial(src_loc=src_loc, test_cmds=args.testcmds)
+    clean_runtime_1 = clean_trial(src_loc=src_loc, test_cmds=args.testcmds)
 
     # Run the mutation trials based on the input argument
     run_mode = RunMode(args.mode)
@@ -400,7 +363,6 @@ def main(args: argparse.Namespace) -> None:
     results_summary = run_mutation_trials(
         src_loc=src_loc,
         test_cmds=args.testcmds,
-        wtw=wtw,
         exclude_files=args.exclude,
         n_locations=args.nlocations,
         break_on_detected=run_mode.break_on_detection,
@@ -411,8 +373,7 @@ def main(args: argparse.Namespace) -> None:
     )
 
     # Run the pipeline with no mutations last to ensure cleared cache
-    clean_runtime_2 = timedelta(0)
-    # clean_runtime_2 = clean_trial(src_loc=src_loc, test_cmds=args.testcmds)
+    clean_runtime_2 = clean_trial(src_loc=src_loc, test_cmds=args.testcmds)
 
     runtimes = TrialTimes(
         clean_trial_1=clean_runtime_1,

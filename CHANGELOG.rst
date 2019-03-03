@@ -8,13 +8,6 @@ not guaranteed while under development.
 0.8.0
 -----
 
-    - New :code:`WhoTestWhat` optimizer enabled with :code:`--wtw`:
-        1. Best-try coverage per individual test with :code:`coverage`.
-        2. Will select only relevant tests per mutated location, giving a major speed increase
-           for mutation trials on long-running test suites.
-        3. This optimizer is only for :code:`pytest`.
-        4. The restricted sample selection using :code:`.coverage` is still available.
-
     - Breaking changes to the CLI arguments and new defaults:
         1. Output files are now optional, the default behavior has changed from always writing an RST
            file using the :code:`-o` option on the command line.

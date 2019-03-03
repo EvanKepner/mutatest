@@ -23,7 +23,6 @@ from mutatest.cli import (
     cli_main,
     cli_summary_report,
     get_src_location,
-    wtw_optimizer,
 )
 
 
@@ -39,14 +38,6 @@ class MockArgs(NamedTuple):
     testcmds: Optional[List[str]]
     debug: Optional[bool]
     nocov: Optional[bool]
-    wtw: Optional[bool]
-
-
-class MockOptArgs(NamedTuple):
-    """Container for optimization mocks."""
-
-    wtw: Optional[bool]
-    testcmds: Optional[str]
 
 
 @pytest.fixture
@@ -62,7 +53,6 @@ def mock_args(tmp_path, binop_file):
         testcmds=["pytest"],
         debug=False,
         nocov=True,
-        wtw=False,
     )
 
 
@@ -137,19 +127,6 @@ def test_get_src_location_file(monkeypatch, binop_file):
     assert result.resolve() == binop_file.resolve()
 
 
-def test_wtw_optimizer_nocov():
-    noargs = MockOptArgs(wtw=False, testcmds="pytest")
-
-    result, _ = wtw_optimizer(noargs)
-    assert result is None
-
-
-def test_wtw_optimizer_exception():
-    mock_args = MockOptArgs(wtw=True, testcmds="Some bad string")
-    result, _ = wtw_optimizer(mock_args)
-    assert result is None
-
-
 @freeze_time("2019-01-01")
 def test_main(monkeypatch, mock_args, mock_results_summary):
     """As of v0.1.0, if the report structure changes this will need to be updated."""
@@ -163,7 +140,6 @@ def test_main(monkeypatch, mock_args, mock_results_summary):
          - Excluded files: ['__init__.py']
          - N locations input: 10
          - Random seed: 314
-         - Who-tests-what: False
 
         Random sample details
         ---------------------
@@ -224,7 +200,6 @@ def test_main(monkeypatch, mock_args, mock_results_summary):
     def mock_wtw_opt(*args, **kwargs):
         return None, timedelta(0)
 
-    monkeypatch.setattr(mutatest.cli, "wtw_optimizer", mock_wtw_opt)
     monkeypatch.setattr(mutatest.cli, "clean_trial", mock_clean_trial)
     monkeypatch.setattr(mutatest.cli, "run_mutation_trials", mock_run_mutation_trials)
 
