@@ -12,8 +12,8 @@ not guaranteed while under development.
         1. Output files are now optional, the default behavior has changed from always writing an RST
            file using the :code:`-o` option on the command line.
         2. Exclusions are still marked as :code:`-e`; however, now multiple :code:`-e` arguments are
-           supported and arguments must point to a Python file e.g. it used to be:
-           :code:`mutatest -e "__init__.py _devtools.py" and now it is
+           supported and arguments must point to a Python file. The argument used to be:
+           :code:`mutatest -e "__init__.py _devtools.py"` and now it is
            :code:`mutatest -e src/__init__.py -e src/_devtools.py`. There are no longer default
            exclusions applied.
 
