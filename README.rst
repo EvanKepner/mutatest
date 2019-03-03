@@ -124,7 +124,7 @@ is that no files are excluded.
 
 .. code-block:: bash
 
-    $ mutatest --exclude mypackage/__init__.py -- exclude mypackage/_devtools.py
+    $ mutatest --exclude mypackage/__init__.py --exclude mypackage/_devtools.py
 
     # using shorthand arguments
     $ mutatest -e mypackage/__init__.py -e mypackage/_devtools.py
