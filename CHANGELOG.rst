@@ -17,7 +17,7 @@ not guaranteed while under development.
 
     - Breaking changes to the CLI arguments and new defaults:
         1. Output files are now optional, the default behavior has changed from always writing an RST
-          file using the :code:`-o` option on the command line.
+           file using the :code:`-o` option on the command line.
         2. Exclusions are still marked as :code:`-e`; however, now multiple :code:`-e` arguments are
            supported and arguments must point to a Python file e.g. it used to be:
            :code:`mutatest -e "__init__.py _devtools.py" and now it is
