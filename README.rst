@@ -29,6 +29,8 @@ Features:
     - Flexible enough to run on a whole package or a single file.
 
 
+:code:`mutatest` is alpha-software, see the `CHANGELOG`_ for updates.
+
 Installation
 ============
 
@@ -128,6 +130,9 @@ is that no files are excluded.
     $ mutatest -e mypackage/__init__.py -e mypackage/_devtools.py
 
 
+These commands can all be combined in different ways to target your sample space for mutations.
+
+
 Coverage optimization
 ---------------------
 
@@ -145,7 +150,10 @@ running:
 
 would generate the :code:`.coverage` file based on :code:`tests/test_run.py`. Therefore, even though
 the entire package is seen only the lines covered by :code:`tests/test_run.py` will be mutated
-during the trials. You can override this behavior with the :code:`--nocov` flag on the command line.
+during the trials.
+If you specified a source with :code:`-s` only the covered lines in that source file would become
+valid targets for mutation. Excluded files with :code:`-e` are still skipped.
+You can override this behavior with the :code:`--nocov` flag on the command line.
 
 If you have a :code:`pytest.ini` file that includes the :code:`--cov` command the default behavior
 of :code:`mutatest` will generate the coverage file. You will see this in the CLI output at the
@@ -302,8 +310,8 @@ Run :code:`mutatest --help` to see command line arguments and supported operatio
 
     optional arguments:
       -h, --help            show this help message and exit
-      -e STR_LIST, --exclude STR_LIST
-                            Space delimited string list of .py file names to exclude. (default: '__init__.py')
+      -e PATH, --exclude PATH
+                            Path to .py file to exclude, multiple -e entries supported. (default: None)
       -m {f,s,d,sd}, --mode {f,s,d,sd}
                             Running modes, see the choice option descriptions below. (default: s)
       -n INT, --nlocations INT
@@ -646,9 +654,18 @@ Known limitations
 -----------------
 
 Since :code:`mutatest` operates on the local :code:`__pycache__` it is a serial execution process.
-This means it can be slow, and will take as long as running your test suite in series for the
-number of operations. It's designed as a diagnostic tool, not something you would run in your
-CICD pipeline.
+This means it will take as long as running your test suite in series for the
+number of operations. It's designed as a diagnostic tool, and you should try to find the combination
+of test commands, source specifiers, and exclusions that generate meaningful diagnostics.
+For example, if you have 600 tests, running :code:`mutatest` over the entire test suite may take
+some time. A better strategy would be:
+
+1. Select a subset of your tests and run :code:`pytest` with :code:`coverage` to see the
+   covered percentage per source file.
+2. Run :code:`mutatest` with the same :code:`pytest` command passed in with :code:`-t` and generating
+   a coverage file. Use :code:`-s` to pick the source file of interest to restrict the sample space,
+   or use :code:`-e` to exclude files if you want to target multiple files.
+
 
 If you kill the :code:`mutatest` process before the trials complete you may end up
 with partially mutated :code:`__pycache__` files. If this happens the best fix is to remove the
@@ -663,5 +680,6 @@ return codes into mutation trial statuses.
 
 
 .. target-notes::
+.. _CHANGELOG: https://github.com/EvanKepner/mutatest/blob/master/CHANGELOG.rst
 .. _Python AST grammar: https://docs.python.org/3/library/ast.html#abstract-grammar
 .. _Pytest Test Layout: https://docs.pytest.org/en/latest/goodpractices.html#choosing-a-test-layout-import-rules
