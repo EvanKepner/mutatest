@@ -105,7 +105,7 @@ if __name__ == "__main__":
         zip_safe=False,
         entry_points={
             "console_scripts": ["mutatest=mutatest.cli:cli_main"],
-            "pytest11": ["mutatest_wtw_coverage=mutatest.mutatest_plugins"],
+            "pytest11": ["mutatest_wtw_coverage=mutatest.plugin"],
         },
         classifiers=CLASSIFIERS,
         install_requires=INSTALL_REQUIRES,

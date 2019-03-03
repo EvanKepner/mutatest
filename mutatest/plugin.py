@@ -1,4 +1,4 @@
-"""Mutatest  plugin registration.
+"""Mutatest plugin registration.
 """
 import json
 

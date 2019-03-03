@@ -11,7 +11,7 @@ from typing import Dict, List, Optional, Tuple
 
 from coverage.data import CoverageData  # type: ignore
 
-from mutatest.mutatest_plugins import MUTATEST_ENABLE, MUTATEST_WTW_JSON
+from mutatest.plugin import MUTATEST_ENABLE, MUTATEST_WTW_JSON
 from mutatest.transformers import LocIndex
 
 

@@ -8,10 +8,10 @@ not guaranteed while under development.
 0.8.0
 -----
 
-    - New :code:`WhoTestWhat` optimizer:
-        1. Determines the coverage per individual test using :code:`pytest-cov` and :code:`coverage`.
+    - New :code:`WhoTestWhat` optimizer enabled with :code:`--wtw`:
+        1. Best-try coverage per individual test with :code:`coverage`.
         2. Will select only relevant tests per mutated location, giving a major speed increase
-           for mutation trials on large test suites.
+           for mutation trials on long-running test suites.
         3. This optimizer is only for :code:`pytest`.
         4. The restricted sample selection using :code:`coverage` is still available.
 
@@ -19,7 +19,7 @@ not guaranteed while under development.
       file using the :code:`-o` option on the command line.
     - Improved CLI reporting during trial runs, including selected test counts and line/col locations
       for trial results while processing.
-    - Set install requires of :code:`pytest` version to be :code:`>=3.6` given new plugins as
+    - Set install requires of :code:`pytest` version to be :code:`>=3.6` given new plugin as
       part of the optimizers.
 
 

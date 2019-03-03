@@ -22,11 +22,11 @@ slip past your continuous integration checks and are undetectable by your tests.
 
 Features:
     - Simple command line tool.
-    - Integrated with :code:`coverage` to only create meaningful mutants.
-    - Optimized to only run relevant tests based on :code:`coverage` per mutated location.
     - Built on Python's Abstract Syntax Tree (AST) grammar to ensure mutants are valid.
+    - No source code modification, only the :code:`__pycache__`.
+    - Integrated with :code:`coverage` to only create meaningful mutants.
+    - "Who tests what" selects relevant tests based on :code:`coverage` per mutated location.
     - Built for efficiency with multiple running modes and random sampling of mutation targets.
-    - Does not modify your source code, only the :code:`__pycache__`.
     - Flexible enough to run on a whole package or a single file.
 
 
