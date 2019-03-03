@@ -184,5 +184,5 @@ def write_mutant_cache_file(mutant: Mutant) -> None:
 
     create_cache_dirs(mutant.cfile)
 
-    LOGGER.info("Writing mutant cache file: %s", mutant.cfile)
+    LOGGER.debug("Writing mutant cache file: %s", mutant.cfile)
     importlib._bootstrap_external._write_atomic(mutant.cfile, bytecode, mutant.mode)  # type: ignore

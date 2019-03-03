@@ -377,7 +377,7 @@ def run_mutation_trials(  # noqa: C901
                     "%s",
                     colorize_output(
                         (
-                            f"Surviving mutation detected at "
+                            f"Surviving mutation at "
                             f"{sample_src}: ({sample_idx.lineno}, {sample_idx.col_offset})"
                         ),
                         "red",
