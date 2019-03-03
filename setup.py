@@ -15,7 +15,7 @@ if (sys.version_info.major, sys.version_info.minor) != (3, 7):
 NAME = "mutatest"
 PACKAGES = find_packages()
 META_PATH = os.path.join("mutatest", "__init__.py")
-KEYWORDS = ["mutatest", "mutation", "testing", "test", "mutant", "mutate"]
+KEYWORDS = ["mutatest", "mutation", "testing", "test", "mutant", "mutate", "pytest"]
 PROJECT_URLS = {
     "Documentation": "https://github.com/EvanKepner/mutatest",
     "Bug Tracker": "https://github.com/EvanKepner/mutatest/issues",
