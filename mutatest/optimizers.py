@@ -11,8 +11,11 @@ from typing import Dict, List, Optional, Tuple
 
 from coverage.data import CoverageData  # type: ignore
 
-from mutatest.plugin import MUTATEST_ENABLE, MUTATEST_WTW_JSON
 from mutatest.transformers import LocIndex
+
+
+MUTATEST_ENABLE = ""
+MUTATEST_WTW_JSON = Path(".mutatest.json")
 
 
 LOGGER = logging.getLogger(__name__)

@@ -411,7 +411,8 @@ def main(args: argparse.Namespace) -> None:
     )
 
     # Run the pipeline with no mutations last to ensure cleared cache
-    clean_runtime_2 = clean_trial(src_loc=src_loc, test_cmds=args.testcmds)
+    clean_runtime_2 = timedelta(0)
+    # clean_runtime_2 = clean_trial(src_loc=src_loc, test_cmds=args.testcmds)
 
     runtimes = TrialTimes(
         clean_trial_1=clean_runtime_1,
