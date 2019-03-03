@@ -16,15 +16,15 @@
 
 
 Are you confident in your tests? Try out :code:`mutatest` and see if your tests will detect small
-modifications (mutations) in the code. Surviving mutations represent subtle changes that might
-slip past your continuous integration checks and are undetectable by your tests.
-
+modifications (mutations) in the code. Surviving mutations represent subtle changes that are
+undetectable by your tests. These mutants are potential modifications in source code that continuous
+integration checks would miss.
 
 Features:
     - Simple command line tool.
     - Built on Python's Abstract Syntax Tree (AST) grammar to ensure mutants are valid.
-    - No source code modification, only the :code:`__pycache__`.
-    - Integrated with :code:`coverage` to only create meaningful mutants.
+    - No source code modification, only the :code:`__pycache__` is changed.
+    - Uses :code:`coverage` to create only meaningful mutants.
     - Built for efficiency with multiple running modes and random sampling of mutation targets.
     - Flexible enough to run on a whole package or a single file.
 
