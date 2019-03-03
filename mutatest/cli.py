@@ -233,6 +233,9 @@ def cli_args(args: Optional[Sequence[str]]) -> argparse.Namespace:
     parser.add_argument(
         "--nocov", action="store_true", help="Ignore coverage files for optimization."
     )
+    parser.add_argument(
+        "--wtw", action="store_true", help="Use Who-Tests-What optimization for test selection."
+    )
 
     return parser.parse_args(args)
 
@@ -349,7 +352,8 @@ def wtw_optimizer(args: argparse.Namespace) -> Tuple[Optional[WhoTestsWhat], tim
     """
     wtw, clean_runtime_1 = None, timedelta(0)
 
-    if not args.nocov:
+    if args.wtw:
+        LOGGER.info("Who-Test-What optimization enabled.")
         try:
             start = datetime.now()
             wtw = WhoTestsWhat(args.testcmds)
@@ -377,13 +381,9 @@ def main(args: argparse.Namespace) -> None:
         stream=sys.stdout,
     )
 
-    # determine if who-tests-what optimization can apply
     wtw, clean_runtime_1 = wtw_optimizer(args)
 
     if wtw is None:
-        # Run the pipeline with no mutations first to ensure later results are meaningful
-        # This only has to happen if WhoTestsWhat is skipped
-        LOGGER.info("Who-Test-What optimization skipped, running clean trial.")
         clean_runtime_1 = clean_trial(src_loc=src_loc, test_cmds=args.testcmds)
 
     # Run the mutation trials based on the input argument

@@ -11,17 +11,13 @@ from typing import Dict, List, Optional, Tuple
 
 from coverage.data import CoverageData  # type: ignore
 
+from mutatest.mutatest_plugins import MUTATEST_ENABLE, MUTATEST_WTW_JSON
 from mutatest.transformers import LocIndex
-
-from coverage import Coverage
 
 
 LOGGER = logging.getLogger(__name__)
 
 DEFAULT_COVERAGE_FILE = Path(".coverage")
-
-# related to the file locations for subprocess details in who-tests-what
-MUTATEST_WTW_JSON = Path(".mutatest_wtw.json")
 
 
 class CoverageOptimizer:
@@ -47,50 +43,6 @@ class CoverageOptimizer:
     def cov_mapping(self) -> Dict[str, List[int]]:
         """Mapping of src_file to list of lines in coverage."""
         return {k: self.cov_data.lines(k) for k in self.cov_data.measured_files()}
-
-
-class MutatestWTWCoverage:
-    def __init__(self):
-        self.cov = Coverage()
-        self._map = {"collected": [], "coverage": {}}
-
-    @property
-    def map(self):
-        return self._map
-
-    def pytest_runtest_logstart(self, nodeid, location):
-        self.cov.start()
-
-    def pytest_runtest_logfinish(self, nodeid, location):
-        self.cov.stop()
-        cov_data = self.cov.get_data()
-        self._map["coverage"][nodeid] = {k: cov_data.lines(k) for k in cov_data.measured_files()}
-        self.cov.erase()
-
-    def pytest_terminal_summary(self, terminalreporter, exitstatus, config):
-        stats = terminalreporter.stats
-
-        drop_keys = []
-        if "failed" in stats:
-            drop_keys.extend([t.nodeid for t in stats["failed"]])
-
-        if "skipped" in stats:
-            drop_keys.extend([t.nodeid for t in stats["skipped"]])
-
-        if "xfailed" in stats:
-            drop_keys.extend([t.nodeid for t in stats["xfailed"]])
-
-        for dk in drop_keys:
-            try:
-                self._map["coverage"].pop(dk)
-
-            except KeyError:
-                continue
-
-        self._map["collected"] = [k for k in self.map["coverage"]]
-
-        with open(MUTATEST_WTW_JSON, "w") as ostream:
-            json.dump(self.map, ostream)
 
 
 class CovBaselineTestException(Exception):
@@ -161,6 +113,7 @@ class WhoTestsWhat:
 
     @property
     def insp_coverage(self) -> Dict[str, Dict[str, List[int]]]:
+        """Accessor property for the inspection coverage mapping."""
         return self._insp_coverage
 
     def get_src_line_deselection(self, src_file: str, lineno: int) -> Tuple[List[str], List[str]]:
@@ -189,21 +142,34 @@ class WhoTestsWhat:
         """Set the collected tests and pytest config options for coverage."""
         LOGGER.info("Who-tests-what: Running mutatest inspection sub-process: %s", self.args)
 
+        sp_args = [i for i in self.args]
+        sp_args.append(f"--{MUTATEST_ENABLE}")
+
+        if any("--cov=" in i for i in sp_args):
+            LOGGER.info(
+                "'--cov=' found in testcmds for Who-Tests-What, "
+                "adding `--nocov` to trial to avoid coverage processing collision."
+            )
+            sp_args.append("--no-cov")
+
         # This should run with the mutatest_plugins registered
-        settings_trial = subprocess.run(self.args, capture_output=False)
+        LOGGER.info("Executing: %s", sp_args)
+        settings_trial = subprocess.run(sp_args, capture_output=False)
 
         if settings_trial.returncode != 0:
             raise CovBaselineTestException(
                 "Failed test detected in WTW setup, " "mutation results will be meaningless."
             )
 
-        with open(MUTATEST_WTW_JSON.resolve(), "r") as fstream:
-            mip = json.load(fstream)
+        if MUTATEST_WTW_JSON.resolve().exists():
 
-        LOGGER.debug("Inspection loaded: %s", mip)
+            with open(MUTATEST_WTW_JSON.resolve(), "r") as fstream:
+                mip = json.load(fstream)
 
-        self._collected = mip["collected"]
-        self._insp_coverage = mip["coverage"]
+            LOGGER.debug("Inspection loaded: %s", mip)
+
+            self._collected = mip["collected"]
+            self._insp_coverage = mip["coverage"]
 
     def get_deselect_args(self, target: str) -> List[str]:
         """Pytest can support multiple --dselect options.
@@ -254,10 +220,6 @@ class WhoTestsWhat:
         for test_node in self.collected:
             cov_map = self.insp_coverage[test_node]
             self.add_cov_map(test_node, cov_map)
-
-        LOGGER.info("MAP BUILT")
-        # LOGGER.info(self.cov_mapping)
-        # LOGGER.info(self.coverage_test_mapping)
 
 
 def covered_sample_space(

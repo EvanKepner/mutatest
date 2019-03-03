@@ -39,12 +39,13 @@ class MockArgs(NamedTuple):
     testcmds: Optional[List[str]]
     debug: Optional[bool]
     nocov: Optional[bool]
+    wtw: Optional[bool]
 
 
 class MockOptArgs(NamedTuple):
     """Container for optimization mocks."""
 
-    nocov: Optional[bool]
+    wtw: Optional[bool]
     testcmds: Optional[str]
 
 
@@ -61,6 +62,7 @@ def mock_args(tmp_path, binop_file):
         testcmds=["pytest"],
         debug=False,
         nocov=True,
+        wtw=False,
     )
 
 
@@ -136,14 +138,14 @@ def test_get_src_location_file(monkeypatch, binop_file):
 
 
 def test_wtw_optimizer_nocov():
-    noargs = MockOptArgs(nocov=True, testcmds="pytest")
+    noargs = MockOptArgs(wtw=False, testcmds="pytest")
 
     result, _ = wtw_optimizer(noargs)
     assert result is None
 
 
 def test_wtw_optimizer_exception():
-    mock_args = MockOptArgs(nocov=False, testcmds="Some bad string")
+    mock_args = MockOptArgs(wtw=True, testcmds="Some bad string")
     result, _ = wtw_optimizer(mock_args)
     assert result is None
 
