@@ -73,6 +73,12 @@ class NodeLister(ast.NodeVisitor):  # pragma: no cover
     # IN DEVELOPMENT
     ################################################################################################
 
+    def visit_If(self, node: ast.If) -> None:
+        # have is, is not already, not clear If directly is a valuable mutation
+        # print(f"If: {node}")
+        print(ast.dump(node))
+        self.generic_visit(node)
+
     # FUTURE DEVELOPMENT
     ################################################################################################
 
@@ -84,9 +90,3 @@ class NodeLister(ast.NodeVisitor):  # pragma: no cover
 
     # INVESTIGATED BUT NOT COVERED
     ################################################################################################
-
-    def visit_If(self, node: ast.If) -> None:
-        # have is, is not already, not clear If directly is a valuable mutation
-        # print(f"If: {node}")
-        # print(ast.dump(node))
-        self.generic_visit(node)

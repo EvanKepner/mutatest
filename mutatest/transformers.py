@@ -189,11 +189,6 @@ class MutateAST(ast.NodeTransformer):
             else:
                 # typical comparison case, will also catch (a==b)==1 as an example.
                 LOGGER.debug("%s single comparison node operation", log_header)
-                new_node = ast.Compare(
-                    left=node.left, ops=[self.mutation()], comparators=node.comparators
-                )
-                LOGGER.debug("%s new node:\n%s", log_header, ast.dump(new_node))
-
                 return ast.copy_location(
                     ast.Compare(
                         left=node.left, ops=[self.mutation()], comparators=node.comparators
@@ -202,6 +197,30 @@ class MutateAST(ast.NodeTransformer):
                 )
 
         LOGGER.debug("%s (%s, %s): no mutations applied.", log_header, node.lineno, node.col_offset)
+        return node
+
+    def visit_If(self, node: ast.If) -> ast.AST:
+        self.generic_visit(node)
+        log_header = f"visit_If: {self.src_file}:"
+
+        if_type = "If_NotConstant"
+
+        if type(node.test) == ast.NameConstant:
+            if_type = f"If_{bool(node.test.value)}"
+
+        idx = LocIndex("If", node.lineno, node.col_offset, if_type)
+
+        if_mutations = {
+            "If_True": ast.NameConstant(value=True),
+            "If_False": ast.NameConstant(value=False),
+        }
+
+        if idx == self.target_idx and self.mutation and not self.readonly:
+            LOGGER.debug("%s mutating idx: %s with %s", log_header, self.target_idx, self.mutation)
+            return ast.copy_location(
+                ast.If(test=if_mutations[self.mutation], body=node.body, orelse=node.orelse), node
+            )
+
         return node
 
     def visit_Index(self, node: ast.Index) -> ast.AST:
@@ -379,6 +398,10 @@ def get_compatible_operation_sets() -> List[MutationOpSet]:
 
     # Custom references for substitutions of zero, positive, and negative iterable indicies
     index_types: Set[str] = {"Index_NumPos", "Index_NumNeg", "Index_NumZero"}
+
+    # Custom references for If statement substitutions
+    # only If_True and If_False will be applied as mutations
+    # if_types: Set[str] = {"If_True", "If_False"}
 
     # Custom references for subscript substitutions for slice mutations
     slice_bounded_types: Set[str] = {"Slice_UnboundUpper", "Slice_UnboundLower", "Slice_Unbounded"}
