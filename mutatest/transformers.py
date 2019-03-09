@@ -200,27 +200,44 @@ class MutateAST(ast.NodeTransformer):
         return node
 
     def visit_If(self, node: ast.If) -> ast.AST:
+
+        # TODO: DETERMINE IF_CONSTANT TARGET TRANSFORMTION USAGE
+        # TODO: CURRENTLY ONLY TRUE/FALSE WORK
+
+        """If statements e.g. If x == y transformed to If True and If False."""
         self.generic_visit(node)
         log_header = f"visit_If: {self.src_file}:"
 
+        # default for a comparison is "If_NotConstant" which will be changed to True/False
+        # if_NotConstand if not set as a mutation target, controlled in get_mutations function
+
         if_type = "If_NotConstant"
-
-        if type(node.test) == ast.NameConstant:
-            if_type = f"If_{bool(node.test.value)}"
-
-        idx = LocIndex("If", node.lineno, node.col_offset, if_type)
 
         if_mutations = {
             "If_True": ast.NameConstant(value=True),
             "If_False": ast.NameConstant(value=False),
         }
 
+        if type(node.test) == ast.NameConstant:
+            if_type = f"If_{bool(node.test.value)}"  # type: ignore
+
+        idx = LocIndex("If", node.lineno, node.col_offset, if_type)
+        self.locs.add(idx)
+
+        if type(node) == ast.If:
+            LOGGER.info(self.target_idx)
+            LOGGER.info(self.mutation)
+
         if idx == self.target_idx and self.mutation and not self.readonly:
             LOGGER.debug("%s mutating idx: %s with %s", log_header, self.target_idx, self.mutation)
-            return ast.copy_location(
-                ast.If(test=if_mutations[self.mutation], body=node.body, orelse=node.orelse), node
+            return ast.fix_missing_locations(
+                ast.copy_location(
+                    ast.If(test=if_mutations[self.mutation], body=node.body, orelse=node.orelse),
+                    node,
+                )
             )
 
+        LOGGER.debug("%s (%s, %s): no mutations applied.", log_header, node.lineno, node.col_offset)
         return node
 
     def visit_Index(self, node: ast.Index) -> ast.AST:
@@ -401,7 +418,7 @@ def get_compatible_operation_sets() -> List[MutationOpSet]:
 
     # Custom references for If statement substitutions
     # only If_True and If_False will be applied as mutations
-    # if_types: Set[str] = {"If_True", "If_False"}
+    if_types: Set[str] = {"If_True", "If_False", "If_Compare"}
 
     # Custom references for subscript substitutions for slice mutations
     slice_bounded_types: Set[str] = {"Slice_UnboundUpper", "Slice_UnboundLower", "Slice_Unbounded"}
@@ -436,6 +453,9 @@ def get_compatible_operation_sets() -> List[MutationOpSet]:
         ),
         MutationOpSet(
             name="Compare Is", desc="Comapre identity e.g. is, is not", operations=cmpop_is_types
+        ),
+        MutationOpSet(
+            name="If", desc="If statement tests e.g. Compare, True, False", operations=if_types
         ),
         MutationOpSet(
             name="Index",
@@ -484,6 +504,11 @@ def get_mutations_for_target(target: LocIndex) -> Set[Any]:
             # Special case where Slice-Ops are self-referential, and are set to self
             if target.op_type in ["Slice_UPosToZero", "Slice_UNegToZero"]:
                 mutation_ops = {target.op_type}
+
+            # Special case for If-compare since that is a default to transform to True or False
+            # but not a validation mutation target by iself
+            if "If_Compare" in mutation_ops:
+                mutation_ops.remove("If_Compare")
 
             break
 
