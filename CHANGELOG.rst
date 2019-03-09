@@ -5,6 +5,15 @@ Changelog
 not guaranteed while under development.
 
 
+0.9.0
+-----
+
+    - Added new :code:`If` mutation:
+        1. Original statements are represented by :code:`If_Statement` and mutated to be either
+           :code:`If_True` where the statement always passes, or :code:`If_False` where the statement
+           is never passed.
+
+
 0.8.0
 -----
 

@@ -166,6 +166,35 @@ def test_MutateAST_visit_compare(compare_file, compare_expected_loc):
             assert l.op_type == test_mutation
 
 
+def test_MutateAST_visit_if(if_file, if_expected_locs):
+    """Test mutation for nameconst: True, False, None."""
+    tree = get_ast_from_src(if_file)
+    test_mutation = "If_True"
+
+    testing_tree = deepcopy(tree)
+    # change from If_Statement to If_True
+    mutated_tree = MutateAST(target_idx=if_expected_locs[0], mutation=test_mutation).visit(
+        testing_tree
+    )
+
+    mast = MutateAST(readonly=True)
+    mast.visit(mutated_tree)
+
+    # named constants will also be picked up, filter just to if_ operations
+    if_locs = [l for l in mast.locs if l.ast_class == "If"]
+    assert len(if_locs) == 4
+
+    for l in if_locs:
+        # spot check on mutation from True to False
+        if l.lineno == 2 and l.col_offset == 4:
+            print(l)
+            assert l.op_type == test_mutation
+
+        # spot check on not-mutated location still being None
+        if l.lineno == 13 and l.col_offset == 4:
+            assert l.op_type == "If_False"
+
+
 INDEX_SETS = [
     # idx order, lineno, col_offset, mutation to apply
     # change NumNeg to Pos and Zero
@@ -232,9 +261,11 @@ def test_MutateAST_visit_nameconst(nameconst_file, nameconst_expected_locs):
     mast = MutateAST(readonly=True)
     mast.visit(mutated_tree)
 
-    assert len(mast.locs) == 4
+    # if statement is included with this file that will be picked up
+    nc_locs = [l for l in mast.locs if l.ast_class == "NameConstant"]
+    assert len(nc_locs) == 4
 
-    for l in mast.locs:
+    for l in nc_locs:
         # spot check on mutation from True to False
         if l.lineno == 1 and l.col_offset == 14:
             assert l.op_type == test_mutation

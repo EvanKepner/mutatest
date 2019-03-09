@@ -340,6 +340,7 @@ Supported operations:
     - :code:`Compare` mutations e.g. :code:`== >= < <= !=`.
     - :code:`Compare In` mutations e.g. :code:`in, not in`.
     - :code:`Compare Is` mutations e.g. :code:`is, is not`.
+    - :code:`If` mutations e.g. :code:`If x > y` becomes :code:`If True` or :code:`If False`.
     - :code:`Index` mutations e.g. :code:`i[0]` becomes :code:`i[1]` and :code:`i[-1]`.
     - :code:`NameConstant` mutations e.g. :code:`True`, :code:`False`, and :code:`None`.
     - :code:`Slice` mutations e.g. changing :code:`x[:2]` to :code:`x[2:]`
@@ -527,6 +528,34 @@ Example:
 
     # mutation
     x is not None
+
+
+If
+--
+
+If mutations change :code:`if` statements to always be :code:`True` or :code:`False`. The original
+statement is represented by the class :code:`If_Statement` in reporting.
+
+Members:
+    - :code:`If_False`
+    - :code:`If_Statement`
+    - :code:`If_True`
+
+
+Example:
+
+.. code-block:: python
+
+    # source code
+    if a > b:   # If_Statement
+        ...
+
+    # Mutations
+    if True:   # If_True
+        ...
+
+    if False:  # If_False
+        ...
 
 
 Index

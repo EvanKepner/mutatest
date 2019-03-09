@@ -353,6 +353,52 @@ def compare_expected_loc():
 
 
 ####################################################################################################
+# TRANSFORMERS: IF FIXTURES
+####################################################################################################
+
+
+@pytest.fixture(scope="session")
+def if_file(tmp_path_factory):
+    """Simple file for if-statement mutations."""
+    contents = dedent(
+        """\
+    def equal_test(a, b):
+        if a == b:
+            print("Equal")
+        elif a < b:
+            print("LT")
+        else:
+            print("Else!")
+
+    def second():
+        if True:
+            print("true")
+
+        if False:
+            print("false")
+    """
+    )
+
+    fn = tmp_path_factory.mktemp("if_statement") / "if_statement.py"
+
+    with open(fn, "w") as output_fn:
+        output_fn.write(contents)
+
+    return fn
+
+
+@pytest.fixture(scope="session")
+def if_expected_locs():
+    """Exepected locations in the if_statement."""
+    return [
+        LocIndex(ast_class="If", lineno=2, col_offset=4, op_type="If_Statement"),
+        LocIndex(ast_class="If", lineno=4, col_offset=9, op_type="If_Statement"),
+        LocIndex(ast_class="If", lineno=10, col_offset=4, op_type="If_True"),
+        LocIndex(ast_class="If", lineno=13, col_offset=4, op_type="If_False"),
+    ]
+
+
+####################################################################################################
 # TRANSFORMERS: INDEX FIXTURES
 ####################################################################################################
 

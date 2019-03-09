@@ -1,6 +1,6 @@
 """Mutation initialization.
 """
-__version__ = "0.8.1-dev"
+__version__ = "0.9.0-dev"
 
 __title__ = "mutatest"
 __description__ = "Python mutation testing: test your tests!"
