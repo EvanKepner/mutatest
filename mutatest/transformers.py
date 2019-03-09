@@ -25,6 +25,7 @@ class MutationOpSet(NamedTuple):
     name: str
     desc: str
     operations: Set[Any]
+    category: str
 
 
 class MutateAST(ast.NodeTransformer):
@@ -419,47 +420,70 @@ def get_compatible_operation_sets() -> List[MutationOpSet]:
 
     return [
         MutationOpSet(
-            name="AugAssign", desc="Augmented assignment e.g. += -= /= *=", operations=aug_assigns
+            name="AugAssign",
+            desc="Augmented assignment e.g. += -= /= *=",
+            operations=aug_assigns,
+            category="aa",
         ),
         MutationOpSet(
-            name="BinOp", desc="Binary operations e.g. + - * / %", operations=binop_types
+            name="BinOp",
+            desc="Binary operations e.g. + - * / %",
+            operations=binop_types,
+            category="bn",
         ),
         MutationOpSet(
             name="BinOp Bit Comparison",
             desc="Bitwise comparison operations e.g. x & y, x | y, x ^ y",
             operations=binop_bit_cmp_types,
+            category="bc",
         ),
         MutationOpSet(
             name="BinOp Bit Shifts",
             desc="Bitwise shift operations e.g. << >>",
             operations=binop_bit_shift_types,
+            category="bs",
         ),
         MutationOpSet(
-            name="BoolOp", desc="Boolean operations e.g. and or", operations=boolop_types
+            name="BoolOp",
+            desc="Boolean operations e.g. and or",
+            operations=boolop_types,
+            category="bl",
         ),
         MutationOpSet(
-            name="Compare", desc="Comparison operations e.g. == >= <= > <", operations=cmpop_types
+            name="Compare",
+            desc="Comparison operations e.g. == >= <= > <",
+            operations=cmpop_types,
+            category="cp",
         ),
         MutationOpSet(
-            name="Compare In", desc="Compare membership e.g. in, not in", operations=cmpop_in_types
+            name="Compare In",
+            desc="Compare membership e.g. in, not in",
+            operations=cmpop_in_types,
+            category="cn",
         ),
         MutationOpSet(
-            name="Compare Is", desc="Comapre identity e.g. is, is not", operations=cmpop_is_types
+            name="Compare Is",
+            desc="Comapre identity e.g. is, is not",
+            operations=cmpop_is_types,
+            category="cs",
         ),
         MutationOpSet(
             name="If",
             desc="If statement tests e.g. original statement, True, False",
             operations=if_types,
+            category="if",
         ),
         MutationOpSet(
             name="Index",
             desc="Index values for iterables e.g. i[-1], i[0], i[0][1]",
             operations=index_types,
+            category="ix",
         ),
         MutationOpSet(
             name="NameConstant",
             desc="Named constant mutations e.g. True, False, None",
             operations=named_const_singletons,
+            category="nc",
         ),
         MutationOpSet(
             name="Slice Unbounded Swap",
@@ -468,11 +492,13 @@ def get_compatible_operation_sets() -> List[MutationOpSet]:
                 " (unbound lower). Steps are not changed."
             ),
             operations=slice_bounded_types,
+            category="ss",
         ),
         MutationOpSet(
             name="Slice Range Change",
             desc="Slice range changes e.g. x[1:5] to x[1:4].",
             operations=slice_range_types,
+            category="sr",
         ),
     ]
 
