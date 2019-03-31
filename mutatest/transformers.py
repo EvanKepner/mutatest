@@ -9,6 +9,22 @@ from typing import Any, Dict, List, NamedTuple, Optional, Set, Union
 
 LOGGER = logging.getLogger(__name__)
 
+CATEGORIES = {
+    "AugAssign": "aa",
+    "BinOp": "bn",
+    "BinOpBC": "bc",
+    "BinOpBS": "bs",
+    "BoolOp": "bl",
+    "Compare": "cp",
+    "CompareIn": "cn",
+    "CompareIs": "cs",
+    "If": "if",
+    "Index": "ix",
+    "NameConstant": "nc",
+    "SliceUS": "ss",
+    "SliceRC": "sr",
+}
+
 
 class LocIndex(NamedTuple):
     """Location index within AST to mark mutatest targets."""
@@ -113,6 +129,7 @@ class MutateAST(ast.NodeTransformer):
             return node
 
         idx = LocIndex("AugAssign", node.lineno, node.col_offset, idx_op)
+
         self.locs.add(idx)
 
         if idx == self.target_idx and self.mutation in aug_mappings and not self.readonly:
@@ -135,6 +152,7 @@ class MutateAST(ast.NodeTransformer):
         log_header = f"visit_BinOp: {self.src_file}:"
 
         idx = LocIndex("BinOp", node.lineno, node.col_offset, type(node.op))
+
         self.locs.add(idx)
 
         if idx == self.target_idx and self.mutation and not self.readonly:
@@ -170,6 +188,7 @@ class MutateAST(ast.NodeTransformer):
         # in basic testing, things like (a==b)==1 still end up with lists of 1,
         # but since the AST docs specify a list of operations this seems safer.
         idx = LocIndex("Compare", node.lineno, node.col_offset, type(node.ops[0]))
+
         self.locs.add(idx)
 
         if idx == self.target_idx and self.mutation and not self.readonly:
@@ -423,67 +442,67 @@ def get_compatible_operation_sets() -> List[MutationOpSet]:
             name="AugAssign",
             desc="Augmented assignment e.g. += -= /= *=",
             operations=aug_assigns,
-            category="aa",
+            category=CATEGORIES["AugAssign"],
         ),
         MutationOpSet(
             name="BinOp",
             desc="Binary operations e.g. + - * / %",
             operations=binop_types,
-            category="bn",
+            category=CATEGORIES["BinOp"],
         ),
         MutationOpSet(
             name="BinOp Bit Comparison",
             desc="Bitwise comparison operations e.g. x & y, x | y, x ^ y",
             operations=binop_bit_cmp_types,
-            category="bc",
+            category=CATEGORIES["BinOpBC"],
         ),
         MutationOpSet(
             name="BinOp Bit Shifts",
             desc="Bitwise shift operations e.g. << >>",
             operations=binop_bit_shift_types,
-            category="bs",
+            category=CATEGORIES["BinOpBS"],
         ),
         MutationOpSet(
             name="BoolOp",
             desc="Boolean operations e.g. and or",
             operations=boolop_types,
-            category="bl",
+            category=CATEGORIES["BoolOp"],
         ),
         MutationOpSet(
             name="Compare",
             desc="Comparison operations e.g. == >= <= > <",
             operations=cmpop_types,
-            category="cp",
+            category=CATEGORIES["Compare"],
         ),
         MutationOpSet(
             name="Compare In",
             desc="Compare membership e.g. in, not in",
             operations=cmpop_in_types,
-            category="cn",
+            category=CATEGORIES["CompareIn"],
         ),
         MutationOpSet(
             name="Compare Is",
             desc="Comapre identity e.g. is, is not",
             operations=cmpop_is_types,
-            category="cs",
+            category=CATEGORIES["CompareIs"],
         ),
         MutationOpSet(
             name="If",
             desc="If statement tests e.g. original statement, True, False",
             operations=if_types,
-            category="if",
+            category=CATEGORIES["If"],
         ),
         MutationOpSet(
             name="Index",
             desc="Index values for iterables e.g. i[-1], i[0], i[0][1]",
             operations=index_types,
-            category="ix",
+            category=CATEGORIES["Index"],
         ),
         MutationOpSet(
             name="NameConstant",
             desc="Named constant mutations e.g. True, False, None",
             operations=named_const_singletons,
-            category="nc",
+            category=CATEGORIES["NameConstant"],
         ),
         MutationOpSet(
             name="Slice Unbounded Swap",
@@ -492,13 +511,13 @@ def get_compatible_operation_sets() -> List[MutationOpSet]:
                 " (unbound lower). Steps are not changed."
             ),
             operations=slice_bounded_types,
-            category="ss",
+            category=CATEGORIES["SliceUS"],
         ),
         MutationOpSet(
             name="Slice Range Change",
             desc="Slice range changes e.g. x[1:5] to x[1:4].",
             operations=slice_range_types,
-            category="sr",
+            category=CATEGORIES["SliceRC"],
         ),
     ]
 
