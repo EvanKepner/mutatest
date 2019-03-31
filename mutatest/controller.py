@@ -350,6 +350,12 @@ def run_mutation_trials(  # noqa: C901
     for sample_src, sample_idx in mutation_sample:
 
         LOGGER.info("Current target location: %s, %s", Path(sample_src).name, sample_idx)
+
+        # TODO: THIS IS THE WHITELIST/BLACKLIST CATEGORY TARGET FOR 0.9.1-DEV
+        # TODO: HOW TO APPROPRIATELY REPORT SKIPPING? RETURN NONE IF SKIPPED CATEGORY?
+        # TODO: LIKELY A COUNTER, ADD TO THE RESULTS SUMMARY
+        # TODO: SAMPLE IS ALREADY CREATED AT THIS POINT, SO MAY NEED TO MOVE HIGHER IN LOGIC TO
+        # TODO: CORRECTLY FULFILL THE N-LOCATIONS ARGUMENT
         mutant_operations = get_mutations_for_target(sample_idx)
         src_tree = src_trees[sample_src]
 
