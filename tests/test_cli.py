@@ -11,7 +11,6 @@ import pytest
 
 from freezegun import freeze_time
 from hypothesis import given
-from hypothesis.strategies import composite
 
 import mutatest.cli
 
@@ -23,12 +22,14 @@ from mutatest.cli import (
     cli_main,
     cli_summary_report,
     get_src_location,
+    selected_categories,
 )
 
 
 class MockArgs(NamedTuple):
     """Container for mocks of the cli arguments."""
 
+    blacklist: Optional[List[str]]
     exclude: Optional[List[str]]
     mode: Optional[str]
     nlocations: Optional[int]
@@ -36,6 +37,7 @@ class MockArgs(NamedTuple):
     rseed: Optional[int]
     src: Optional[Path]
     testcmds: Optional[List[str]]
+    whitelist: Optional[List[str]]
     debug: Optional[bool]
     nocov: Optional[bool]
 
@@ -44,6 +46,7 @@ class MockArgs(NamedTuple):
 def mock_args(tmp_path, binop_file):
     """Basic fixture with default settings using existing binop_file fixture."""
     return MockArgs(
+        blacklist=[],
         exclude=["__init__.py"],
         mode="s",
         nlocations=10,
@@ -51,6 +54,7 @@ def mock_args(tmp_path, binop_file):
         rseed=314,
         src=binop_file,
         testcmds=["pytest"],
+        whitelist=[],
         debug=False,
         nocov=True,
     )
@@ -125,6 +129,60 @@ def test_get_src_location_file(monkeypatch, binop_file):
     """If an existing file is passed it is returned without modification."""
     result = get_src_location(binop_file)
     assert result.resolve() == binop_file.resolve()
+
+
+class MockOpSet(NamedTuple):
+    category: str
+
+
+EXPECTED_CATEGORIES = {"a", "b", "c", "d", "e"}
+
+
+@pytest.fixture
+def mock_get_compatible_sets(monkeypatch):
+    """Mock for compatible operations to return basic list of single letter values."""
+
+    def mock_comp_sets(*args, **kwargs):
+        categories = EXPECTED_CATEGORIES
+        return [MockOpSet(c) for c in categories]
+
+    monkeypatch.setattr(mutatest.cli, "get_compatible_operation_sets", mock_comp_sets)
+
+
+def test_selected_categories_empty_lists(mock_get_compatible_sets):
+    """Empty lists should be the full set."""
+    result = selected_categories([], [])
+    assert result == EXPECTED_CATEGORIES
+
+
+def test_selected_categories_wlist(mock_get_compatible_sets):
+    """Whitelisted categories are only selections."""
+    wl = ["a", "b"]
+    result = selected_categories(wl, [])
+    assert result == set(wl)
+
+
+def test_selected_categories_blist(mock_get_compatible_sets):
+    """Blacklisted categories are the inverse selection."""
+    bl = ["a", "b", "c"]
+    result = selected_categories([], bl)
+    assert result == {"d", "e"}
+
+
+def test_selected_categories_wblist(mock_get_compatible_sets):
+    """Mixing white/black list results in the differentiated set."""
+    wl = ["a", "b"]
+    bl = ["a"]
+    result = selected_categories(wl, bl)
+    assert result == {"b"}
+
+
+def test_selected_categories_wblist_long(mock_get_compatible_sets):
+    """Mixing white/black list results in the differentiated set if blist is longer."""
+    wl = ["a", "b"]
+    bl = ["a", "d", "e"]
+    result = selected_categories(wl, bl)
+    assert result == {"b"}
 
 
 @freeze_time("2019-01-01")

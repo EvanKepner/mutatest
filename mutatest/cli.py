@@ -9,7 +9,7 @@ import sys
 from datetime import timedelta
 from pathlib import Path
 from textwrap import dedent
-from typing import NamedTuple, Optional, Sequence
+from typing import List, NamedTuple, Optional, Sequence, Set
 
 from setuptools import find_packages  # type:ignore
 
@@ -68,12 +68,39 @@ class PositiveIntegerAction(argparse.Action):
         setattr(namespace, self.dest, values)
 
 
+class ValidCategoryAction(argparse.Action):
+    """Custom action to ensure only valid categories are used for white/black listing."""
+
+    def __call__(self, parser, namespace, values, option_string=None):  # type: ignore
+        if len(values) > 0:
+
+            valid_categories = {m.category for m in get_compatible_operation_sets()}
+            values_set = set(values)
+
+            if not values_set.issubset(valid_categories):
+                parser.error(
+                    "{0} must only hold valid categories. Use --help to see options.".format(
+                        option_string
+                    )
+                )
+
+        setattr(namespace, self.dest, values)
+
+
 def cli_epilog() -> str:
 
     main_epilog = dedent(
         """
     Additional command argument information:
     ========================================
+
+    Black/White List:
+    -----------------
+     - Use -b and -w to set black/white lists of mutation categories. If -w categories are set then
+       all mutation categories except those specified are skipped during trials. If -b categories
+       are set then all mutations categories except those specified are considered. If you set both
+       -w and -b then the whitelisted categories are selected first, and then the blacklisted
+       categories are removed from the candidate set.
 
     Exclude:
     --------
@@ -118,7 +145,10 @@ def cli_epilog() -> str:
     )
 
     header = "Supported mutation sets"
-    description = "These are the current operations that are mutated as compatible sets."
+    description = (
+        "These are the current operations that are mutated as compatible sets. "
+        "Use the category code for whitelist/blacklist selections."
+    )
     mutation_epilog = [header, "=" * len(header), description, "\n"]
     for mutop in get_compatible_operation_sets():
         mutation_epilog.extend(
@@ -126,7 +156,8 @@ def cli_epilog() -> str:
                 mutop.name,
                 "-" * len(mutop.name),
                 f" - Description: {mutop.desc}",
-                f" - Members: {str(mutop.operations)}\n",
+                f" - Members: {str(mutop.operations)}",
+                f" - Category Code: {str(mutop.category)}\n",
             ]
         )
 
@@ -164,6 +195,16 @@ def cli_args(args: Optional[Sequence[str]]) -> argparse.Namespace:
         ),
         formatter_class=argparse.RawTextHelpFormatter,
         epilog=cli_epilog(),
+    )
+    parser.add_argument(
+        "-b",
+        "--blacklist",
+        type=str,
+        action=ValidCategoryAction,
+        nargs="*",
+        default=[],
+        metavar="STR",
+        help="Blacklisted mutation categories for trials. (default: empty list)",
     )
     parser.add_argument(
         "-e",
@@ -229,6 +270,16 @@ def cli_args(args: Optional[Sequence[str]]) -> argparse.Namespace:
         # shelx.split will appropriately handle embedded quotes etc. for tokenization.
         type=lambda x: shlex.split(x),
         help="Test command string to execute. (default: 'pytest')",
+    )
+    parser.add_argument(
+        "-w",
+        "--whitelist",
+        type=str,
+        action=ValidCategoryAction,
+        nargs="*",
+        default=[],
+        metavar="STR",
+        help="Whitelisted mutation categories for trials. (default: empty list)",
     )
     parser.add_argument("--debug", action="store_true", help="Turn on DEBUG level logging output.")
     parser.add_argument(
@@ -337,6 +388,26 @@ def get_src_location(src_loc: Optional[Path] = None) -> Path:
         "No source directory specified or automatically detected. "
         "Use --src or --help to see options."
     )
+
+
+def selected_categories(whitelist: List[str], blacklist: List[str]) -> Set[str]:
+    """Create the selected categories from the whitelist/blacklist set.
+
+    Args:
+        whitelist: list of categories
+        blacklist: list of categories
+
+    Returns:
+        Selection set of mutation categories
+    """
+    all_mutations = {m.category for m in get_compatible_operation_sets()}
+    w_set = set(whitelist)
+    b_set = set(blacklist)
+
+    if len(w_set) > 0:
+        return all_mutations - (all_mutations - w_set) - b_set
+
+    return all_mutations - b_set
 
 
 def main(args: argparse.Namespace) -> None:
