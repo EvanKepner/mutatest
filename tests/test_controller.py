@@ -5,17 +5,21 @@ import subprocess
 
 from pathlib import Path
 from subprocess import CompletedProcess
+from typing import NamedTuple, Set
 
 import hypothesis.strategies as st
 import pytest
 
 from hypothesis import assume, example, given
 
+import mutatest.controller
+
 from mutatest.controller import (
     BaselineTestException,
     build_src_trees_and_targets,
     clean_trial,
     colorize_output,
+    filter_wl_bl_categories,
     get_mutation_sample_locations,
     get_py_files,
     get_sample_space,
@@ -185,6 +189,33 @@ def test_optimize_covered_sample(mock_coverage_file, mock_precov_sample):
 
     for _, li in result_sample:
         assert li.lineno in [1, 4, 2]
+
+
+class MockOp(NamedTuple):
+    category: str
+    operations: Set[str]
+
+
+def test_filter_wl_bl_categories(monkeypatch):
+    """Filtering based on op return expectations."""
+
+    def mock_get_comp_ops(*args, **kwargs):
+        return [MockOp("aa", {"a1", "a2"}), MockOp("bb", {"b1", "b2"}), MockOp("cc", {"c1", "c2"})]
+
+    monkeypatch.setattr(mutatest.controller, "get_compatible_operation_sets", mock_get_comp_ops)
+
+    sample = [
+        ("a1", LocIndex(ast_class="a", lineno=1, col_offset=2, op_type="a1")),
+        ("a2", LocIndex(ast_class="a", lineno=1, col_offset=2, op_type="a2")),
+        ("b1", LocIndex(ast_class="a", lineno=1, col_offset=2, op_type="b1")),
+        ("c1", LocIndex(ast_class="a", lineno=1, col_offset=2, op_type="c1")),
+    ]
+
+    result = filter_wl_bl_categories(sample_space=sample, wlbl_categories={"aa"})
+
+    assert len(result) == 2
+    for i, _ in result:
+        assert i.startswith("a")
 
 
 ####################################################################################################
