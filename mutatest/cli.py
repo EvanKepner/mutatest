@@ -405,7 +405,7 @@ def selected_categories(whitelist: List[str], blacklist: List[str]) -> Set[str]:
     b_set = set(blacklist)
 
     if len(w_set) > 0:
-        return all_mutations - (all_mutations - w_set) - b_set
+        return w_set - b_set
 
     return all_mutations - b_set
 
@@ -431,11 +431,17 @@ def main(args: argparse.Namespace) -> None:
         LOGGER.info("Random seed set by user to: %s.", args.rseed)
         random.seed(a=args.rseed)
 
+    # set categories if present
+    wlbl_categories = None
+    if len(args.whitelist) > 0 or len(args.blacklist) > 0:
+        wlbl_categories = selected_categories(whitelist=args.whitelist, blacklist=args.blacklist)
+
     results_summary = run_mutation_trials(
         src_loc=src_loc,
         test_cmds=args.testcmds,
         exclude_files=args.exclude,
         n_locations=args.nlocations,
+        wlbl_categories=wlbl_categories,
         break_on_detected=run_mode.break_on_detection,
         break_on_survival=run_mode.break_on_survival,
         break_on_error=run_mode.break_on_error,

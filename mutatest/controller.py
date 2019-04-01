@@ -7,12 +7,17 @@ import subprocess
 
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, NamedTuple, Optional, Tuple, Union
+from typing import Dict, List, NamedTuple, Optional, Set, Tuple, Union
 
 from mutatest.cache import remove_existing_cache_files
 from mutatest.maker import MutantTrialResult, create_mutation_and_run_trial, get_mutation_targets
 from mutatest.optimizers import DEFAULT_COVERAGE_FILE, CoverageOptimizer, covered_sample_space
-from mutatest.transformers import LocIndex, get_ast_from_src, get_mutations_for_target
+from mutatest.transformers import (
+    LocIndex,
+    get_ast_from_src,
+    get_compatible_operation_sets,
+    get_mutations_for_target,
+)
 
 
 LOGGER = logging.getLogger(__name__)
@@ -186,6 +191,34 @@ def get_sample_space(src_targets: Dict[str, List[LocIndex]]) -> List[Tuple[str, 
     return sample_space
 
 
+def filter_wl_bl_categories(
+    sample_space: List[Tuple[str, LocIndex]], wlbl_categories: Set[str]
+) -> List[Tuple[str, LocIndex]]:
+    """Filter the sample by white/blacklist categories.
+
+    Args:
+        sample_space: sample space to filter
+        wlbl_categories: set of categories for filtering
+
+    Returns:
+        restricted sample space
+    """
+    LOGGER.info("Category restriction, valid categories: %s", sorted(wlbl_categories))
+    category_sample = []
+    allowed_operations = []
+
+    for m in get_compatible_operation_sets():
+        if m.category in wlbl_categories:
+            allowed_operations.extend([i for i in m.operations])
+
+    for fn, locidx in sample_space:
+        if locidx.op_type in allowed_operations:
+            category_sample.append((fn, locidx))
+
+    LOGGER.info("Category restricted sample size: %s", len(category_sample))
+    return category_sample
+
+
 def get_mutation_sample_locations(
     sample_space: List[Tuple[str, LocIndex]], n_locations: Optional[int] = None
 ) -> List[Tuple[str, LocIndex]]:
@@ -299,6 +332,7 @@ def run_mutation_trials(  # noqa: C901
     test_cmds: List[str],
     exclude_files: Optional[List[Path]] = None,
     n_locations: Optional[int] = None,
+    wlbl_categories: Optional[Set[str]] = None,
     break_on_survival: bool = False,
     break_on_detected: bool = False,
     break_on_error: bool = False,
@@ -316,6 +350,7 @@ def run_mutation_trials(  # noqa: C901
         exclude_files: optional list of files to exclude from mutation trials, default None
         n_locations: optional number of locations for mutations,
             if unspecified then the full sample space is used.
+        wlbl_categories: white/black list categories for further set restriction.
         break_on_survival: flag to stop further mutations at a location if one survives,
             defaults to False
         break_on_detected: flag to stop further mutations at a location if one is detected,
@@ -339,6 +374,10 @@ def run_mutation_trials(  # noqa: C901
         ignore_coverage=ignore_coverage,
         cov_mapping=None,
     )
+
+    # filter white/black listed categories
+    if wlbl_categories is not None:
+        sample_space = filter_wl_bl_categories(sample_space, wlbl_categories)
 
     mutation_sample = get_mutation_sample_locations(
         sample_space=sample_space, n_locations=n_locations
