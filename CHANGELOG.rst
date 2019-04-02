@@ -4,6 +4,12 @@ Changelog
 :code:`mutatest` is alpha software, and backwards compatibility between releases is
 not guaranteed while under development.
 
+0.9.1
+-----
+
+    - Added :code:`--whitelist` and :code:`--blacklist` with category codes for mutation families.
+    - Provides CLI selection of mutation types to be used during the trials.
+
 
 0.9.0
 -----

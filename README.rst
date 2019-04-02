@@ -254,6 +254,42 @@ candidate locations is used.
     $ mutatest -n 5 -r 314
 
 
+Selecting categories of mutations
+---------------------------------
+
+:code:`mutatest` categorizes families of mutations with two-letter category codes (available in
+the help output and in the mutants section below). You can use these category codes in the
+:code:`--whitelist` and :code:`--blacklist` arguments to opt-in or opt-out of types of mutations
+for your trials. This impacts the pool of potential locations to draw from for the sample, but the
+number of mutations specified in :code:`--nlocations` still determines the final sample size.
+You will see the categories used in the output during the trial.
+
+.. code-block::
+
+    # selects only the categories "aa" (AugAssign), "bn" (BinOp), and "ix" (Index) mutations
+    $ mutatest --whitelist aa bn ix
+
+    ... initial output ...
+
+    Full sample space size: 246
+    Restricting sample based on existing coverage file.
+    Coverage optimized sample space size: 215
+    Optimized sample set, size: 215
+    Category restriction, valid categories: ['aa', 'bn', 'ix']
+    Category restricted sample size: 21
+
+    ... continued output ...
+
+    # using shorthand
+    $ mutatest -w aa bn ix
+
+    # using the blacklist instead, selects all categories except "aa", "bn", and "ix"
+    $ mutatest --blacklist aa bn ix
+
+    # with shorthand
+    $ mutatest -b aa bn ix
+
+
 Setting the output location
 ---------------------------
 
@@ -303,13 +339,16 @@ Run :code:`mutatest --help` to see command line arguments and supported operatio
 
     $ mutatest --help
 
-    usage: Mutatest [-h] [-e STR_LIST] [-m {f,s,d,sd}] [-n INT] [-o PATH] [-r INT]
-                    [-s PATH] [-t STR_CMDS] [--debug]
+    usage: Mutatest [-h] [-b [STR [STR ...]]] [-e PATH] [-m {f,s,d,sd}] [-n INT]
+                    [-o PATH] [-r INT] [-s PATH] [-t STR_CMDS]
+                    [-w [STR [STR ...]]] [--debug] [--nocov]
 
     Python mutation testing. Mutatest will manipulate local __pycache__ files.
 
     optional arguments:
       -h, --help            show this help message and exit
+      -b [STR [STR ...]], --blacklist [STR [STR ...]]
+                            Blacklisted mutation categories for trials. (default: empty list)
       -e PATH, --exclude PATH
                             Path to .py file to exclude, multiple -e entries supported. (default: None)
       -m {f,s,d,sd}, --mode {f,s,d,sd}
@@ -317,13 +356,16 @@ Run :code:`mutatest --help` to see command line arguments and supported operatio
       -n INT, --nlocations INT
                             Number of locations in code to randomly select for mutation from possible targets. (default: 10)
       -o PATH, --output PATH
-                            Output file location for results. (default: mutation_report.rst)
+                            Output RST file location for results. (default: No output written)
       -r INT, --rseed INT   Random seed to use for sample selection.
       -s PATH, --src PATH   Source code (file or directory) for mutation testing. (default: auto-detection attempt).
       -t STR_CMDS, --testcmds STR_CMDS
                             Test command string to execute. (default: 'pytest')
+      -w [STR [STR ...]], --whitelist [STR [STR ...]]
+                            Whitelisted mutation categories for trials. (default: empty list)
       --debug               Turn on DEBUG level logging output.
       --nocov               Ignore coverage files for optimization.
+
 
 Mutations
 =========
@@ -346,10 +388,11 @@ Supported operations:
     - :code:`Slice` mutations e.g. changing :code:`x[:2]` to :code:`x[2:]`
 
 These are the current operations that are mutated as compatible sets.
+The two-letter category code for white/black-list selection is beside the name in double quotes.
 
 
-AugAssign
----------
+AugAssign - "aa"
+----------------
 
 Augmented assignment e.g. :code:`+= -= /= *=`.
 
@@ -373,8 +416,8 @@ Example:
     x /= y  # AugAssign_Div
 
 
-BinOp
------
+BinOp - "bn"
+------------
 
 Binary operations e.g. add, subtract, divide, etc.
 
@@ -400,8 +443,8 @@ Example:
     x = a - b  # ast.Sub
 
 
-BinOp Bit Comparison
---------------------
+BinOp Bit Comparison - "bc"
+---------------------------
 
 Bitwise comparison operations e.g. :code:`x & y, x | y, x ^ y`.
 
@@ -423,8 +466,8 @@ Example:
     x = a ^ y  # ast.BitXor
 
 
-BinOp Bit Shifts
-----------------
+BinOp Bit Shifts - "bs"
+-----------------------
 
 Bitwise shift operations e.g. :code:`<< >>`.
 
@@ -442,8 +485,8 @@ Example:
     # mutation
     x << y
 
-BoolOp
-------
+BoolOp - "bl"
+-------------
 
 Boolean operations e.g. :code:`and or`.
 
@@ -463,8 +506,8 @@ Example:
     if x or y:
 
 
-Compare
--------
+Compare - "cp"
+--------------
 
 Comparison operations e.g. :code:`== >= <= > <`.
 
@@ -489,8 +532,8 @@ Example:
     x != y  # ast.NotEq
 
 
-Compare In
-----------
+Compare In - "cn"
+-----------------
 
 Compare membership e.g. :code:`in, not in`.
 
@@ -510,8 +553,8 @@ Example:
     x not in [1, 2, 3, 4]
 
 
-Compare Is
-----------
+Compare Is - "cs"
+-----------------
 
 Comapre identity e.g. :code:`is, is not`.
 
@@ -530,8 +573,8 @@ Example:
     x is not None
 
 
-If
---
+If - "if"
+---------
 
 If mutations change :code:`if` statements to always be :code:`True` or :code:`False`. The original
 statement is represented by the class :code:`If_Statement` in reporting.
@@ -558,8 +601,8 @@ Example:
         ...
 
 
-Index
------
+Index - "ix"
+------------
 
 Index values for iterables e.g. :code:`i[-1], i[0], i[0][1]`. It is worth noting that this is a
 unique mutation form in that any index value that is positive will be marked as :code:`Index_NumPos`
@@ -589,8 +632,8 @@ Example:
     x = [a[10], a[-4], a[1]]  # a[0] mutated to Index_NumPos
 
 
-NameConstant
-------------
+NameConstant - "nc"
+-------------------
 
 Named constant mutations e.g. :code:`True, False, None`.
 
@@ -612,13 +655,14 @@ Example:
     X = None
 
 
-Slices
-------
+Slices - "su" and "sr"
+----------------------
 
 Slice mutations to swap lower/upper values, or change range e.g. :code:`x[2:] to x[:2]`
 or :code:`x[1:5] to x[1:4]`. This is a unique mutation. If the upper or lower bound is set to
 :code:`None` then the bound values are swapped. This is represented by the operations of
-:code:`Slice_UnboundedUpper` for swap None to the "upper" value  from "lower".
+:code:`Slice_UnboundedUpper` for swap None to the "upper" value  from "lower". The category code
+for this type of mutation is "su".
 
 The "ToZero" operations
 change the list by moving the upper bound by one unit towards zero from the absolute value and
@@ -627,6 +671,7 @@ then applying the original sign e.g. :code:`x[0:2]` would become :code:`x[0:1]`,
 more common pattern, this results in shrinking the index slice by 1. Note that these "ToZero"
 operations appear self-referential in the report output. This is because an operation identified
 as a :code:`Slice_UPosToZero` remains as a :code:`Slice_UPosToZero` but with updated values.
+The category code for this type of mutation is "sr".
 
 
 Members:

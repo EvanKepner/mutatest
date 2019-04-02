@@ -21,7 +21,7 @@ CATEGORIES = {
     "If": "if",
     "Index": "ix",
     "NameConstant": "nc",
-    "SliceUS": "ss",
+    "SliceUS": "su",
     "SliceRC": "sr",
 }
 

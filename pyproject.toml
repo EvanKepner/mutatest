@@ -4,7 +4,7 @@ requires = ["setuptools", "wheel"]
 
 [tool.black]
 line-length = 100
-py36 = true
+target-version = ['py36', 'py37', 'py38']
 exclude = '''
 /(
     \.eggs
