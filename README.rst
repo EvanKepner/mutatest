@@ -262,23 +262,24 @@ the help output and in the mutants section below). You can use these category co
 :code:`--whitelist` and :code:`--blacklist` arguments to opt-in or opt-out of types of mutations
 for your trials. This impacts the pool of potential locations to draw from for the sample, but the
 number of mutations specified in :code:`--nlocations` still determines the final sample size.
-You will see the categories used in the output during the trial.
+You will see the categories used in the output during the trial. Categories are space delimited
+as an input list on the CLI.
 
 .. code-block::
 
     # selects only the categories "aa" (AugAssign), "bn" (BinOp), and "ix" (Index) mutations
     $ mutatest --whitelist aa bn ix
 
-    ... initial output ...
+    ... prior output...
 
-    Full sample space size: 246
-    Restricting sample based on existing coverage file.
-    Coverage optimized sample space size: 215
-    Optimized sample set, size: 215
-    Category restriction, valid categories: ['aa', 'bn', 'ix']
-    Category restricted sample size: 21
+    ... Full sample space size: 246
+    ... Restricting sample based on existing coverage file.
+    ... Coverage optimized sample space size: 215
+    ... Optimized sample set, size: 215
+    ... Category restriction, valid categories: ['aa', 'bn', 'ix']
+    ... Category restricted sample size: 21
 
-    ... continued output ...
+    ... continued output...
 
     # using shorthand
     $ mutatest -w aa bn ix
