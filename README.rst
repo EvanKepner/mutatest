@@ -370,7 +370,7 @@ Run :code:`mutatest --help` to see command line arguments and supported operatio
 
     usage: Mutatest [-h] [-b [STR [STR ...]]] [-e PATH] [-m {f,s,d,sd}] [-n INT]
                     [-o PATH] [-r INT] [-s PATH] [-t STR_CMDS]
-                    [-w [STR [STR ...]]] [--debug] [--nocov]
+                    [-w [STR [STR ...]]] [-x INT] [--debug] [--nocov]
 
     Python mutation testing. Mutatest will manipulate local __pycache__ files.
 
@@ -392,6 +392,8 @@ Run :code:`mutatest --help` to see command line arguments and supported operatio
                             Test command string to execute. (default: 'pytest')
       -w [STR [STR ...]], --whitelist [STR [STR ...]]
                             Whitelisted mutation categories for trials. (default: empty list)
+      -x INT, --exception INT
+                            Count of survivors to raise Mutation Exception for system exit.
       --debug               Turn on DEBUG level logging output.
       --nocov               Ignore coverage files for optimization.
 
