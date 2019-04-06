@@ -565,4 +565,4 @@ def get_ast_from_src(src_file: Union[str, Path]) -> ast.Module:
     """
     with open(src_file, "rb") as src_stream:
         source = src_stream.read()
-        return ast.parse(source)
+        return ast.parse(source)  # type: ignore

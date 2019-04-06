@@ -103,7 +103,7 @@ def create_mutant(
     cfile = get_cache_file_loc(src_file)
 
     # generate cache file pyc machinery for writing the cache file
-    loader = importlib.machinery.SourceFileLoader("<py_compile>", src_file)
+    loader = importlib.machinery.SourceFileLoader("<py_compile>", src_file)  # type: ignore
     source_stats = loader.path_stats(src_file)
     mode = importlib._bootstrap_external._calc_mode(src_file)  # type: ignore
 

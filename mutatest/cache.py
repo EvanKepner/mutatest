@@ -55,7 +55,7 @@ def get_cache_file_loc(src_file: Union[str, Path]) -> Path:
     if not src_file:
         raise ValueError("src_file cannot be an empty string.")
 
-    cache_file = importlib.util.cache_from_source(str(src_file))
+    cache_file = importlib.util.cache_from_source(str(src_file))  # type: ignore
 
     if os.path.islink(cache_file):
         msg = (
