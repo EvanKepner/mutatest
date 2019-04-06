@@ -155,7 +155,7 @@ def cli_epilog() -> str:
        to raise a system-exit error in automatic running of the trials. For example, you could
        have a continuous integration pipeline stage that runs mutatest over an important section
        of tests (optionally specifying a random seed or categories) and cause a system exit if
-       a set number of allowable survivors is breached.
+       a set number of allowable survivors is exceeded.
     """
     )
 

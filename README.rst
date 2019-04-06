@@ -321,7 +321,7 @@ or :code:`-x` argument that will raise an exception if that number if met or exc
 count of survivors after the trials. This argument is included for use in automated running
 of :code:`mutatest` e.g. as a stage in continuous integration.
 
-when combined with the random seed and category selection you can have targeted stages for important
+When combined with the random seed and category selection you can have targeted stages for important
 sections of code where you want a low count of surviving mutations enforced.
 
 .. code-block::
