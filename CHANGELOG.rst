@@ -7,7 +7,7 @@ not guaranteed while under development.
 0.9.2
 -----
 
-    - Added :code:`--exception` and :code:`-x` as a suvivor tolerance to raise an exception
+    - Added :code:`--exception` and :code:`-x` as a survivor tolerance to raise an exception
       after the trial completes if the count of surviving mutants is greater than or equal to the
       specified value.
 
