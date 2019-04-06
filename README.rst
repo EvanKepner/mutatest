@@ -312,6 +312,34 @@ mutations that were undetected by your test suite. The report includes file name
 column numbers, original operation, and mutation for ease of diagnostic investigation.
 
 
+Raising exceptions for survivor tolerances
+------------------------------------------
+
+By default, :code:`mutatest` will only display output and not raise any final exceptions if there
+are survivors in the trial results. You can set a tolerance number using the :code:`--exception`
+or :code:`-x` argument that will raise an exception if that number if met or exceeded for the
+count of survivors after the trials. This argument is included for use in automated running
+of :code:`mutatest` e.g. as a stage in continuous integration.
+
+when combined with the random seed and category selection you can have targeted stages for important
+sections of code where you want a low count of surviving mutations enforced.
+
+.. code-block::
+
+    $ mutatest --exception 5
+
+    # using shorthand arguments
+    $ mutatest -x 5
+
+The exception type is a :code:`SurvivingMutantException`:
+
+.. code-block::
+
+    ... prior output from trial...
+
+    mutatest.cli.SurvivingMutantException: Survivor tolerance breached: 8 / 2
+
+
 Putting it all together
 -----------------------
 

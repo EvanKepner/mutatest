@@ -16,11 +16,13 @@ import mutatest.cli
 
 from mutatest.cli import (
     RunMode,
+    SurvivingMutantException,
     TrialTimes,
     cli_args,
     cli_epilog,
     cli_main,
     cli_summary_report,
+    exception_processing,
     get_src_location,
     selected_categories,
 )
@@ -38,6 +40,7 @@ class MockArgs(NamedTuple):
     src: Optional[Path]
     testcmds: Optional[List[str]]
     whitelist: Optional[List[str]]
+    exception: Optional[int]
     debug: Optional[bool]
     nocov: Optional[bool]
 
@@ -55,6 +58,7 @@ def mock_args(tmp_path, binop_file):
         src=binop_file,
         testcmds=["pytest"],
         whitelist=[],
+        exception=None,
         debug=False,
         nocov=True,
     )
@@ -183,6 +187,17 @@ def test_selected_categories_wblist_long(mock_get_compatible_sets):
     bl = ["a", "d", "e"]
     result = selected_categories(wl, bl)
     assert result == {"b"}
+
+
+def test_exception_raised(mock_trial_results):
+    """Mock trials results should have 1 survivor"""
+    with pytest.raises(SurvivingMutantException):
+        exception_processing(1, mock_trial_results)
+
+
+def test_exception_not_raised(mock_trial_results):
+    """Mock trials results should have 1 survivor"""
+    exception_processing(5, mock_trial_results)
 
 
 @freeze_time("2019-01-01")

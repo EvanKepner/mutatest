@@ -16,8 +16,9 @@ from setuptools import find_packages  # type:ignore
 import mutatest
 
 from mutatest.cache import check_cache_invalidation_mode
-from mutatest.controller import clean_trial, run_mutation_trials
-from mutatest.report import analyze_mutant_trials, write_report
+from mutatest.controller import clean_trial, colorize_output, run_mutation_trials
+from mutatest.maker import MutantTrialResult
+from mutatest.report import analyze_mutant_trials, get_reported_results, write_report
 from mutatest.transformers import get_compatible_operation_sets
 
 
@@ -87,6 +88,12 @@ class ValidCategoryAction(argparse.Action):
         setattr(namespace, self.dest, values)
 
 
+class SurvivingMutantException(Exception):
+    """Exception for surviving mutations."""
+
+    pass
+
+
 def cli_epilog() -> str:
 
     main_epilog = dedent(
@@ -141,6 +148,14 @@ def cli_epilog() -> str:
        entered command string. Mutant status e.g. SURVIVED vs. DETECTED is based on the
        return code of the command. Return code 0 = SURVIVED, 1 = DETECTED, 2 = ERROR, and
        all others are UNKNOWN. Stdout is shown from the command if --debug mode is enabled.
+
+    Exception:
+    ----------
+     - A count of survivors for raising an exception after the trails. This is useful if you want
+       to raise a system-exit error in automatic running of the trials. For example, you could
+       have a continuous integration pipeline stage that runs mutatest over an important section
+       of tests (optionally specifying a random seed or categories) and cause a system exit if
+       a set number of allowable survivors is breached.
     """
     )
 
@@ -281,6 +296,14 @@ def cli_args(args: Optional[Sequence[str]]) -> argparse.Namespace:
         metavar="STR",
         help="Whitelisted mutation categories for trials. (default: empty list)",
     )
+    parser.add_argument(
+        "-x",
+        "--exception",
+        type=int,
+        action=PositiveIntegerAction,
+        metavar="INT",
+        help=("Count of survivors to raise Mutation Exception for system exit."),
+    )
     parser.add_argument("--debug", action="store_true", help="Turn on DEBUG level logging output.")
     parser.add_argument(
         "--nocov", action="store_true", help="Ignore coverage files for optimization."
@@ -410,6 +433,32 @@ def selected_categories(whitelist: List[str], blacklist: List[str]) -> Set[str]:
     return all_mutations - b_set
 
 
+def exception_processing(n_survivors: int, trial_results: List[MutantTrialResult]) -> None:
+    """Raise a custom mutation exception if n_survivors count is met.
+
+    Args:
+        n_survivors: tolerance number for survivors
+        trial_results: results from the trials
+
+    Returns:
+        None
+
+    Raises:
+        Surviving mutant exception
+    """
+    survived = get_reported_results(trial_results, "SURVIVED")
+    if len(survived.mutants) >= n_survivors:
+        message = colorize_output(
+            f"Survivor tolerance breached: {len(survived.mutants)} / {n_survivors}", "red"
+        )
+        raise SurvivingMutantException(message)
+
+    LOGGER.info(
+        "%s",
+        colorize_output(f"Survivor tolerance OK: {len(survived.mutants)} / {n_survivors}", "green"),
+    )
+
+
 def main(args: argparse.Namespace) -> None:
 
     src_loc = get_src_location(args.src)
@@ -477,3 +526,7 @@ def main(args: argparse.Namespace) -> None:
     if args.output:
         report = "\n".join([cli_report, trial_report])
         write_report(report, Path(args.output))
+
+    if args.exception:
+        LOGGER.info("Survivor tolerance check for %s surviving mutants.", args.exception)
+        exception_processing(args.exception, results_summary.results)
