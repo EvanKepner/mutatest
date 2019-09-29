@@ -5,6 +5,7 @@ pip-wheel-metadata/
 .ipynb
 .ipynb_checkpoints/*
 .mutatest*
+TRASH/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
