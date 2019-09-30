@@ -31,7 +31,7 @@ matrix:
       env: TOXENV=py37
 
     - python: "3.8-dev"
-      env: TOXENV=py37
+      env: TOXENV=py38
 
   # Newest release of python 3.7 can have failures since that indicates
   # an area for active development
