@@ -1,12 +1,8 @@
 import codecs
 import os
 import re
-import sys
 
 from setuptools import find_packages, setup
-
-if sys.version_info.major != 3 and sys.version_info.minor < 7:
-    raise EnvironmentError("Mutatest requires minimally Python version 3.7.")
 
 ###############################################################################
 # Using setup.py from Attrs as a template for finding components, awesome config.
