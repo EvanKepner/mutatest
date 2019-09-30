@@ -554,6 +554,7 @@ def get_mutations_for_target(target: LocIndex) -> Set[Any]:
     return mutation_ops
 
 
+# TODO: REMOVE THIS FUNCTION, COVERED IN GENOME
 def get_ast_from_src(src_file: Union[str, Path]) -> ast.Module:
     """Create an AST from a source file
 
