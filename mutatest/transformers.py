@@ -56,7 +56,7 @@ class MutateAST(ast.NodeTransformer):
     ) -> None:
         """Create the AST node transformer for mutations.
 
-        If readonly is set to None then no transformations are applied;
+        If readonly is set to True then no transformations are applied;
         however, the locs attribute is updated with the locations of nodes that could
         be transformed. This allows the class to function both as an inspection method
         and as a mutatest transformer.
