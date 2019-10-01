@@ -26,7 +26,7 @@ class CoverageOptimizer:
 
     @property
     def cov_file(self) -> Path:
-        """Property accessor for _cov_file set at initialization."""
+        """Property accessor for _coverage_file set at initialization."""
         return self._cov_file
 
     @property
