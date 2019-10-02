@@ -1,4 +1,4 @@
-"""Filters.
+"""Filters for location index sets.
 """
 import itertools
 import logging
@@ -15,6 +15,10 @@ from mutatest.transformers import CATEGORIES, LocIndex
 
 LOGGER = logging.getLogger(__name__)
 
+####################################################################################################
+# ABSTRACT BASE CLASS
+####################################################################################################
+
 
 class Filter(ABC):
     """Abstract Base Class for filters, interface should include a filter method."""
@@ -30,6 +34,11 @@ class Filter(ABC):
         Other args or kwargs may be required so this is not a hard-enforced signature.
         """
         raise NotImplementedError
+
+
+####################################################################################################
+# FILTER IMPLEMENTATIONS
+####################################################################################################
 
 
 class CoverageFilter(Filter):
@@ -55,7 +64,14 @@ class CoverageFilter(Filter):
 
     @coverage_file.setter
     def coverage_file(self, value: Union[str, Path]) -> None:
-        """Setter for the coverage file, clears local cache of CoverageData."""
+        """Setter for the coverage file, clears local cache of CoverageData.
+
+        Args:
+             value: The path to the coverage file
+
+        Returns:
+            None
+        """
         self._coverage_file = Path(value)
         self._coverage_data = None
 
@@ -156,17 +172,56 @@ class CategoryCodeFilter(Filter):
 
     @codes.setter
     def codes(self, value: Set[str]) -> None:
+        """Set the codes to a new value (full replacement of the set).
+
+        Args:
+            value: the set of 2-letter codes.
+
+        Returns:
+            None
+        """
         self._codes = {v for v in value if v in self.valid_codes}
 
     def add_code(self, code: str) -> None:
+        """Add a single 2-letter code to the codes set for the class.
+
+        Args:
+            code: a valid 2 letter code
+
+        Returns:
+            None
+
+        Raises:
+            CategoryFilterException if an invalid code is passed.
+        """
         if code not in self.valid_codes:
             raise CategoryFilterException(f"{code} is not an allowed code.")
         self._codes.add(code)
 
     def discard_code(self, code: str) -> None:
+        """Discard a 2-letter code from the codes set.
+
+        This uses the built-in set.discard() so that a KeyError is not raised if the code
+        does not exist in the set already.
+
+        Args:
+            code: the 2-letter code to discard
+
+        Returns:
+            None
+        """
         self._codes.discard(code)
 
     def filter(self, loc_idxs: Set[LocIndex], invert: bool = False) -> Set[LocIndex]:
+        """Filter a set of location indices based on the set codes.
+
+        Args:
+            loc_idxs: the set of location indices to filter.
+            invert: flag for inverted filtering using NOT
+
+        Returns:
+            Set of location indices with the filter applied.
+        """
 
         # unpack iterable of sets of compatible operations defined in transformers
         allowed_operations = set(
