@@ -87,6 +87,11 @@ class CoverageFilter(Filter):
     ) -> Set[LocIndex]:
         """Filter based on coverage measured file.
 
+        This adds the source_file argument to the filter abstract method because the coverage
+        file holds multiple measured-files, and the LocIndex object does not have a source
+        file attribute. The choice is that the coverage file can be set and read once for the
+        class instance, and any valid measured file can be used in the filter.
+
         Args:
             loc_idxs: location index set of targets
             source_file: source file that is measured by the coverage file
