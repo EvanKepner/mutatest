@@ -5,7 +5,7 @@ import ast
 import logging
 
 from pathlib import Path
-from typing import List, Optional, Set, Union
+from typing import Optional, Set, Union
 
 from mutatest.filters import CoverageFilter
 from mutatest.transformers import LocIndex, MutateAST
@@ -52,7 +52,7 @@ class Genome:
     ################################################################################################
 
     @property
-    def source_file(self) -> Path:
+    def source_file(self) -> Optional[Path]:
         """The source .py file represented by this Genome.
 
         Returns:
@@ -77,7 +77,7 @@ class Genome:
             Parsed AST for the source file.
         """
         if self._ast is None:
-            with open(self.source_file, "rb") as src_stream:
+            with open(self.source_file, "rb") as src_stream:  # type: ignore
                 self._ast = ast.parse(src_stream.read())
         return self._ast
 
@@ -115,30 +115,31 @@ class Genome:
         self._covered_targets = None
 
     @property
-    def covered_targets(self) -> Set[LocIndex]:
+    def covered_targets(  # type: ignore
+        self, coverage_file: Optional[Path] = None
+    ) -> Set[LocIndex]:
         """Targets that are marked as covered based on the coverage_file.
 
         This is cached locally and updated if the coverage_file is changed.
+
+        Args:
+            coverage_file: Optional specific coverage file to use, will set the class
+                level coverage_file property to this value. This is not needed if
+                the coverage_file is already set.
 
         Returns:
             The targets that are covered.
 
         Raises:
-            FileNotFoundError if coverage_file does not exist.
+            FileNotFoundError if the source_file is not set for the Genome.
         """
-        if not self.coverage_file.exists():
-            raise FileNotFoundError(
-                f"{self.coverage_file.resolve()} does not exist. "
-                "Set the coverage_file property to a valid file."
-            )
+        if coverage_file:
+            self.coverage_file = coverage_file
+
+        if not self.source_file:
+            raise FileNotFoundError(f"{self.source_file} is not set")
 
         if self._covered_targets is None:
             cov_filter = CoverageFilter(coverage_file=self.coverage_file)
-            cov_lines: Optional[List[int]] = cov_filter.coverage_data.lines(
-                str(self.source_file.resolve())
-            )
-            if cov_lines:
-                self._covered_targets = {t for t in self.targets if t.lineno in cov_lines}
-            else:
-                self._covered_targets = set()
+            self._covered_targets = cov_filter.filter(self.source_file, self.targets)
         return self._covered_targets

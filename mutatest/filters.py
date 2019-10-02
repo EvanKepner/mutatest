@@ -4,7 +4,7 @@ import itertools
 import logging
 
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Set, Union
+from typing import Dict, Iterable, Optional, Set, Union, ValuesView
 
 from coverage.data import CoverageData  # type: ignore
 
@@ -65,10 +65,25 @@ class CoverageFilter:
             self._coverage_data.read_file(self.coverage_file)
         return self._coverage_data
 
-    # TODO: REDEFINE GENOME.COVERED TARGETS
-    # TODO: ABSTRACT BASE CLASS WITH FILTER METHOD
-    def filter(self, loc_idxs: Set[LocIndex], invert: bool = False) -> Set[LocIndex]:
-        pass
+    def filter(
+        self, source_file: Union[str, Path], loc_idxs: Set[LocIndex], invert: bool = False
+    ) -> Set[LocIndex]:
+        """Filter based on coverage measured file.
+
+        Args:
+            source_file: source file that is measured by the coverage file
+            loc_idxs: location index set of targets
+            invert: flag for inverted filter using NOT
+
+        Returns:
+            Filtered set of location index set
+        """
+        measured_file = str(Path(source_file).resolve())
+        covered_lines = self.coverage_data.lines(measured_file) or list()
+
+        if invert:
+            return {l for l in loc_idxs if l.lineno not in covered_lines}
+        return {l for l in loc_idxs if l.lineno in covered_lines}
 
 
 class CategoryFilterException(Exception):
@@ -100,7 +115,7 @@ class CategoryCodeFilter:
         return self._allowed_categories
 
     @property
-    def valid_codes(self) -> List[str]:
+    def valid_codes(self) -> ValuesView[str]:
         """All valid 2 letter codes.
 
         Returns:
