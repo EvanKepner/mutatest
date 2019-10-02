@@ -141,5 +141,5 @@ class Genome:
 
         if self._covered_targets is None:
             cov_filter = CoverageFilter(coverage_file=self.coverage_file)
-            self._covered_targets = cov_filter.filter(self.source_file, self.targets)
+            self._covered_targets = cov_filter.filter(self.targets, self.source_file)
         return self._covered_targets

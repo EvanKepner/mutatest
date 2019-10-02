@@ -3,6 +3,7 @@
 import itertools
 import logging
 
+from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Dict, Iterable, Optional, Set, Union, ValuesView
 
@@ -15,7 +16,23 @@ from mutatest.transformers import CATEGORIES, LocIndex
 LOGGER = logging.getLogger(__name__)
 
 
-class CoverageFilter:
+class Filter(ABC):
+    """Abstract Base Class for filters, interface should include a filter method."""
+
+    @abstractmethod
+    def filter(self, loc_idxs: Set[LocIndex], invert: bool = False) -> Set[LocIndex]:
+        """General filter method that should return a location index set.
+
+        A filter should take a set of location indicies (loc_idxs) and return
+        the filtered set of location indicies. The invert kwarg is set as a reversible filter e.g.,
+        to specify NOT for the filtering effect.
+
+        Other args or kwargs may be required so this is not a hard-enforced signature.
+        """
+        raise NotImplementedError
+
+
+class CoverageFilter(Filter):
     """Filter for covered lines to be applied to mutation targets in Genome."""
 
     def __init__(self, coverage_file: Union[str, Path] = Path(".coverage")) -> None:
@@ -65,14 +82,14 @@ class CoverageFilter:
             self._coverage_data.read_file(self.coverage_file)
         return self._coverage_data
 
-    def filter(
-        self, source_file: Union[str, Path], loc_idxs: Set[LocIndex], invert: bool = False
+    def filter(  # type: ignore
+        self, loc_idxs: Set[LocIndex], source_file: Union[str, Path], invert: bool = False
     ) -> Set[LocIndex]:
         """Filter based on coverage measured file.
 
         Args:
-            source_file: source file that is measured by the coverage file
             loc_idxs: location index set of targets
+            source_file: source file that is measured by the coverage file
             invert: flag for inverted filter using NOT
 
         Returns:
@@ -92,7 +109,7 @@ class CategoryFilterException(Exception):
     pass
 
 
-class CategoryCodeFilter:
+class CategoryCodeFilter(Filter):
     """Filter by mutation category code."""
 
     def __init__(self, codes: Iterable[str]):
