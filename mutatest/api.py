@@ -166,18 +166,11 @@ class Genome:
         self._covered_targets = None
 
     @property
-    def covered_targets(  # type: ignore
-        self, coverage_file: Optional[Path] = None
-    ) -> Set[LocIndex]:
+    def covered_targets(self) -> Set[LocIndex]:
         """Targets that are marked as covered based on the coverage_file.
 
         This is cached locally and updated if the coverage_file is changed. Filtering is not
         cached and applies any time the filter_codes are changed.
-
-        Args:
-            coverage_file: Optional specific coverage file to use, will set the class
-                level coverage_file property to this value. This is not needed if
-                the coverage_file is already set.
 
         Returns:
             The targets that are covered.
@@ -185,9 +178,6 @@ class Genome:
         Raises:
             TypeError if the source_file or coverage_file is not set for the Genome.
         """
-        if coverage_file:
-            self.coverage_file = coverage_file
-
         if not self.source_file:
             raise TypeError("Source_file property is set to NoneType.")
 
@@ -195,7 +185,8 @@ class Genome:
             raise TypeError("Coverage_file property is set to NoneType.")
 
         if self._covered_targets is None:
-            cov_filter = CoverageFilter(coverage_file=self.coverage_file)
-            self._covered_targets = cov_filter.filter(self.targets, self.source_file)
+            self._covered_targets = CoverageFilter(coverage_file=self.coverage_file).filter(
+                self.targets, self.source_file
+            )
 
         return CategoryCodeFilter(codes=self.filter_codes).filter(self._covered_targets)
