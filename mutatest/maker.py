@@ -161,6 +161,7 @@ def create_mutation_and_run_trial(
     return MutantTrialResult(mutant=mutant, return_code=mutant_trial.returncode)
 
 
+# TODO: REMOVE, IN GENOME
 def write_mutant_cache_file(mutant: Mutant) -> None:
     """Create the cache file for the mutant on disk in __pycache__.
 

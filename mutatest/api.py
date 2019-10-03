@@ -2,16 +2,62 @@
 These are high level objects for interacting with mutatest.
 """
 import ast
+import importlib
 import logging
 
+from copy import deepcopy
 from pathlib import Path
-from typing import Iterable, Optional, Set, Union
+from typing import Any, Iterable, Mapping, NamedTuple, Optional, Set, Union
 
+from mutatest import cache
 from mutatest.filters import CategoryCodeFilter, CoverageFilter
 from mutatest.transformers import CATEGORIES, LocIndex, MutateAST
 
 
 LOGGER = logging.getLogger(__name__)
+
+
+class Mutant(NamedTuple):
+    """Mutant definition.
+
+    Mutants are created through the Genome at specific targets, are immutable, and can be
+    written to disk in the __pycache__.
+    """
+
+    mutant_code: Any
+    src_file: Path
+    cfile: Path
+    loader: Any
+    source_stats: Mapping[str, Any]
+    mode: int
+    src_idx: LocIndex
+    mutation: Any
+
+    def write_cache(self) -> None:
+        """Create the cache file for the mutant on disk in __pycache__.
+
+        Existing target cache files are removed to ensure clean overwrites.
+
+        Reference: https://github.com/python/cpython/blob/master/Lib/py_compile.py#L157
+
+        Args:
+            mutant: the mutant definition to create
+
+        Returns:
+            None, creates the cache file on disk.
+        """
+        cache.check_cache_invalidation_mode()
+
+        bytecode = importlib._bootstrap_external._code_to_timestamp_pyc(  # type: ignore
+            self.mutant_code, self.source_stats["mtime"], self.source_stats["size"]
+        )
+
+        cache.remove_existing_cache_files(self.src_file)
+
+        cache.create_cache_dirs(self.cfile)
+
+        LOGGER.debug("Writing mutant cache file: %s", self.cfile)
+        importlib._bootstrap_external._write_atomic(self.cfile, bytecode, self.mode)
 
 
 class Genome:
@@ -60,7 +106,7 @@ class Genome:
         self.filter_codes: Set[str] = set(filter_codes) if filter_codes else set()
 
     ################################################################################################
-    # CATEGORY FILTER CODES
+    # CATEGORY FILTER CODES PROPERTIES
     ################################################################################################
 
     @property
@@ -91,7 +137,7 @@ class Genome:
         self._filter_codes = value
 
     ################################################################################################
-    # SOURCE FILES
+    # SOURCE FILE PROPERTIES
     ################################################################################################
 
     @property
@@ -151,7 +197,7 @@ class Genome:
         return CategoryCodeFilter(codes=self.filter_codes).filter(self._targets)
 
     ################################################################################################
-    # COVERAGE FILTER
+    # COVERAGE FILTER PROPERTIES
     ################################################################################################
 
     @property
@@ -190,3 +236,52 @@ class Genome:
             )
 
         return CategoryCodeFilter(codes=self.filter_codes).filter(self._covered_targets)
+
+    ################################################################################################
+    # MUTATION METHODS
+    ################################################################################################
+
+    def mutate(self, target_idx: LocIndex, mutation_op: Any, write_cache: bool = False) -> Mutant:
+        """Mutate a single LocIndex
+
+        Args:
+            target_idx:
+            mutation_op:
+            write_cache:
+
+        Returns:
+
+        """
+        if not self.source_file:
+            raise TypeError("Source_file is set to NoneType")
+
+        if target_idx not in self.targets:
+            raise ValueError(f"{target_idx} is not in the Genome targets.")
+
+        mutant_ast = MutateAST(
+            target_idx=target_idx, mutation=mutation_op, src_file=self.source_file, readonly=False
+        ).visit(
+            deepcopy(self.ast)
+        )  # note deepcopy to avoid in-place modification of AST
+
+        # generate cache file pyc machinery for writing the cache file
+        loader = importlib.machinery.SourceFileLoader(  # type: ignore
+            "<py_compile>", self.source_file
+        )
+
+        # create the cache files with the mutated AST
+        mutant = Mutant(
+            mutant_code=compile(mutant_ast, str(self.source_file), "exec"),
+            src_file=Path(self.source_file),
+            cfile=Path(cache.get_cache_file_loc(self.source_file)),
+            loader=loader,
+            source_stats=loader.path_stats(self.source_file),
+            mode=importlib._bootstrap_external._calc_mode(self.source_file),  # type: ignore
+            src_idx=target_idx,
+            mutation=mutation_op,
+        )
+
+        if write_cache:
+            mutant.write_cache()
+
+        return mutant
