@@ -7,8 +7,8 @@ import logging
 from pathlib import Path
 from typing import Iterable, Optional, Set, Union
 
-from mutatest.filters import CoverageFilter
-from mutatest.transformers import LocIndex, MutateAST
+from mutatest.filters import CategoryCodeFilter, CoverageFilter
+from mutatest.transformers import CATEGORIES, LocIndex, MutateAST
 
 
 LOGGER = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ class Genome:
             source_file: an optional source file path
             coverage_file: coverage file for filtering covered lines,
                 default value is set to ".coverage".
-            filter_codes: 2-letter category codes to filter
+            filter_codes: 2-letter category codes to filter returned targets
         """
         # Properties with an underscore prefix are used for local caching and are not designed
         # to be modified directly.
@@ -50,14 +50,45 @@ class Genome:
         self._coverage_file = None
         self._covered_targets: Optional[Set[LocIndex]] = None
 
-        # TODO: Implement filter_codes in targets and covered_targets
-        # Related to category filtering
-        # self.filter_codes: Set[str] = set(filter_codes) if filter_codes else set()
+        # Related to category code filtering, not cached but uses a setter for valid value checks
+        self._filter_codes: Set[str] = set()
 
         # Initialize set values using properties
         # These may be set later and clear the cached values in the setters
         self.source_file = Path(source_file) if source_file else None
         self.coverage_file = Path(coverage_file) if coverage_file else None
+        self.filter_codes: Set[str] = set(filter_codes) if filter_codes else set()
+
+    ################################################################################################
+    # CATEGORY FILTER CODES
+    ################################################################################################
+
+    @property
+    def filter_codes(self) -> Set[str]:
+        """Filter codes applied to targets and covered targets."""
+        return self._filter_codes
+
+    @filter_codes.setter
+    def filter_codes(self, value: Iterable[str]) -> None:
+        """Setter for filter codes. These are always applied when set on the Genome.
+
+        Set this to an empty set to remove all category code filters from returned targets.
+
+        Args:
+            value: a set of 2-letter codes, use a set of a single code if needed.
+
+        Returns:
+            None
+
+        Raises:
+            ValueError if the 2-letter codes in value are not supported by the transformer.
+        """
+        value, valid_codes = set(value), set(CATEGORIES.values())
+        if not value.issubset(valid_codes):
+            raise ValueError(
+                f"Invalid category codes: {value - valid_codes}.\nValid codes: {CATEGORIES}"
+            )
+        self._filter_codes = value
 
     ################################################################################################
     # SOURCE FILES
@@ -103,7 +134,8 @@ class Genome:
     def targets(self) -> Set[LocIndex]:
         """Viable mutation targets within the AST of the source_file.
 
-        This is cached locally and updated if the source_file is changed.
+        This is cached locally and updated if the source_file is changed. Filtering is not
+        cached and applies any time the filter_codes are changed.
 
         Returns:
              The set of the location index objects from the transformer that could be
@@ -115,7 +147,8 @@ class Genome:
             )
             ro_mast.visit(self.ast)
             self._targets = ro_mast.locs
-        return self._targets
+
+        return CategoryCodeFilter(codes=self.filter_codes).filter(self._targets)
 
     ################################################################################################
     # COVERAGE FILTER
@@ -138,7 +171,8 @@ class Genome:
     ) -> Set[LocIndex]:
         """Targets that are marked as covered based on the coverage_file.
 
-        This is cached locally and updated if the coverage_file is changed.
+        This is cached locally and updated if the coverage_file is changed. Filtering is not
+        cached and applies any time the filter_codes are changed.
 
         Args:
             coverage_file: Optional specific coverage file to use, will set the class
@@ -163,4 +197,5 @@ class Genome:
         if self._covered_targets is None:
             cov_filter = CoverageFilter(coverage_file=self.coverage_file)
             self._covered_targets = cov_filter.filter(self.targets, self.source_file)
-        return self._covered_targets
+
+        return CategoryCodeFilter(codes=self.filter_codes).filter(self._covered_targets)

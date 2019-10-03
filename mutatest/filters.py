@@ -140,6 +140,7 @@ class CategoryCodeFilter(Filter):
             codes: An optional iterable of two-letter category codes for filtering.
                 Optional to set at initialization of the class, can be set through properties.
                 The codes property must be set prior to filtering.
+                Only codes that are valid categories are added, others are discarded.
         """
         # managed by class properties, no direct setters
         self._valid_categories = CATEGORIES  # defined in transformers.py
@@ -178,6 +179,8 @@ class CategoryCodeFilter(Filter):
     @codes.setter
     def codes(self, value: Iterable[str]) -> None:
         """Set the codes to a new value (full replacement of the set).
+
+        Only codes that are valid categories are added, all others are discarded.
 
         Args:
             value: the set of 2-letter codes.
