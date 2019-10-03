@@ -133,15 +133,20 @@ class CategoryFilterException(Exception):
 class CategoryCodeFilter(Filter):
     """Filter by mutation category code."""
 
-    def __init__(self, codes: Iterable[str]):
+    def __init__(self, codes: Optional[Iterable[str]] = None):
         """Initialize the filter.
 
         Args:
-            codes: an iterable of two-letter category codes for filtering.
+            codes: An optional iterable of two-letter category codes for filtering.
+                Optional to set at initialization of the class, can be set through properties.
+                The codes property must be set prior to filtering.
         """
-        # managed by class properties
-        self._allowed_categories = CATEGORIES  # defined in transformers.py
-        self._codes = {c for c in codes if c in self.valid_codes}
+        # managed by class properties, no direct setters
+        self._valid_categories = CATEGORIES  # defined in transformers.py
+        self._codes: Set[str] = set()
+
+        # initialize through properties
+        self.codes = set(codes) if codes else set()
 
     @property
     def valid_categories(self) -> Dict[str, str]:
@@ -150,7 +155,7 @@ class CategoryCodeFilter(Filter):
         Returns:
             The categories defined in transformers.
         """
-        return self._allowed_categories
+        return self._valid_categories
 
     @property
     def valid_codes(self) -> ValuesView[str]:
@@ -159,7 +164,7 @@ class CategoryCodeFilter(Filter):
         Returns:
             Dictionary view of the values of valid_categories.
         """
-        return self._allowed_categories.values()
+        return self._valid_categories.values()
 
     @property
     def codes(self) -> Set[str]:
@@ -171,7 +176,7 @@ class CategoryCodeFilter(Filter):
         return self._codes
 
     @codes.setter
-    def codes(self, value: Set[str]) -> None:
+    def codes(self, value: Iterable[str]) -> None:
         """Set the codes to a new value (full replacement of the set).
 
         Args:
@@ -215,6 +220,8 @@ class CategoryCodeFilter(Filter):
     def filter(self, loc_idxs: Set[LocIndex], invert: bool = False) -> Set[LocIndex]:
         """Filter a set of location indices based on the set codes.
 
+        If the codes property is an empty set, the loc_idxs is returned unmodified.
+
         Args:
             loc_idxs: the set of location indices to filter.
             invert: flag for inverted filtering using NOT
@@ -222,6 +229,8 @@ class CategoryCodeFilter(Filter):
         Returns:
             Set of location indices with the filter applied.
         """
+        if not self.codes:
+            return loc_idxs
 
         # unpack iterable of sets of compatible operations defined in transformers
         allowed_operations = set(

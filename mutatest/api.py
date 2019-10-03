@@ -5,7 +5,7 @@ import ast
 import logging
 
 from pathlib import Path
-from typing import Optional, Set, Union
+from typing import Iterable, Optional, Set, Union
 
 from mutatest.filters import CoverageFilter
 from mutatest.transformers import LocIndex, MutateAST
@@ -25,7 +25,8 @@ class Genome:
     def __init__(
         self,
         source_file: Optional[Union[str, Path]] = None,
-        coverage_file: Union[str, Path] = Path(".coverage"),
+        coverage_file: Optional[Union[str, Path]] = Path(".coverage"),
+        filter_codes: Optional[Iterable[str]] = None,
     ) -> None:
         """Initialize the Genome.
 
@@ -36,16 +37,27 @@ class Genome:
             source_file: an optional source file path
             coverage_file: coverage file for filtering covered lines,
                 default value is set to ".coverage".
+            filter_codes: 2-letter category codes to filter
         """
-        # Accessed through class properties to control local caching
+        # Properties with an underscore prefix are used for local caching and are not designed
+        # to be modified directly.
         # Related to source files, AST, targets
-        self._source_file = Path(source_file) if source_file else None
+        self._source_file = None
         self._ast: Optional[ast.Module] = None
         self._targets: Optional[Set[LocIndex]] = None
 
         # Related to coverage filtering
-        self._coverage_file = Path(coverage_file)
+        self._coverage_file = None
         self._covered_targets: Optional[Set[LocIndex]] = None
+
+        # TODO: Implement filter_codes in targets and covered_targets
+        # Related to category filtering
+        # self.filter_codes: Set[str] = set(filter_codes) if filter_codes else set()
+
+        # Initialize set values using properties
+        # These may be set later and clear the cached values in the setters
+        self.source_file = Path(source_file) if source_file else None
+        self.coverage_file = Path(coverage_file) if coverage_file else None
 
     ################################################################################################
     # SOURCE FILES
@@ -61,9 +73,9 @@ class Genome:
         return self._source_file
 
     @source_file.setter
-    def source_file(self, value: Path) -> None:
+    def source_file(self, value: Optional[Union[str, Path]]) -> None:
         """Setter for the source_file that clears the AST and targets for recalculation."""
-        self._source_file = Path(value)
+        self._source_file = Path(value) if value else None
         self._ast = None
         self._targets = None
 
@@ -75,9 +87,15 @@ class Genome:
 
         Returns:
             Parsed AST for the source file.
+
+        Raises:
+            TypeError if source_file is not set.
         """
         if self._ast is None:
-            with open(self.source_file, "rb") as src_stream:  # type: ignore
+            if not self.source_file:
+                raise TypeError("Source_file property is set to NoneType.")
+
+            with open(self.source_file, "rb") as src_stream:
                 self._ast = ast.parse(src_stream.read())
         return self._ast
 
@@ -104,14 +122,14 @@ class Genome:
     ################################################################################################
 
     @property
-    def coverage_file(self) -> Path:
+    def coverage_file(self) -> Optional[Path]:
         """The .coverage file to use for filtering targets."""
         return self._coverage_file
 
     @coverage_file.setter
-    def coverage_file(self, value: Union[str, Path]) -> None:
+    def coverage_file(self, value: Optional[Union[str, Path]]) -> None:
         """Setter for coverage_file, clears the cached covered_targets."""
-        self._coverage_file = Path(value)
+        self._coverage_file = Path(value) if value else None
         self._covered_targets = None
 
     @property
@@ -131,13 +149,16 @@ class Genome:
             The targets that are covered.
 
         Raises:
-            FileNotFoundError if the source_file is not set for the Genome.
+            TypeError if the source_file or coverage_file is not set for the Genome.
         """
         if coverage_file:
             self.coverage_file = coverage_file
 
         if not self.source_file:
-            raise FileNotFoundError(f"{self.source_file} is not set")
+            raise TypeError("Source_file property is set to NoneType.")
+
+        if not self.coverage_file:
+            raise TypeError("Coverage_file property is set to NoneType.")
 
         if self._covered_targets is None:
             cov_filter = CoverageFilter(coverage_file=self.coverage_file)
