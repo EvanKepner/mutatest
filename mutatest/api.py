@@ -5,9 +5,10 @@ import ast
 import importlib
 import logging
 
+from collections.abc import MutableMapping
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Iterable, Mapping, NamedTuple, Optional, Set, Union
+from typing import Any, Iterable, Iterator, Mapping, NamedTuple, Optional, Set, Union
 
 from mutatest import cache
 from mutatest.filters import CategoryCodeFilter, CoverageFilter
@@ -17,11 +18,17 @@ from mutatest.transformers import CATEGORIES, LocIndex, MutateAST
 LOGGER = logging.getLogger(__name__)
 
 
+class MutationException(Exception):
+    """Mutation Exception type."""
+
+    pass
+
+
 class Mutant(NamedTuple):
     """Mutant definition.
 
-    Mutants are created through the Genome at specific targets, are immutable, and can be
-    written to disk in the __pycache__.
+    Mutants are created through the Genome at specific targets using the mutate method.
+    Mutants are immutable and can be written to disk in the __pycache__.
     """
 
     mutant_code: Any
@@ -57,7 +64,7 @@ class Mutant(NamedTuple):
         cache.create_cache_dirs(self.cfile)
 
         LOGGER.debug("Writing mutant cache file: %s", self.cfile)
-        importlib._bootstrap_external._write_atomic(self.cfile, bytecode, self.mode)
+        importlib._bootstrap_external._write_atomic(self.cfile, bytecode, self.mode)  # type: ignore
 
 
 class Genome:
@@ -242,16 +249,33 @@ class Genome:
     ################################################################################################
 
     def mutate(self, target_idx: LocIndex, mutation_op: Any, write_cache: bool = False) -> Mutant:
-        """Mutate a single LocIndex
+        """Mutate a single LocIndex that is in the Genome.
+
+        Mutation_op must be a valid mutation for the target_idx operation code type.
+        Optionally, use write_cache to write the mutant to __pycache__ based on the detected
+        location at the time of creation.
 
         Args:
-            target_idx:
-            mutation_op:
-            write_cache:
+            target_idx: the target location index (member of .targets)
+            mutation_op: the mutation operation to use
+            write_cache: optional flag to write to __pycache__
 
         Returns:
+            The mutant definition
 
+        Raises:
+            MutationException if mutation_op is not a valid mutation for the location index.
+            TypeError if the source_file property is not set on the Genome.
+            ValueError if the target_idx is not a member of Genome targets.
         """
+        op_code = CATEGORIES[target_idx.ast_class]
+        valid_mutations = CategoryCodeFilter(codes=(op_code,)).valid_mutations
+        if mutation_op not in valid_mutations:
+            raise MutationException(
+                f"{mutation_op} is not a member of mutation category {op_code}.\n"
+                f"Valid mutations for {op_code}: {valid_mutations}."
+            )
+
         if not self.source_file:
             raise TypeError("Source_file is set to NoneType")
 
@@ -261,10 +285,10 @@ class Genome:
         mutant_ast = MutateAST(
             target_idx=target_idx, mutation=mutation_op, src_file=self.source_file, readonly=False
         ).visit(
-            deepcopy(self.ast)
-        )  # note deepcopy to avoid in-place modification of AST
+            deepcopy(self.ast)  # deepcopy to avoid in-place modification of AST
+        )
 
-        # generate cache file pyc machinery for writing the cache file
+        # generate cache file pyc machinery for writing the __pycache__ file
         loader = importlib.machinery.SourceFileLoader(  # type: ignore
             "<py_compile>", self.source_file
         )
@@ -285,3 +309,29 @@ class Genome:
             mutant.write_cache()
 
         return mutant
+
+
+class GenomeGroup(MutableMapping):  # type: ignore
+    def __init__(self, *args, **kwargs) -> None:  # type: ignore
+        self.__dict__.update(*args, **kwargs)
+
+    def __setitem__(self, key: str, value: Genome) -> None:
+        self.__dict__[key] = value
+
+    def __getitem__(self, key: str) -> Any:
+        return self.__dict__[key]
+
+    def __delitem__(self, key: str) -> None:
+        del self.__dict__[key]
+
+    def __iter__(self) -> Iterator[Any]:
+        return iter(self.__dict__)
+
+    def __len__(self) -> int:
+        return len(self.__dict__)
+
+    def __str__(self) -> str:
+        return str(self.__dict__)
+
+    def __repr__(self) -> str:
+        return "{}, D({})".format(super().__repr__(), self.__dict__)

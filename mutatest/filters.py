@@ -5,7 +5,7 @@ import logging
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Dict, Iterable, Optional, Set, Union, ValuesView
+from typing import Dict, Iterable, Optional, Set, Union, ValuesView, Any
 
 from coverage.data import CoverageData  # type: ignore
 
@@ -141,6 +141,8 @@ class CategoryCodeFilter(Filter):
                 Optional to set at initialization of the class, can be set through properties.
                 The codes property must be set prior to filtering.
                 Only codes that are valid categories are added, others are discarded.
+                Make sure you set appropriately as an iterable for single string values e.g.,
+                codes=("bn",); otherwise, the codes property will set as empty.
         """
         # managed by class properties, no direct setters
         self._valid_categories = CATEGORIES  # defined in transformers.py
@@ -190,6 +192,22 @@ class CategoryCodeFilter(Filter):
         """
         self._codes = {v for v in value if v in self.valid_codes}
 
+    @property
+    def valid_mutations(self) -> Set[Any]:
+        """Valid mutations for the set of category codes.
+
+        Returns:
+            Set of valid mutations for the codes, types will vary
+        """
+        # unpack iterable of sets of compatible operations defined in transformers
+        return set(
+            itertools.chain.from_iterable(
+                op.operations
+                for op in transformers.get_compatible_operation_sets()
+                if op.category in self.codes
+            )
+        )
+
     def add_code(self, code: str) -> None:
         """Add a single 2-letter code to the codes set for the class.
 
@@ -235,16 +253,7 @@ class CategoryCodeFilter(Filter):
         if not self.codes:
             return loc_idxs
 
-        # unpack iterable of sets of compatible operations defined in transformers
-        allowed_operations = set(
-            itertools.chain.from_iterable(
-                op.operations
-                for op in transformers.get_compatible_operation_sets()
-                if op.category in self.codes
-            )
-        )
-
         if invert:
-            return {l for l in loc_idxs if l.op_type not in allowed_operations}
+            return {l for l in loc_idxs if l.op_type not in self.valid_mutations}
 
-        return {l for l in loc_idxs if l.op_type in allowed_operations}
+        return {l for l in loc_idxs if l.op_type in self.valid_mutations}
