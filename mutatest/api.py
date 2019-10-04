@@ -3,15 +3,16 @@ These are high level objects for interacting with mutatest.
 """
 import ast
 import importlib
+import itertools
 import logging
 
-from collections import OrderedDict
 from collections.abc import MutableMapping
 from copy import deepcopy
 from pathlib import Path
 from typing import (
     Any,
     Dict,
+    ItemsView,
     Iterable,
     Iterator,
     KeysView,
@@ -19,6 +20,7 @@ from typing import (
     NamedTuple,
     Optional,
     Set,
+    Tuple,
     Union,
     ValuesView,
 )
@@ -328,7 +330,7 @@ class Genome:
 
 class GenomeGroup(MutableMapping):  # type: ignore
     def __init__(self) -> None:
-        self._store: Dict[Path, Genome] = OrderedDict()
+        self._store: Dict[Path, Genome] = dict()
 
     def __setitem__(self, key: Path, value: Genome) -> None:
         if not isinstance(key, Path):
@@ -352,8 +354,45 @@ class GenomeGroup(MutableMapping):  # type: ignore
     def __repr__(self) -> str:
         return self._store.__repr__()
 
+    def items(self) -> ItemsView[Path, Genome]:
+        return self._store.items()
+
     def keys(self) -> KeysView[Path]:
         return self._store.keys()
 
     def values(self) -> ValuesView[Genome]:
         return self._store.values()
+
+    def add_genome(self, genome: Genome) -> None:
+        if genome.source_file is None:
+            raise TypeError("Genome source_file is set to NoneType.")
+        self.__setitem__(genome.source_file, genome)
+
+    def add_file(
+        self,
+        source_file: Union[str, Path],
+        coverage_file: Optional[Union[str, Path]] = Path(".coverage"),
+    ) -> None:
+        self.add_genome(Genome(source_file=source_file, coverage_file=coverage_file))
+
+    def set_filter(self, filter_codes: Iterable[str]) -> None:
+        for k, v in self.items():
+            v.filter_codes = set(filter_codes)
+
+    def set_coverage(self, coverage_file: Path) -> None:
+        for k, v in self.items():
+            v.coverage_file = coverage_file
+
+    @property
+    def targets(self) -> Set[Tuple[Path, LocIndex]]:
+        targets = set()
+        for k, v in self.items():
+            targets.update(set(itertools.product([k], v.targets)))
+        return targets
+
+    @property
+    def covered_targets(self) -> Set[Tuple[Path, LocIndex]]:
+        covered_targets = set()
+        for k, v in self.items():
+            covered_targets.update(set(itertools.product([k], v.covered_targets)))
+        return covered_targets
