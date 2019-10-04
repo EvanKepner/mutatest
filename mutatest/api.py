@@ -5,10 +5,23 @@ import ast
 import importlib
 import logging
 
+from collections import OrderedDict
 from collections.abc import MutableMapping
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Iterable, Iterator, Mapping, NamedTuple, Optional, Set, Union
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    Iterator,
+    KeysView,
+    Mapping,
+    NamedTuple,
+    Optional,
+    Set,
+    Union,
+    ValuesView,
+)
 
 from mutatest import cache
 from mutatest.filters import CategoryCodeFilter, CoverageFilter
@@ -73,6 +86,8 @@ class Genome:
     The class describes a single .py file and has properties for the abstract syntax tree (AST)
     and the viable mutation targets. You can initialize without any arguments. If the source_file
     is changed the ast and targets properties will be recalculated for that file.
+
+    Locations in the Genome may be mutated and written to the __pycache__ using the mutate method.
     """
 
     def __init__(
@@ -249,11 +264,11 @@ class Genome:
     ################################################################################################
 
     def mutate(self, target_idx: LocIndex, mutation_op: Any, write_cache: bool = False) -> Mutant:
-        """Mutate a single LocIndex that is in the Genome.
+        """Create a mutant from a single LocIndex that is in the Genome.
 
         Mutation_op must be a valid mutation for the target_idx operation code type.
         Optionally, use write_cache to write the mutant to __pycache__ based on the detected
-        location at the time of creation.
+        location at the time of creation. The Genome AST is unmodified by mutate.
 
         Args:
             target_idx: the target location index (member of .targets)
@@ -312,26 +327,33 @@ class Genome:
 
 
 class GenomeGroup(MutableMapping):  # type: ignore
-    def __init__(self, *args, **kwargs) -> None:  # type: ignore
-        self.__dict__.update(*args, **kwargs)
+    def __init__(self) -> None:
+        self._store: Dict[Path, Genome] = OrderedDict()
 
-    def __setitem__(self, key: str, value: Genome) -> None:
-        self.__dict__[key] = value
+    def __setitem__(self, key: Path, value: Genome) -> None:
+        if not isinstance(key, Path):
+            raise TypeError("Only Path keys are supported.")
+        if not isinstance(value, Genome):
+            raise TypeError("Only Genome values are supported.")
+        self._store[key] = value
 
-    def __getitem__(self, key: str) -> Any:
-        return self.__dict__[key]
+    def __getitem__(self, key: Path) -> Genome:
+        return self._store[key]
 
-    def __delitem__(self, key: str) -> None:
-        del self.__dict__[key]
+    def __delitem__(self, key: Path) -> None:
+        del self._store[key]
 
     def __iter__(self) -> Iterator[Any]:
-        return iter(self.__dict__)
+        return iter(self._store)
 
     def __len__(self) -> int:
-        return len(self.__dict__)
-
-    def __str__(self) -> str:
-        return str(self.__dict__)
+        return len(self._store)
 
     def __repr__(self) -> str:
-        return "{}, D({})".format(super().__repr__(), self.__dict__)
+        return self._store.__repr__()
+
+    def keys(self) -> KeysView[Path]:
+        return self._store.keys()
+
+    def values(self) -> ValuesView[Genome]:
+        return self._store.values()

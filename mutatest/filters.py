@@ -27,8 +27,8 @@ class Filter(ABC):
     def filter(self, loc_idxs: Set[LocIndex], invert: bool = False) -> Set[LocIndex]:
         """General filter method that should return a location index set.
 
-        A filter should take a set of location indicies (loc_idxs) and return
-        the filtered set of location indicies. The invert kwarg is set as a reversible filter e.g.,
+        A filter should take a set of location indices (loc_idxs) and return
+        the filtered set of location indices. The invert kwarg is set as a reversible filter e.g.,
         to specify NOT for the filtering effect.
 
         Other args or kwargs may be required so this is not a hard-enforced signature.
