@@ -5,7 +5,7 @@ import logging
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Dict, Iterable, Optional, Set, Union, ValuesView, Any
+from typing import Any, Dict, Iterable, Optional, Set, Union, ValuesView
 
 from coverage.data import CoverageData  # type: ignore
 
