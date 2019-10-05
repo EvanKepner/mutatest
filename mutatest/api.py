@@ -287,6 +287,7 @@ class Genome:
         """
         op_code = CATEGORIES[target_idx.ast_class]
         valid_mutations = CategoryCodeFilter(codes=(op_code,)).valid_mutations
+
         if mutation_op not in valid_mutations:
             raise MutationException(
                 f"{mutation_op} is not a member of mutation category {op_code}.\n"
