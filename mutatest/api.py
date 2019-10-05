@@ -329,41 +329,99 @@ class Genome:
 
 
 class GenomeGroup(MutableMapping):  # type: ignore
-    def __init__(self) -> None:
+    """The GenomeGroup: a MutableMapping of Genomes for operations on the group.
+    """
+
+    def __init__(self, source_location: Optional[Union[str, Path]] = None) -> None:
+        """Initialize the GenomeGroup.
+
+        GenomeGroup is a MutableMapping collection of Genomes with defined source_file locations.
+        You can use it to apply standard filters or coverage files across the group and get
+        all mutation targets for the group. Folders and files can be added through methods.
+
+        Args:
+            source_location: an optional folder for initialization using the default settings
+                of no file exclusions except 'test' files. For more flexibility, initialize
+                the class and then use the .add_folder() method directly.
+        """
+
+        # internal mapping for Genomes, not designed for direct modification, use class properties
         self._store: Dict[Path, Genome] = dict()
 
+        if source_location is not None:
+            source_location = Path(source_location)
+
+            if source_location.is_dir():
+                self.add_folder(source_location)
+
+            elif source_location.is_file():
+                self.add_file(source_location)
+
+            else:
+                raise TypeError(f"{source_location} is not a folder or file.")
+
     def __setitem__(self, key: Path, value: Genome) -> None:
+        """Setter for GenomeGroup, enforces Path keys and Genome values.
+
+        Args:
+            key: key for the mapping, must be a path
+            value: the genome
+
+        Returns:
+            None
+        """
         if not isinstance(key, Path):
             raise TypeError("Only Path keys are supported.")
+
         if not isinstance(value, Genome):
             raise TypeError("Only Genome values are supported.")
+
         self._store[key] = value
 
     def __getitem__(self, key: Path) -> Genome:
+        """Getter for keys from the mapping store."""
         return self._store[key]
 
     def __delitem__(self, key: Path) -> None:
+        """Delete a key from the mapping store."""
         del self._store[key]
 
-    def __iter__(self) -> Iterator[Any]:
+    def __iter__(self) -> Iterator[Path]:
+        """Iterate over the mapping store keys."""
         return iter(self._store)
 
     def __len__(self) -> int:
+        """Count of keys in the mapping store."""
         return len(self._store)
 
     def __repr__(self) -> str:
+        """Base mapping store repr."""
         return self._store.__repr__()
 
     def items(self) -> ItemsView[Path, Genome]:
+        """ItemsView for the mapping store."""
         return self._store.items()
 
     def keys(self) -> KeysView[Path]:
+        """KeysView of the mapping store."""
         return self._store.keys()
 
     def values(self) -> ValuesView[Genome]:
+        """ValuesView of the mapping store."""
         return self._store.values()
 
     def add_genome(self, genome: Genome) -> None:
+        """Add a Genome to the GenomeGroup. Genomes must have a defined source_file.
+
+        Args:
+            genome: the genome to add
+
+        Returns:
+            None
+
+        Raises:
+            TypeError if the genome.source_file is not set.
+        """
         if genome.source_file is None:
             raise TypeError("Genome source_file is set to NoneType.")
         self.__setitem__(genome.source_file, genome)
@@ -373,18 +431,82 @@ class GenomeGroup(MutableMapping):  # type: ignore
         source_file: Union[str, Path],
         coverage_file: Optional[Union[str, Path]] = Path(".coverage"),
     ) -> None:
+        """Add a .py source file to the group as a new Genome. The Genome is created automatically.
+
+        Args:
+            source_file: the source file to add with Genome creation
+            coverage_file: an optional coverage file to set on the Genome, defaults to ".coverage".
+
+        Returns:
+            None
+        """
         self.add_genome(Genome(source_file=source_file, coverage_file=coverage_file))
 
+    def add_folder(
+        self,
+        source_folder: Union[str, Path],
+        exclude_files: Optional[Iterable[Union[str, Path]]] = None,
+        ignore_test_files: bool = True,
+    ) -> None:
+        """Add a folder (recursively) to the GenomeGroup for all .py files.
+
+        Args:
+            source_folder: the folder to recursively search
+            exclude_files: optional iterable of specific files in the source_folder to skip
+            ignore_test_files: optional flag, default to true, to ignore files prefixed with
+                'test_' or suffixed with '_test' in the stem of the file name.
+
+        Returns:
+            None, adds all files as Genomes to the group.
+
+        Raises:
+            TypeError if source_folder is not a folder.
+        """
+        source_folder = Path(source_folder)
+        exclude_files = [Path(e) for e in exclude_files] if exclude_files else set()
+
+        if not source_folder.is_dir():
+            raise TypeError(f"{source_folder} is not a directory.")
+
+        for fn in source_folder.rglob("*.py"):
+            if (fn.stem.startswith("test_") or fn.stem.endswith("_test")) and ignore_test_files:
+                continue
+            else:
+                if fn not in exclude_files:
+                    self.add_file(fn)
+
     def set_filter(self, filter_codes: Iterable[str]) -> None:
+        """Set the filter codes for all Genomes in the group.
+
+        Args:
+            filter_codes: iterable of 2-letter codes to set on all Genomes in the group.
+
+        Returns:
+            None
+        """
         for k, v in self.items():
             v.filter_codes = set(filter_codes)
 
-    def set_coverage(self, coverage_file: Path) -> None:
+    def set_coverage(self, coverage_file: Union[str, Path]) -> None:
+        """Set a common coverage file for all Genomes in the group.
+
+        Args:
+            coverage_file: the coverage file to set.
+
+        Returns:
+            None
+        """
         for k, v in self.items():
-            v.coverage_file = coverage_file
+            v.coverage_file = Path(coverage_file)
 
     @property
     def targets(self) -> Set[Tuple[Path, LocIndex]]:
+        """All mutation targets in the group, returned as tuples of source-file and location
+        indices in a single set.
+
+        Returns:
+            Set of tuples of source-file and location index for all targets in the group.
+        """
         targets = set()
         for k, v in self.items():
             targets.update(set(itertools.product([k], v.targets)))
@@ -392,6 +514,12 @@ class GenomeGroup(MutableMapping):  # type: ignore
 
     @property
     def covered_targets(self) -> Set[Tuple[Path, LocIndex]]:
+        """All mutation targets in the group that are covered,
+        returned as tuples of source-file and location indices in a single set.
+
+        Returns:
+            Set of tuples of source-file and location index for all covered targets in the group.
+        """
         covered_targets = set()
         for k, v in self.items():
             covered_targets.update(set(itertools.product([k], v.covered_targets)))
