@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, NamedTuple, Optional, Set, Tuple, Union
 
-from mutatest import cache
+from mutatest import cache, transformers
 from mutatest.api import GenomeGroup, Mutant
 from mutatest.transformers import LocIndex
 
@@ -80,6 +80,21 @@ def colorize_output(output: str, color: str) -> str:
     return colors.get(color, output)
 
 
+def capture_output(log_level: int) -> bool:
+    """Utility function used in subprocess for caputred output.
+
+    Available log levels are: https://docs.python.org/3/library/logging.html#levels
+    10 is the value for Debug, so if it's not "DEBUG", return true and capture output.
+
+    Args:
+        log_level: the logging level
+
+    Returns:
+        Bool indicator on capturing output
+    """
+    return log_level != 10
+
+
 def clean_trial(src_loc: Path, test_cmds: List[str]) -> timedelta:
     """Remove all existing cache files and run the test suite.
 
@@ -125,7 +140,7 @@ def get_sample(ggrp: GenomeGroup, ignore_coverage: bool) -> Set[Tuple[Path, LocI
 
 
 def get_mutation_sample_locations(
-    sample_space: Set[Tuple[Path, LocIndex]], n_locations: int, rseed: int
+    sample_space: Set[Tuple[Path, LocIndex]], n_locations: int
 ) -> List[Tuple[Path, LocIndex]]:
     """Create the mutation sample space and set n_locations to a correct value for reporting.
 
@@ -134,7 +149,6 @@ def get_mutation_sample_locations(
     Args:
         sample_space: sample space to draw random locations from
         n_locations: number of locations to draw
-        rseed: random seed
 
     Returns:
         mutation sample
@@ -155,7 +169,6 @@ def get_mutation_sample_locations(
                 f"Selecting {n_locations} locations from {len(sample_space)} potentials.", "green"
             ),
         )
-        random.seed(a=rseed)
         mutation_sample = random.sample(sample_space, k=n_locations)
 
     else:
@@ -171,9 +184,12 @@ def get_mutation_sample_locations(
     return mutation_sample
 
 
-def run_mutation_trials(
+def run_mutation_trials(  # noqa: C901
     src_loc: Union[str, Path], test_cmds: List[str], config: Config
 ) -> ResultsSummary:
+
+    LOGGER.info("Setting random.seed to: %s", config.random_seed)
+    random.seed(a=config.random_seed)
 
     start = datetime.now()
 
@@ -196,12 +212,116 @@ def run_mutation_trials(
         )
 
     sample_space = get_sample(ggrp, config.ignore_coverage)
+    mutation_sample = get_mutation_sample_locations(sample_space, config.n_locations)
     LOGGER.info(f"Total sample space size: %s", len(sample_space))
 
-    mutation_sample = get_mutation_sample_locations(
-        sample_space, config.n_locations, config.random_seed
-    )
+    results: List[MutantTrialResult] = []
+    LOGGER.info("Starting individual mutation trials!")
+    for sample_src, sample_idx in mutation_sample:
 
-    return start, mutation_sample
+        LOGGER.info("Current target location: %s, %s", sample_src.name, sample_idx)
+        mutant_operations = transformers.get_mutations_for_target(sample_idx)
 
-    # TODO: FINISH FUNCTION
+        while mutant_operations:
+            # random.choice doesn't support sets, but sample of 1 produces a list with one element
+            current_mutation = random.sample(mutant_operations, k=1)[0]
+            mutant_operations.remove(current_mutation)
+
+            LOGGER.debug("Running trial for %s", current_mutation)
+            mutant = ggrp[sample_src].mutate(sample_idx, current_mutation, write_cache=True)
+            mutant_trial = subprocess.run(
+                test_cmds, capture_output=capture_output(LOGGER.getEffectiveLevel())
+            )
+            cache.remove_existing_cache_files(mutant.src_file)
+
+            trial_results = MutantTrialResult(mutant=mutant, return_code=mutant_trial.returncode)
+            results.append(trial_results)
+
+            if trial_results.status == "SURVIVED":
+                LOGGER.info(
+                    "%s",
+                    colorize_output(
+                        (
+                            f"Surviving mutation at "
+                            f"{sample_src}: ({sample_idx.lineno}, {sample_idx.col_offset})"
+                        ),
+                        "red",
+                    ),
+                )
+                if config.break_on_survival:
+                    LOGGER.info(
+                        "%s",
+                        colorize_output(
+                            "Break on survival: stopping further mutations at location.", "red"
+                        ),
+                    )
+                    break
+
+            if trial_results.status == "DETECTED":
+                LOGGER.info(
+                    "%s",
+                    colorize_output(
+                        (
+                            f"Detected mutation at "
+                            f"{sample_src}: ({sample_idx.lineno}, {sample_idx.col_offset})"
+                        ),
+                        "green",
+                    ),
+                )
+                if config.break_on_detected:
+                    LOGGER.info(
+                        "%s",
+                        colorize_output(
+                            "Break on detected: stopping further mutations at location.", "green"
+                        ),
+                    )
+                    break
+
+            if trial_results.status == "ERROR":
+                LOGGER.info(
+                    "%s",
+                    colorize_output(
+                        (
+                            f"Error with mutation at "
+                            f"{sample_src}: ({sample_idx.lineno}, {sample_idx.col_offset})"
+                        ),
+                        "yellow",
+                    ),
+                )
+                if config.break_on_error:
+                    LOGGER.info(
+                        "%s",
+                        colorize_output(
+                            "Break on error: stopping further mutations at location.", "yellow"
+                        ),
+                    )
+                    break
+
+            if trial_results.status == "UNKNOWN":
+                LOGGER.info(
+                    "%s",
+                    colorize_output(
+                        (
+                            f"Unknown mutation result at "
+                            f"{sample_src}: ({sample_idx.lineno}, {sample_idx.col_offset})"
+                        ),
+                        "yellow",
+                    ),
+                )
+                if config.break_on_unknown:
+                    LOGGER.info(
+                        "%s",
+                        colorize_output(
+                            "Break on unknown: stopping further mutations at location.", "yellow"
+                        ),
+                    )
+                    break
+
+        end = datetime.now()
+
+        return ResultsSummary(
+            results=results,
+            n_locs_mutated=len(mutation_sample),
+            n_locs_identified=len(sample_space),
+            total_runtime=end - start,
+        )
