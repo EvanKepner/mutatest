@@ -60,6 +60,11 @@ class BaselineTestException(Exception):
     pass
 
 
+####################################################################################################
+# UTILITY FUNCTIONS
+####################################################################################################
+
+
 def colorize_output(output: str, color: str) -> str:
     """Color output for the terminal display as either red or green.
 
@@ -95,6 +100,11 @@ def capture_output(log_level: int) -> bool:
     return log_level != 10
 
 
+####################################################################################################
+# CLEAN TRIAL RUNNING FUNCTIONS
+####################################################################################################
+
+
 def clean_trial(src_loc: Path, test_cmds: List[str]) -> timedelta:
     """Remove all existing cache files and run the test suite.
 
@@ -126,7 +136,24 @@ def clean_trial(src_loc: Path, test_cmds: List[str]) -> timedelta:
     return end - start
 
 
+####################################################################################################
+# MUTATION TRIAL RUNNING FUNCTIONS
+####################################################################################################
+
+
 def get_sample(ggrp: GenomeGroup, ignore_coverage: bool) -> Set[Tuple[Path, LocIndex]]:
+    """Get the sample space for the mutation trials.
+
+    This will attempt to use covered-targets as the default unless ignore_coverage is set to True.
+    If the set .coverage file is not found then the total targets are returned instead.
+
+    Args:
+        ggrp: the Genome Group to generate the sample space of targets
+        ignore_coverage: flag to ignore coverage if present
+
+    Returns:
+        Set of Path-LocIndex pairs as complete sample space from the Genome Group.
+    """
 
     if ignore_coverage:
         LOGGER.info("Ignoring coverage file for sample space creation.")
@@ -141,7 +168,7 @@ def get_sample(ggrp: GenomeGroup, ignore_coverage: bool) -> Set[Tuple[Path, LocI
 
 def get_mutation_sample_locations(
     sample_space: Set[Tuple[Path, LocIndex]], n_locations: int
-) -> List[Tuple[Path, LocIndex]]:
+) -> Set[Tuple[Path, LocIndex]]:
     """Create the mutation sample space and set n_locations to a correct value for reporting.
 
     n_locations will change if it is larger than the total sample_space.
@@ -169,7 +196,7 @@ def get_mutation_sample_locations(
                 f"Selecting {n_locations} locations from {len(sample_space)} potentials.", "green"
             ),
         )
-        mutation_sample = random.sample(sample_space, k=n_locations)
+        mutation_sample = set(random.sample(sample_space, k=n_locations))
 
     else:
         # set here for final reporting, though not used in rest of trial controls
@@ -184,22 +211,31 @@ def get_mutation_sample_locations(
     return mutation_sample
 
 
-def run_mutation_trials(  # noqa: C901
-    src_loc: Union[str, Path], test_cmds: List[str], config: Config
-) -> ResultsSummary:
+def get_genome_group(src_loc: Path, config: Config) -> GenomeGroup:
+    """Get the GenomeGroup based on src_loc and config.
 
-    LOGGER.info("Setting random.seed to: %s", config.random_seed)
-    random.seed(a=config.random_seed)
+    Config is used to set global filter codes and exclude files on group creation.
 
-    start = datetime.now()
+    Args:
+        src_loc: Path, can be directory or file
+        config: the running config object
 
+    Returns:
+        GenomeGroup based on src_loc and config.
+    """
     ggrp = GenomeGroup()
-    ggrp.add_folder(
-        source_folder=src_loc, exclude_files=config.exclude_files, ignore_test_files=True
-    )
+
+    # check if src_loc is a single file, otherwise assume it's a directory
+    if src_loc.is_file():
+        ggrp.add_file(source_file=src_loc)
+
+    else:
+        ggrp.add_folder(
+            source_folder=src_loc, exclude_files=config.exclude_files, ignore_test_files=True
+        )
 
     if config.filter_codes:
-        LOGGER.info("Category restriction, valid categories: %s", sorted(config.filter_codes))
+        LOGGER.info("Category restriction, chosen categories: %s", sorted(config.filter_codes))
         ggrp.set_filter(filter_codes=config.filter_codes)
 
     for k, genome in ggrp.items():
@@ -211,12 +247,151 @@ def run_mutation_trials(  # noqa: C901
             ),
         )
 
-    sample_space = get_sample(ggrp, config.ignore_coverage)
-    mutation_sample = get_mutation_sample_locations(sample_space, config.n_locations)
-    LOGGER.info(f"Total sample space size: %s", len(sample_space))
+    for e in config.exclude_files:
+        LOGGER.info("%s", colorize_output(f"{e.resolve} excluded.", "yellow"))
 
-    results: List[MutantTrialResult] = []
+    return ggrp
+
+
+def trial_output_check_break(
+    trial_results: MutantTrialResult, config: Config, sample_src: Path, sample_idx: LocIndex
+) -> bool:
+    """Flagging function to break the mutation operations loop and output logging.
+
+    This is called within the run_mutation_trials as a utility function to determine the
+    break-on behavior for progression e.g., break-on-survival.
+
+    Args:
+        trial_results: mutation trial results
+        config: running configuration object
+        sample_src: the sample source location
+        sample_idx: the sample index where the mutation occurred
+
+    Returns:
+        Bool flag for whether or not to break the outer operations loop.
+    """
+    if trial_results.status == "SURVIVED":
+        LOGGER.info(
+            "%s",
+            colorize_output(
+                (
+                    f"Surviving mutation at "
+                    f"{sample_src}: ({sample_idx.lineno}, {sample_idx.col_offset})"
+                ),
+                "red",
+            ),
+        )
+        if config.break_on_survival:
+            LOGGER.info(
+                "%s",
+                colorize_output(
+                    "Break on survival: stopping further mutations at location.", "red"
+                ),
+            )
+            return True
+
+    if trial_results.status == "DETECTED":
+        LOGGER.info(
+            "%s",
+            colorize_output(
+                (
+                    f"Detected mutation at "
+                    f"{sample_src}: ({sample_idx.lineno}, {sample_idx.col_offset})"
+                ),
+                "green",
+            ),
+        )
+        if config.break_on_detected:
+            LOGGER.info(
+                "%s",
+                colorize_output(
+                    "Break on detected: stopping further mutations at location.", "green"
+                ),
+            )
+            return True
+
+    if trial_results.status == "ERROR":
+        LOGGER.info(
+            "%s",
+            colorize_output(
+                (
+                    f"Error with mutation at "
+                    f"{sample_src}: ({sample_idx.lineno}, {sample_idx.col_offset})"
+                ),
+                "yellow",
+            ),
+        )
+        if config.break_on_error:
+            LOGGER.info(
+                "%s",
+                colorize_output(
+                    "Break on error: stopping further mutations at location.", "yellow"
+                ),
+            )
+            return True
+
+    if trial_results.status == "UNKNOWN":
+        LOGGER.info(
+            "%s",
+            colorize_output(
+                (
+                    f"Unknown mutation result at "
+                    f"{sample_src}: ({sample_idx.lineno}, {sample_idx.col_offset})"
+                ),
+                "yellow",
+            ),
+        )
+        if config.break_on_unknown:
+            LOGGER.info(
+                "%s",
+                colorize_output(
+                    "Break on unknown: stopping further mutations at location.", "yellow"
+                ),
+            )
+            return True
+
+    return False
+
+
+def run_mutation_trials(
+    src_loc: Union[str, Path], test_cmds: List[str], config: Config
+) -> ResultsSummary:
+    """This is the main function for running the mutation trials.
+
+    It will cycle through creation of the GenomeGroups from the source location, selecting the
+    mutation sample based on the config settings, and executing the mutation trials using the
+    test commands. This function does not include a clean-trial, it only runs the
+    mutation trials.
+
+    Args:
+        src_loc: the source location for mutation
+        test_cmds: the test commands to execute
+        config: the running config object
+
+    Returns:
+        ResultsSummary object of the mutation trials
+    """
+
+    start = datetime.now()
+
+    # Create a GenomeGroup from the source-location with config flags
+    ggrp = get_genome_group(Path(src_loc), config)
+
+    # Sample setup
+    LOGGER.info("Setting random.seed to: %s", config.random_seed)
+    random.seed(a=config.random_seed)
+    sample_space = get_sample(ggrp, config.ignore_coverage)
+    LOGGER.info(f"Total sample space size: %s", len(sample_space))
+    mutation_sample = get_mutation_sample_locations(sample_space, config.n_locations)
+
+    # Run trials through mutations
     LOGGER.info("Starting individual mutation trials!")
+    results: List[MutantTrialResult] = []
+
+    # For every source/sample-idx pair in the mutation sample
+    # Select the valid mutations for that sample-idx
+    # Then apply the selected mutations in a random order running the test commands
+    # until all mutations are tested or the appropriate break-on action occurs
     for sample_src, sample_idx in mutation_sample:
 
         LOGGER.info("Current target location: %s, %s", sample_src.name, sample_idx)
@@ -237,91 +412,15 @@ def run_mutation_trials(  # noqa: C901
             trial_results = MutantTrialResult(mutant=mutant, return_code=mutant_trial.returncode)
             results.append(trial_results)
 
-            if trial_results.status == "SURVIVED":
-                LOGGER.info(
-                    "%s",
-                    colorize_output(
-                        (
-                            f"Surviving mutation at "
-                            f"{sample_src}: ({sample_idx.lineno}, {sample_idx.col_offset})"
-                        ),
-                        "red",
-                    ),
-                )
-                if config.break_on_survival:
-                    LOGGER.info(
-                        "%s",
-                        colorize_output(
-                            "Break on survival: stopping further mutations at location.", "red"
-                        ),
-                    )
-                    break
+            # will log output results to console, and flag to break while loop of operations
+            if trial_output_check_break(trial_results, config, sample_src, sample_idx):
+                break
 
-            if trial_results.status == "DETECTED":
-                LOGGER.info(
-                    "%s",
-                    colorize_output(
-                        (
-                            f"Detected mutation at "
-                            f"{sample_src}: ({sample_idx.lineno}, {sample_idx.col_offset})"
-                        ),
-                        "green",
-                    ),
-                )
-                if config.break_on_detected:
-                    LOGGER.info(
-                        "%s",
-                        colorize_output(
-                            "Break on detected: stopping further mutations at location.", "green"
-                        ),
-                    )
-                    break
+    end = datetime.now()
 
-            if trial_results.status == "ERROR":
-                LOGGER.info(
-                    "%s",
-                    colorize_output(
-                        (
-                            f"Error with mutation at "
-                            f"{sample_src}: ({sample_idx.lineno}, {sample_idx.col_offset})"
-                        ),
-                        "yellow",
-                    ),
-                )
-                if config.break_on_error:
-                    LOGGER.info(
-                        "%s",
-                        colorize_output(
-                            "Break on error: stopping further mutations at location.", "yellow"
-                        ),
-                    )
-                    break
-
-            if trial_results.status == "UNKNOWN":
-                LOGGER.info(
-                    "%s",
-                    colorize_output(
-                        (
-                            f"Unknown mutation result at "
-                            f"{sample_src}: ({sample_idx.lineno}, {sample_idx.col_offset})"
-                        ),
-                        "yellow",
-                    ),
-                )
-                if config.break_on_unknown:
-                    LOGGER.info(
-                        "%s",
-                        colorize_output(
-                            "Break on unknown: stopping further mutations at location.", "yellow"
-                        ),
-                    )
-                    break
-
-        end = datetime.now()
-
-        return ResultsSummary(
-            results=results,
-            n_locs_mutated=len(mutation_sample),
-            n_locs_identified=len(sample_space),
-            total_runtime=end - start,
-        )
+    return ResultsSummary(
+        results=results,
+        n_locs_mutated=len(mutation_sample),
+        n_locs_identified=len(sample_space),
+        total_runtime=end - start,
+    )
