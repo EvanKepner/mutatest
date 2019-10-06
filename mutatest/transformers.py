@@ -552,18 +552,3 @@ def get_mutations_for_target(target: LocIndex) -> Set[Any]:
             break
 
     return mutation_ops
-
-
-# TODO: REMOVE THIS FUNCTION, COVERED IN GENOME
-def get_ast_from_src(src_file: Union[str, Path]) -> ast.Module:
-    """Create an AST from a source file
-
-    Args:
-        src_file: the source file to  build into an AST
-
-    Returns:
-        The AST
-    """
-    with open(src_file, "rb") as src_stream:
-        source = src_stream.read()
-        return ast.parse(source)
