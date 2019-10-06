@@ -187,7 +187,18 @@ class MutateAST(ast.NodeTransformer):
         # taking only the first operation in the compare node
         # in basic testing, things like (a==b)==1 still end up with lists of 1,
         # but since the AST docs specify a list of operations this seems safer.
-        idx = LocIndex("Compare", node.lineno, node.col_offset, type(node.ops[0]))
+        # idx = LocIndex("CompareIs", node.lineno, node.col_offset, type(node.ops[0]))
+
+        cmpop_is_types: Set[type] = {ast.Is, ast.IsNot}
+        cmpop_in_types: Set[type] = {ast.In, ast.NotIn}
+        op_type = type(node.ops[0])
+
+        if op_type in cmpop_is_types:
+            idx = LocIndex("CompareIs", node.lineno, node.col_offset, op_type)
+        elif op_type in cmpop_in_types:
+            idx = LocIndex("CompareIn", node.lineno, node.col_offset, op_type)
+        else:
+            idx = LocIndex("Compare", node.lineno, node.col_offset, op_type)
 
         self.locs.add(idx)
 

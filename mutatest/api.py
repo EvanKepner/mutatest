@@ -20,7 +20,6 @@ from typing import (
     NamedTuple,
     Optional,
     Set,
-    Tuple,
     Union,
     ValuesView,
 )
@@ -329,6 +328,13 @@ class Genome:
         return mutant
 
 
+class GenomeGroupTarget(NamedTuple):
+    """Container for targets returned from GenomeGroup to associated source path to LocIdx."""
+
+    source_path: Path
+    loc_idx: LocIndex
+
+
 class GenomeGroup(MutableMapping):  # type: ignore
     """The GenomeGroup: a MutableMapping of Genomes for operations on the group.
     """
@@ -501,27 +507,29 @@ class GenomeGroup(MutableMapping):  # type: ignore
             v.coverage_file = Path(coverage_file)
 
     @property
-    def targets(self) -> Set[Tuple[Path, LocIndex]]:
+    def targets(self) -> Set[GenomeGroupTarget]:
         """All mutation targets in the group, returned as tuples of source-file and location
         indices in a single set.
 
         Returns:
             Set of tuples of source-file and location index for all targets in the group.
+            These are GenomeGroupTargets to make attribute access easier.
         """
         targets = set()
         for k, v in self.items():
             targets.update(set(itertools.product([k], v.targets)))
-        return targets
+        return {GenomeGroupTarget(*t) for t in targets}
 
     @property
-    def covered_targets(self) -> Set[Tuple[Path, LocIndex]]:
+    def covered_targets(self) -> Set[GenomeGroupTarget]:
         """All mutation targets in the group that are covered,
         returned as tuples of source-file and location indices in a single set.
 
         Returns:
             Set of tuples of source-file and location index for all covered targets in the group.
+            These are GenomeGroupTargets to make attribute access easier.
         """
         covered_targets = set()
         for k, v in self.items():
             covered_targets.update(set(itertools.product([k], v.covered_targets)))
-        return covered_targets
+        return {GenomeGroupTarget(*c) for c in covered_targets}

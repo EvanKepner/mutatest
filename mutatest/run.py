@@ -6,12 +6,14 @@ import subprocess
 
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
+from operator import attrgetter
 from pathlib import Path
-from typing import List, NamedTuple, Optional, Set, Tuple
+from typing import List, NamedTuple, Optional
 
-from mutatest import cache, transformers
-from mutatest.api import GenomeGroup, Mutant
-from mutatest.transformers import LocIndex
+from mutatest import cache
+from mutatest.api import GenomeGroup, GenomeGroupTarget, Mutant
+from mutatest.filters import CategoryCodeFilter
+from mutatest.transformers import CATEGORIES, LocIndex
 
 
 LOGGER = logging.getLogger(__name__)
@@ -141,7 +143,7 @@ def clean_trial(src_loc: Path, test_cmds: List[str]) -> timedelta:
 ####################################################################################################
 
 
-def get_sample(ggrp: GenomeGroup, ignore_coverage: bool) -> Set[Tuple[Path, LocIndex]]:
+def get_sample(ggrp: GenomeGroup, ignore_coverage: bool) -> List[GenomeGroupTarget]:
     """Get the sample space for the mutation trials.
 
     This will attempt to use covered-targets as the default unless ignore_coverage is set to True.
@@ -152,23 +154,26 @@ def get_sample(ggrp: GenomeGroup, ignore_coverage: bool) -> Set[Tuple[Path, LocI
         ignore_coverage: flag to ignore coverage if present
 
     Returns:
-        Set of Path-LocIndex pairs as complete sample space from the Genome Group.
+        Sorted list of Path-LocIndex pairs as complete sample space from the Genome Group.
     """
-
     if ignore_coverage:
         LOGGER.info("Ignoring coverage file for sample space creation.")
 
     try:
-        return ggrp.targets if ignore_coverage else ggrp.covered_targets
+        sample = ggrp.targets if ignore_coverage else ggrp.covered_targets
 
     except FileNotFoundError:
         LOGGER.info("Coverage file does not exist, proceeding to sample from all targets.")
-        return ggrp.targets
+        sample = ggrp.targets
+
+    # sorted list used for repeat trials using random seed instead of set
+    sort_by_keys = attrgetter("source_path", "loc_idx.lineno", "loc_idx.col_offset")
+    return sorted(sample, key=sort_by_keys)
 
 
 def get_mutation_sample_locations(
-    sample_space: Set[Tuple[Path, LocIndex]], n_locations: int
-) -> Set[Tuple[Path, LocIndex]]:
+    sample_space: List[GenomeGroupTarget], n_locations: int
+) -> List[GenomeGroupTarget]:
     """Create the mutation sample space and set n_locations to a correct value for reporting.
 
     n_locations will change if it is larger than the total sample_space.
@@ -196,7 +201,7 @@ def get_mutation_sample_locations(
                 f"Selecting {n_locations} locations from {len(sample_space)} potentials.", "green"
             ),
         )
-        mutation_sample = set(random.sample(sample_space, k=n_locations))
+        mutation_sample = random.sample(sample_space, k=n_locations)
 
     else:
         # set here for final reporting, though not used in rest of trial controls
@@ -248,7 +253,7 @@ def get_genome_group(src_loc: Path, config: Config) -> GenomeGroup:
         )
 
     for e in config.exclude_files:
-        LOGGER.info("%s", colorize_output(f"{e.resolve} excluded.", "yellow"))
+        LOGGER.info("%s", colorize_output(f"{e.resolve()} excluded.", "yellow"))
 
     return ggrp
 
@@ -393,7 +398,13 @@ def run_mutation_trials(src_loc: Path, test_cmds: List[str], config: Config) -> 
     for sample_src, sample_idx in mutation_sample:
 
         LOGGER.info("Current target location: %s, %s", sample_src.name, sample_idx)
-        mutant_operations = transformers.get_mutations_for_target(sample_idx)
+
+        op_code = CATEGORIES[sample_idx.ast_class]
+        mutant_operations = CategoryCodeFilter(codes=(op_code,)).valid_mutations
+
+        LOGGER.debug("MUTATION OPS: %s", mutant_operations)
+        LOGGER.debug("MUTATION: %s", sample_idx)
+        mutant_operations.remove(sample_idx.op_type)
 
         while mutant_operations:
             # random.choice doesn't support sets, but sample of 1 produces a list with one element
