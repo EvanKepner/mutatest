@@ -1,4 +1,4 @@
-"""Run mutation trials from the command line.
+"""Run mutation trials.
 """
 import logging
 import random
@@ -7,7 +7,7 @@ import subprocess
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import List, NamedTuple, Optional, Set, Tuple, Union
+from typing import List, NamedTuple, Optional, Set, Tuple
 
 from mutatest import cache, transformers
 from mutatest.api import GenomeGroup, Mutant
@@ -353,9 +353,7 @@ def trial_output_check_break(
     return False
 
 
-def run_mutation_trials(
-    src_loc: Union[str, Path], test_cmds: List[str], config: Config
-) -> ResultsSummary:
+def run_mutation_trials(src_loc: Path, test_cmds: List[str], config: Config) -> ResultsSummary:
     """This is the main function for running the mutation trials.
 
     It will cycle through creation of the GenomeGroups from the source location, selecting the
@@ -364,7 +362,7 @@ def run_mutation_trials(
     mutation trials.
 
     Args:
-        src_loc: the source location for mutation
+        src_loc: the source location path for mutation
         test_cmds: the test commands to execute
         config: the running config object
 
@@ -375,7 +373,7 @@ def run_mutation_trials(
     start = datetime.now()
 
     # Create a GenomeGroup from the source-location with config flags
-    ggrp = get_genome_group(Path(src_loc), config)
+    ggrp = get_genome_group(src_loc, config)
 
     # Sample setup
     LOGGER.info("Setting random.seed to: %s", config.random_seed)

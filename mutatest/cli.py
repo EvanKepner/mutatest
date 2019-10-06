@@ -2,24 +2,20 @@
 """
 import argparse
 import logging
-import random
 import shlex
 import sys
 
 from datetime import timedelta
 from pathlib import Path
 from textwrap import dedent
-from typing import List, NamedTuple, Optional, Sequence, Set
+from typing import List, NamedTuple, Optional, Sequence
 
 from setuptools import find_packages  # type:ignore
 
 import mutatest
 
-from mutatest.cache import check_cache_invalidation_mode
-from mutatest.controller import clean_trial, colorize_output, run_mutation_trials
-from mutatest.maker import MutantTrialResult
-from mutatest.report import analyze_mutant_trials, get_reported_results, write_report
-from mutatest.transformers import get_compatible_operation_sets
+from mutatest import cache, report, run, transformers
+from mutatest.run import Config, MutantTrialResult
 
 
 LOGGER = logging.getLogger(__name__)
@@ -75,7 +71,7 @@ class ValidCategoryAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):  # type: ignore
         if len(values) > 0:
 
-            valid_categories = {m.category for m in get_compatible_operation_sets()}
+            valid_categories = {m.category for m in transformers.get_compatible_operation_sets()}
             values_set = set(values)
 
             if not values_set.issubset(valid_categories):
@@ -165,7 +161,7 @@ def cli_epilog() -> str:
         "Use the category code for whitelist/blacklist selections."
     )
     mutation_epilog = [header, "=" * len(header), description, "\n"]
-    for mutop in get_compatible_operation_sets():
+    for mutop in transformers.get_compatible_operation_sets():
         mutation_epilog.extend(
             [
                 mutop.name,
@@ -205,9 +201,7 @@ def cli_args(args: Optional[Sequence[str]]) -> argparse.Namespace:
     """
     parser = argparse.ArgumentParser(
         prog="Mutatest",
-        description=(
-            "Python mutation testing. " "Mutatest will manipulate local __pycache__ files."
-        ),
+        description=("Python mutation testing. Mutatest will manipulate local __pycache__ files."),
         formatter_class=argparse.RawTextHelpFormatter,
         epilog=cli_epilog(),
     )
@@ -236,7 +230,7 @@ def cli_args(args: Optional[Sequence[str]]) -> argparse.Namespace:
         choices=["f", "s", "d", "sd"],
         default="s",
         type=str,  # can't lambda format this to RunMode because of choices
-        help=("Running modes, see the choice option descriptions below. " "(default: s)"),
+        help="Running modes, see the choice option descriptions below. (default: s)",
     )
     parser.add_argument(
         "-n",
@@ -263,7 +257,7 @@ def cli_args(args: Optional[Sequence[str]]) -> argparse.Namespace:
         type=int,
         action=PositiveIntegerAction,
         metavar="INT",
-        help=("Random seed to use for sample selection."),
+        help="Random seed to use for sample selection.",
     )
     parser.add_argument(
         "-s",
@@ -302,7 +296,7 @@ def cli_args(args: Optional[Sequence[str]]) -> argparse.Namespace:
         type=int,
         action=PositiveIntegerAction,
         metavar="INT",
-        help=("Count of survivors to raise Mutation Exception for system exit."),
+        help="Count of survivors to raise Mutation Exception for system exit.",
     )
     parser.add_argument("--debug", action="store_true", help="Turn on DEBUG level logging output.")
     parser.add_argument(
@@ -324,6 +318,9 @@ def cli_summary_report(
     Args:
         src_loc: source location
         args: argparse namespace from cli
+        locs_mutated: total locations that were mutated
+        locs_identified: total locations identified as potential mutations
+        runtimes: trial times for the clean trials and mutation trials
 
     Returns:
         str
@@ -378,14 +375,6 @@ def cli_summary_report(
     return cli_summary_template.format_map(fmt_map)
 
 
-def cli_main() -> None:
-    """Entry point to run CLI args and execute main function."""
-    # Run a quick check at the beginning in case of later OS errors.
-    check_cache_invalidation_mode()
-    args = cli_args(sys.argv[1:])
-    main(args)
-
-
 def get_src_location(src_loc: Optional[Path] = None) -> Path:
     """Find packages if the src_loc is not set
 
@@ -413,7 +402,7 @@ def get_src_location(src_loc: Optional[Path] = None) -> Path:
     )
 
 
-def selected_categories(whitelist: List[str], blacklist: List[str]) -> Set[str]:
+def selected_categories(whitelist: List[str], blacklist: List[str]) -> List[str]:
     """Create the selected categories from the whitelist/blacklist set.
 
     Args:
@@ -423,14 +412,14 @@ def selected_categories(whitelist: List[str], blacklist: List[str]) -> Set[str]:
     Returns:
         Selection set of mutation categories
     """
-    all_mutations = {m.category for m in get_compatible_operation_sets()}
+    all_mutations = {m.category for m in transformers.get_compatible_operation_sets()}
     w_set = set(whitelist)
     b_set = set(blacklist)
 
     if len(w_set) > 0:
-        return w_set - b_set
+        return list(w_set - b_set)
 
-    return all_mutations - b_set
+    return list(all_mutations - b_set)
 
 
 def exception_processing(n_survivors: int, trial_results: List[MutantTrialResult]) -> None:
@@ -446,21 +435,38 @@ def exception_processing(n_survivors: int, trial_results: List[MutantTrialResult
     Raises:
         Surviving mutant exception
     """
-    survived = get_reported_results(trial_results, "SURVIVED")
+    survived = report.get_reported_results(trial_results, "SURVIVED")
     if len(survived.mutants) >= n_survivors:
-        message = colorize_output(
+        message = run.colorize_output(
             f"Survivor tolerance breached: {len(survived.mutants)} / {n_survivors}", "red"
         )
         raise SurvivingMutantException(message)
 
     LOGGER.info(
         "%s",
-        colorize_output(f"Survivor tolerance OK: {len(survived.mutants)} / {n_survivors}", "green"),
+        run.colorize_output(
+            f"Survivor tolerance OK: {len(survived.mutants)} / {n_survivors}", "green"
+        ),
     )
 
 
-def main(args: argparse.Namespace) -> None:
+def cli_main() -> None:
+    """Entry point to run CLI args and execute main function."""
+    # Run a quick check at the beginning in case of later OS errors.
+    cache.check_cache_invalidation_mode()
+    args = cli_args(sys.argv[1:])
+    main(args)
 
+
+def main(args: argparse.Namespace) -> None:
+    """Main CLI function to run the mutation trials and report results.
+
+    Args:
+        args: argparse arguments
+
+    Returns:
+        None, reports output
+    """
     src_loc = get_src_location(args.src)
 
     # set the logging level based on the debug flag in args
@@ -471,26 +477,21 @@ def main(args: argparse.Namespace) -> None:
         stream=sys.stdout,
     )
 
-    clean_runtime_1 = clean_trial(src_loc=src_loc, test_cmds=args.testcmds)
+    clean_runtime_1 = run.clean_trial(src_loc=src_loc, test_cmds=args.testcmds)
 
     # Run the mutation trials based on the input argument
-    run_mode = RunMode(args.mode)
-
-    if args.rseed:
-        LOGGER.info("Random seed set by user to: %s.", args.rseed)
-        random.seed(a=args.rseed)
-
     # set categories if present
-    wlbl_categories = None
+    filter_codes: List[str] = list()
     if len(args.whitelist) > 0 or len(args.blacklist) > 0:
-        wlbl_categories = selected_categories(whitelist=args.whitelist, blacklist=args.blacklist)
+        filter_codes = selected_categories(whitelist=args.whitelist, blacklist=args.blacklist)
 
-    results_summary = run_mutation_trials(
-        src_loc=src_loc,
-        test_cmds=args.testcmds,
-        exclude_files=args.exclude,
+    # Build the running configuration for the mutation trials
+    run_mode = RunMode(args.mode)
+    config = Config(
         n_locations=args.nlocations,
-        wlbl_categories=wlbl_categories,
+        exclude_files=args.exclude,
+        filter_codes=filter_codes,
+        random_seed=args.rseed,
         break_on_detected=run_mode.break_on_detection,
         break_on_survival=run_mode.break_on_survival,
         break_on_error=run_mode.break_on_error,
@@ -498,8 +499,12 @@ def main(args: argparse.Namespace) -> None:
         ignore_coverage=args.nocov,
     )
 
+    results_summary = run.run_mutation_trials(
+        src_loc=src_loc, test_cmds=args.testcmds, config=config
+    )
+
     # Run the pipeline with no mutations last to ensure cleared cache
-    clean_runtime_2 = clean_trial(src_loc=src_loc, test_cmds=args.testcmds)
+    clean_runtime_2 = run.clean_trial(src_loc=src_loc, test_cmds=args.testcmds)
 
     runtimes = TrialTimes(
         clean_trial_1=clean_runtime_1,
@@ -516,7 +521,7 @@ def main(args: argparse.Namespace) -> None:
         runtimes=runtimes,
     )
 
-    trial_report, display_results = analyze_mutant_trials(results_summary.results)
+    trial_report, display_results = report.analyze_mutant_trials(results_summary.results)
 
     LOGGER.info("CLI Report:\n\n%s", cli_report)
     LOGGER.info("Trial Summary Report:\n\n%s\n", display_results.summary)
@@ -524,8 +529,7 @@ def main(args: argparse.Namespace) -> None:
     LOGGER.info("Surviving mutations:%s\n", display_results.survived)
 
     if args.output:
-        report = "\n".join([cli_report, trial_report])
-        write_report(report, Path(args.output))
+        report.write_report("\n".join([cli_report, trial_report]), Path(args.output))
 
     if args.exception:
         LOGGER.info("Survivor tolerance check for %s surviving mutants.", args.exception)

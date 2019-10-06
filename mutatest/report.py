@@ -8,8 +8,9 @@ from operator import attrgetter
 from pathlib import Path
 from typing import Dict, List, NamedTuple, Tuple, Union
 
-from mutatest.controller import colorize_output
-from mutatest.maker import Mutant, MutantTrialResult
+from mutatest import run
+from mutatest.api import Mutant
+from mutatest.run import MutantTrialResult
 
 
 LOGGER = logging.getLogger(__name__)
@@ -116,10 +117,10 @@ def analyze_mutant_trials(trial_results: List[MutantTrialResult]) -> Tuple[str, 
             report_sections.append(section)
 
             if rpt_results.status == "SURVIVED":
-                display_survived = colorize_output(section, "red")
+                display_survived = run.colorize_output(section, "red")
 
             if rpt_results.status == "DETECTED":
-                display_detected = colorize_output(section, "green")
+                display_detected = run.colorize_output(section, "green")
 
     return (
         "\n".join(report_sections),
