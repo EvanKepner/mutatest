@@ -12,8 +12,9 @@ from typing import NamedTuple
 
 import pytest
 
-from mutatest.controller import ResultsSummary
-from mutatest.maker import LocIndex, Mutant, MutantTrialResult
+from mutatest.run import ResultsSummary, MutantTrialResult
+from mutatest.transformers import LocIndex
+from mutatest.api import Mutant
 
 
 class FileAndTest(NamedTuple):

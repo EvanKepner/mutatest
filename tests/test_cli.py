@@ -139,7 +139,7 @@ class MockOpSet(NamedTuple):
     category: str
 
 
-EXPECTED_CATEGORIES = {"a", "b", "c", "d", "e"}
+EXPECTED_CATEGORIES = ["a", "b", "c", "d", "e"]
 
 
 @pytest.fixture
@@ -150,27 +150,27 @@ def mock_get_compatible_sets(monkeypatch):
         categories = EXPECTED_CATEGORIES
         return [MockOpSet(c) for c in categories]
 
-    monkeypatch.setattr(mutatest.cli, "get_compatible_operation_sets", mock_comp_sets)
+    monkeypatch.setattr(mutatest.cli.transformers, "get_compatible_operation_sets", mock_comp_sets)
 
 
 def test_selected_categories_empty_lists(mock_get_compatible_sets):
     """Empty lists should be the full set."""
     result = selected_categories([], [])
-    assert result == EXPECTED_CATEGORIES
+    assert sorted(result) == sorted(EXPECTED_CATEGORIES)
 
 
 def test_selected_categories_wlist(mock_get_compatible_sets):
     """Whitelisted categories are only selections."""
     wl = ["a", "b"]
     result = selected_categories(wl, [])
-    assert result == set(wl)
+    assert sorted(result) == sorted(wl)
 
 
 def test_selected_categories_blist(mock_get_compatible_sets):
     """Blacklisted categories are the inverse selection."""
     bl = ["a", "b", "c"]
     result = selected_categories([], bl)
-    assert result == {"d", "e"}
+    assert sorted(result) == sorted(["d", "e"])
 
 
 def test_selected_categories_wblist(mock_get_compatible_sets):
@@ -178,7 +178,7 @@ def test_selected_categories_wblist(mock_get_compatible_sets):
     wl = ["a", "b"]
     bl = ["a"]
     result = selected_categories(wl, bl)
-    assert result == {"b"}
+    assert result == ["b"]
 
 
 def test_selected_categories_wblist_long(mock_get_compatible_sets):
@@ -186,7 +186,7 @@ def test_selected_categories_wblist_long(mock_get_compatible_sets):
     wl = ["a", "b"]
     bl = ["a", "d", "e"]
     result = selected_categories(wl, bl)
-    assert result == {"b"}
+    assert result == ["b"]
 
 
 def test_exception_raised(mock_trial_results):
@@ -273,8 +273,8 @@ def test_main(monkeypatch, mock_args, mock_results_summary):
     def mock_wtw_opt(*args, **kwargs):
         return None, timedelta(0)
 
-    monkeypatch.setattr(mutatest.cli, "clean_trial", mock_clean_trial)
-    monkeypatch.setattr(mutatest.cli, "run_mutation_trials", mock_run_mutation_trials)
+    monkeypatch.setattr(mutatest.cli.run, "clean_trial", mock_clean_trial)
+    monkeypatch.setattr(mutatest.cli.run, "run_mutation_trials", mock_run_mutation_trials)
 
     monkeypatch.delenv("SOURCE_DATE_EPOCH", raising=False)
     monkeypatch.setattr(mutatest.cli, "cli_args", mock_cli_args)
