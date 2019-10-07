@@ -103,7 +103,9 @@ def mock_coverage_file(tmp_path_factory):
     with open(mock_cov_file, "w") as ostream:
         ostream.write(mock_contents)
 
-    return mock_cov_file
+    yield mock_cov_file
+
+    mock_cov_file.unlink()
 
 
 @pytest.fixture(scope="session")
@@ -162,7 +164,9 @@ def augassign_file(tmp_path_factory):
     with open(fn, "w") as output_fn:
         output_fn.write(contents)
 
-    return fn
+    yield fn
+
+    fn.unlink()
 
 
 @pytest.fixture(scope="session")
@@ -211,7 +215,9 @@ def binop_file(tmp_path_factory):
     with open(fn, "w") as output_fn:
         output_fn.write(contents)
 
-    return fn
+    yield fn
+
+    fn.unlink()
 
 
 @pytest.fixture(scope="session")
@@ -249,7 +255,9 @@ def boolop_file(tmp_path_factory):
     with open(fn, "w") as output_fn:
         output_fn.write(contents)
 
-    return fn
+    yield fn
+
+    fn.unlink()
 
 
 @pytest.fixture(scope="session")
@@ -287,7 +295,10 @@ def single_binop_file_with_good_test(tmp_path_factory):
         with open(f, "w") as output_fn:
             output_fn.write(c)
 
-    return FileAndTest(fn, good_test_fn)
+    yield FileAndTest(fn, good_test_fn)
+
+    fn.unlink()
+    good_test_fn.unlink()
 
 
 @pytest.fixture(scope="session")
@@ -319,7 +330,10 @@ def single_binop_file_with_bad_test(tmp_path_factory):
         with open(f, "w") as output_fn:
             output_fn.write(c)
 
-    return FileAndTest(fn, bad_test_fn)
+    yield FileAndTest(fn, bad_test_fn)
+
+    fn.unlink()
+    bad_test_fn.unlink()
 
 
 ####################################################################################################
@@ -344,7 +358,9 @@ def compare_file(tmp_path_factory):
     with open(fn, "w") as output_fn:
         output_fn.write(contents)
 
-    return fn
+    yield fn
+
+    fn.unlink()
 
 
 @pytest.fixture(scope="session")
@@ -385,7 +401,9 @@ def if_file(tmp_path_factory):
     with open(fn, "w") as output_fn:
         output_fn.write(contents)
 
-    return fn
+    yield fn
+
+    fn.unlink()
 
 
 @pytest.fixture(scope="session")
@@ -421,7 +439,9 @@ def index_file(tmp_path_factory):
     with open(fn, "w") as output_fn:
         output_fn.write(contents)
 
-    return fn
+    yield fn
+
+    fn.unlink()
 
 
 @pytest.fixture(scope="session")
@@ -460,7 +480,9 @@ def nameconst_file(tmp_path_factory):
     with open(fn, "w") as output_fn:
         output_fn.write(contents)
 
-    return fn
+    yield fn
+
+    fn.unlink()
 
 
 @pytest.fixture(scope="session")
@@ -501,7 +523,9 @@ def slice_file(tmp_path_factory):
     with open(fn, "w") as output_fn:
         output_fn.write(contents)
 
-    return fn
+    yield fn
+
+    fn.unlink()
 
 
 @pytest.fixture(scope="session")
