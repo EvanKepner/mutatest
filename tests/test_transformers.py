@@ -8,20 +8,11 @@ from copy import deepcopy
 
 import pytest
 
-from mutatest.transformers import LocIndex, MutateAST, get_ast_from_src, get_mutations_for_target
+from mutatest.api import Genome
+from mutatest.transformers import LocIndex, MutateAST, get_mutations_for_target
 
 
 TEST_BINOPS = {ast.Add, ast.Sub, ast.Div, ast.Mult, ast.Pow, ast.Mod, ast.FloorDiv}
-
-
-def test_get_ast_from_src(binop_file):
-    """Basic assurance that the AST matches expectations in type and body size."""
-    tree = get_ast_from_src(binop_file)
-
-    assert type(tree) == ast.Module
-
-    # 4 functions will be 4 body entries in the AST, plus 1 for print statement, 5 total
-    assert len(tree.body) == 5
 
 
 @pytest.mark.parametrize("test_op", TEST_BINOPS)
@@ -48,7 +39,7 @@ def test_get_mutations_for_target_slice():
 
 def test_MutateAST_visit_read_only(binop_file):
     """Read only test to ensure locations are aggregated."""
-    tree = get_ast_from_src(binop_file)
+    tree = Genome(binop_file).ast
     mast = MutateAST(readonly=True)
     testing_tree = deepcopy(tree)
     mast.visit(testing_tree)
@@ -69,7 +60,7 @@ def test_MutateAST_visit_read_only(binop_file):
 
 def test_MutateAST_visit_augassign(augassign_file, augassign_expected_locs):
     """Test mutation for AugAssign: +=, -=, /=, *=."""
-    tree = get_ast_from_src(augassign_file)
+    tree = Genome(augassign_file).ast
     test_mutation = "AugAssign_Div"
 
     testing_tree = deepcopy(tree)
@@ -94,7 +85,7 @@ def test_MutateAST_visit_augassign(augassign_file, augassign_expected_locs):
 
 def test_MutateAST_visit_binop(binop_file):
     """Read only test to ensure locations are aggregated."""
-    tree = get_ast_from_src(binop_file)
+    tree = Genome(binop_file).ast
 
     test_idx = LocIndex(ast_class="BinOp", lineno=6, col_offset=11, op_type=ast.Add)
     test_mutation = ast.Pow
@@ -118,7 +109,7 @@ def test_MutateAST_visit_binop(binop_file):
 
 def test_MutateAST_visit_boolop(boolop_file, boolop_expected_loc):
     """Test mutation of AND to OR in the boolop."""
-    tree = get_ast_from_src(boolop_file)
+    tree = Genome(boolop_file).ast
     test_mutation = ast.Or
 
     # apply the mutation to the original tree copy
@@ -143,7 +134,7 @@ def test_MutateAST_visit_boolop(boolop_file, boolop_expected_loc):
 
 def test_MutateAST_visit_compare(compare_file, compare_expected_loc):
     """Test mutation of the == to != in the compare op."""
-    tree = get_ast_from_src(compare_file)
+    tree = Genome(compare_file).ast
     test_mutation = ast.NotEq
 
     # apply the mutation to the original tree copy
@@ -168,7 +159,7 @@ def test_MutateAST_visit_compare(compare_file, compare_expected_loc):
 
 def test_MutateAST_visit_if(if_file, if_expected_locs):
     """Test mutation for nameconst: True, False, None."""
-    tree = get_ast_from_src(if_file)
+    tree = Genome(if_file).ast
     test_mutation = "If_True"
 
     testing_tree = deepcopy(tree)
@@ -225,7 +216,7 @@ def test_MutateAST_visit_index_neg(
     i_order, lineno, col_offset, mut, index_file, index_expected_locs
 ):
     """Test mutation for Index: i[0], i[1], i[-1]."""
-    tree = get_ast_from_src(index_file)
+    tree = Genome(index_file).ast
     test_mutation = mut
 
     testing_tree = deepcopy(tree)
@@ -250,7 +241,7 @@ def test_MutateAST_visit_index_neg(
 
 def test_MutateAST_visit_nameconst(nameconst_file, nameconst_expected_locs):
     """Test mutation for nameconst: True, False, None."""
-    tree = get_ast_from_src(nameconst_file)
+    tree = Genome(nameconst_file).ast
     test_mutation = False
 
     testing_tree = deepcopy(tree)
@@ -277,7 +268,7 @@ def test_MutateAST_visit_nameconst(nameconst_file, nameconst_expected_locs):
 
 def test_MutateAST_visit_subscript(slice_file, slice_expected_locs):
     """Test Slice references within subscript."""
-    tree = get_ast_from_src(slice_file)
+    tree = Genome(slice_file).ast
     mast = MutateAST(readonly=True)
     mast.visit(tree)
     assert len(mast.locs) == len(slice_expected_locs)
