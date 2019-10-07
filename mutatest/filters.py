@@ -124,12 +124,6 @@ class CoverageFilter(Filter):
         return {l for l in loc_idxs if l.lineno in covered_lines}
 
 
-class CategoryFilterException(Exception):
-    """Exception class used within the CategoryFilter."""
-
-    pass
-
-
 class CategoryCodeFilter(Filter):
     """Filter by mutation category code."""
 
@@ -218,10 +212,10 @@ class CategoryCodeFilter(Filter):
             None
 
         Raises:
-            CategoryFilterException if an invalid code is passed.
+            TypeError if an invalid code is passed.
         """
         if code not in self.valid_codes:
-            raise CategoryFilterException(f"{code} is not an allowed code.")
+            raise TypeError(f"{code} is not an allowed code.")
         self._codes.add(code)
 
     def discard_code(self, code: str) -> None:

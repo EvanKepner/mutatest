@@ -8,13 +8,13 @@ from datetime import timedelta
 from io import StringIO
 from pathlib import Path
 from textwrap import dedent
-from typing import NamedTuple
+from typing import NamedTuple, Set
 
 import pytest
 
-from mutatest.run import ResultsSummary, MutantTrialResult
-from mutatest.transformers import LocIndex
 from mutatest.api import Mutant
+from mutatest.run import MutantTrialResult, ResultsSummary
+from mutatest.transformers import LocIndex
 
 
 class FileAndTest(NamedTuple):
@@ -83,7 +83,7 @@ def mock_results_summary(mock_trial_results):
 
 
 ####################################################################################################
-# OPTIMIZERS: MOCK COVERAGE FILE FIXTURES
+# FILTERS: MOCK COVERAGE FILE FIXTURES
 ####################################################################################################
 
 
@@ -108,35 +108,28 @@ def mock_coverage_file(tmp_path_factory):
     mock_cov_file.unlink()
 
 
+class SourceAndTargets(NamedTuple):
+    """Container for use with Coverage Filter mock sets."""
+
+    source_file: Path
+    targets: Set[LocIndex]
+
+
 @pytest.fixture(scope="session")
-def mock_precov_sample():
-    """Mock pre-coverage sample that aligns to mock_coverage_file fixture."""
-    return [
-        (
-            "/simple_isnot/isnot/run.py",
-            LocIndex(ast_class="a", lineno=1, col_offset=1, op_type="o"),
-        ),
-        (
-            "/simple_isnot/isnot/run.py",
-            LocIndex(ast_class="a", lineno=2, col_offset=1, op_type="o"),
-        ),
-        (
-            "/simple_isnot/isnot/run.py",
-            LocIndex(ast_class="a", lineno=3, col_offset=1, op_type="o"),
-        ),
-        (
-            "/simple_isnot/isnot/run.py",
-            LocIndex(ast_class="a", lineno=4, col_offset=1, op_type="o"),
-        ),
-        (
-            "/simple_isnot/isnot/run.py",
-            LocIndex(ast_class="a", lineno=5, col_offset=1, op_type="o"),
-        ),
-        (
-            "/simple_isnot/isnot/run.py",
-            LocIndex(ast_class="a", lineno=5, col_offset=2, op_type="o"),
-        ),
-    ]
+def mock_source_and_targets():
+    """Mock source file with uncovered/covered targets to use with mock_coverage_file.
+
+    Covered lines include: 1, 2, 4
+    """
+    source_file = Path("/simple_isnot/isnot/run.py")
+    targets = {
+        LocIndex(ast_class="a", lineno=1, col_offset=1, op_type="o"),
+        LocIndex(ast_class="a", lineno=2, col_offset=1, op_type="o"),
+        LocIndex(ast_class="a", lineno=3, col_offset=1, op_type="o"),
+        LocIndex(ast_class="a", lineno=4, col_offset=1, op_type="o"),
+        LocIndex(ast_class="a", lineno=5, col_offset=1, op_type="o"),
+    }
+    return SourceAndTargets(source_file, targets)
 
 
 ####################################################################################################
