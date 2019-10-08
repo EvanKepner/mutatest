@@ -8,10 +8,10 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from operator import attrgetter
 from pathlib import Path
-from typing import List, NamedTuple, Optional
+from typing import Any, List, NamedTuple, Optional
 
 from mutatest import cache
-from mutatest.api import GenomeGroup, GenomeGroupTarget, Mutant
+from mutatest.api import Genome, GenomeGroup, GenomeGroupTarget, Mutant
 from mutatest.filters import CategoryCodeFilter
 from mutatest.transformers import CATEGORIES, LocIndex
 
@@ -358,6 +358,31 @@ def trial_output_check_break(
     return False
 
 
+def create_mutation_run_trial(
+    genome: Genome, target_idx: LocIndex, mutation_op: Any, test_cmds: List[str]
+) -> MutantTrialResult:
+    """Run a single mutation trial.
+
+    Args:
+        genome: the genome to mutate
+        target_idx: the mutation location
+        mutation_op: the mutation operation
+        test_cmds: the test commands to execute with the mutated code
+
+    Returns:
+        The mutation trial result
+    """
+
+    LOGGER.debug("Running trial for %s", mutation_op)
+    mutant = genome.mutate(target_idx, mutation_op, write_cache=True)
+    mutant_trial = subprocess.run(
+        test_cmds, capture_output=capture_output(LOGGER.getEffectiveLevel())
+    )
+    cache.remove_existing_cache_files(mutant.src_file)
+
+    return MutantTrialResult(mutant=mutant, return_code=mutant_trial.returncode)
+
+
 def run_mutation_trials(src_loc: Path, test_cmds: List[str], config: Config) -> ResultsSummary:
     """This is the main function for running the mutation trials.
 
@@ -411,14 +436,13 @@ def run_mutation_trials(src_loc: Path, test_cmds: List[str], config: Config) -> 
             current_mutation = random.sample(mutant_operations, k=1)[0]
             mutant_operations.remove(current_mutation)
 
-            LOGGER.debug("Running trial for %s", current_mutation)
-            mutant = ggrp[sample_src].mutate(sample_idx, current_mutation, write_cache=True)
-            mutant_trial = subprocess.run(
-                test_cmds, capture_output=capture_output(LOGGER.getEffectiveLevel())
+            trial_results = create_mutation_run_trial(
+                genome=ggrp[sample_src],
+                target_idx=sample_idx,
+                mutation_op=current_mutation,
+                test_cmds=test_cmds,
             )
-            cache.remove_existing_cache_files(mutant.src_file)
 
-            trial_results = MutantTrialResult(mutant=mutant, return_code=mutant_trial.returncode)
             results.append(trial_results)
 
             # will log output results to console, and flag to break while loop of operations

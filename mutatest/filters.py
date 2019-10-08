@@ -212,10 +212,10 @@ class CategoryCodeFilter(Filter):
             None
 
         Raises:
-            TypeError if an invalid code is passed.
+            ValueError if an invalid code is passed.
         """
         if code not in self.valid_codes:
-            raise TypeError(f"{code} is not an allowed code.")
+            raise ValueError(f"{code} is not an allowed code.")
         self._codes.add(code)
 
     def discard_code(self, code: str) -> None:

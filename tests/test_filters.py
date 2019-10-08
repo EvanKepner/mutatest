@@ -112,5 +112,5 @@ def test_CategoryCodeFilter_filter(ast_class, invert, augassign_expected_locs, b
 def test_invalid_code():
     """Invalid codes will raise a TypeError."""
     ccf = CategoryCodeFilter()
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         ccf.add_code("asdf")
