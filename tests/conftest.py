@@ -123,11 +123,11 @@ def mock_source_and_targets():
     """
     source_file = Path("/simple_isnot/isnot/run.py")
     targets = {
-        LocIndex(ast_class="a", lineno=1, col_offset=1, op_type="o"),
-        LocIndex(ast_class="a", lineno=2, col_offset=1, op_type="o"),
-        LocIndex(ast_class="a", lineno=3, col_offset=1, op_type="o"),
-        LocIndex(ast_class="a", lineno=4, col_offset=1, op_type="o"),
-        LocIndex(ast_class="a", lineno=5, col_offset=1, op_type="o"),
+        LocIndex(ast_class="AugAssign", lineno=1, col_offset=1, op_type="o"),
+        LocIndex(ast_class="AugAssign", lineno=2, col_offset=1, op_type="o"),
+        LocIndex(ast_class="AugAssign", lineno=3, col_offset=1, op_type="o"),
+        LocIndex(ast_class="BinOp", lineno=4, col_offset=1, op_type="o"),
+        LocIndex(ast_class="BinOp", lineno=5, col_offset=1, op_type="o"),
     }
     return SourceAndTargets(source_file, targets)
 
