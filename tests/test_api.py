@@ -6,7 +6,7 @@ import sys
 
 import pytest
 
-from mutatest.api import Genome, GenomeGroup
+from mutatest.api import Genome, GenomeGroup, MutationException
 from mutatest.transformers import LocIndex
 
 
@@ -72,6 +72,43 @@ def test_covered_targets_coverage_file_TypeError(binop_file):
         genome = Genome(binop_file)
         genome.coverage_file = None
         _ = genome.covered_targets
+
+
+def test_mutate_MutationException(binop_file, mock_LocIdx):
+    """Mutate with an invalid operation raises a mutation exception."""
+    genome = Genome(binop_file)
+    with pytest.raises(MutationException):
+        _ = genome.mutate(target_idx=mock_LocIdx, mutation_op="badoperation", write_cache=False)
+
+
+def test_mutate_TypeError_source_file(mock_LocIdx):
+    """Mutate with a NoneType source_file property raises a TypeError."""
+    genome = Genome()
+    with pytest.raises(TypeError):
+        _ = genome.mutate(target_idx=mock_LocIdx, mutation_op=ast.Div, write_cache=False)
+
+
+def test_mutate_ValueError_target(binop_file, mock_LocIdx):
+    """Mutate with a target_idx not in the targets raises a ValueError."""
+    genome = Genome(binop_file)
+    with pytest.raises(ValueError):
+        _ = genome.mutate(target_idx=mock_LocIdx, mutation_op=ast.Div, write_cache=False)
+
+
+@pytest.mark.parametrize("filter_codes", [set(), ("bn",)], ids=["Filter Empty Set", "Filter BinOp"])
+def test_covered_targets(filter_codes, binop_file, mock_binop_coverage_file):
+    """Mock coverage file sets lines 6 and 10 (not 15) to be covered."""
+    genome = Genome(binop_file, coverage_file=mock_binop_coverage_file)
+    genome.filter_codes = filter_codes
+
+    assert len(genome.targets) == 4
+    assert len(genome.covered_targets) == 3
+
+    for ct in genome.covered_targets:
+        assert ct.lineno in [6, 10]
+
+    diff = list(genome.targets - genome.covered_targets)
+    assert diff[0].lineno == 15
 
 
 ####################################################################################################
@@ -202,3 +239,52 @@ def test_GenomeGroup_add_folder_with_exclusions(tmp_path):
 
     assert len(ggrp) == 1
     assert list(ggrp.keys())[0].name == expected
+
+
+@pytest.mark.parametrize("filter_codes", [set(), ("bn",)], ids=["Filter Empty Set", "Filter BinOp"])
+def test_GenomeGroup_covered_targets(filter_codes, binop_file, mock_binop_coverage_file):
+    """Mock coverage file sets lines 6 and 10 (not 15) to be covered."""
+    ggrp = GenomeGroup(binop_file)
+    ggrp.set_coverage(mock_binop_coverage_file)
+    ggrp.set_filter(filter_codes)
+
+    assert len(ggrp.targets) == 4
+    assert len(ggrp.covered_targets) == 3
+
+    for ct in ggrp.covered_targets:
+        assert ct.source_path == binop_file
+        assert ct.loc_idx.lineno in [6, 10]
+
+    diff = list(ggrp.targets - ggrp.covered_targets)
+    assert diff[0].loc_idx.lineno == 15
+
+
+def test_GenomeGroup_TypeError_source_file():
+    """GenomeGroup raises a TypeError adding a Genome without a set source_file."""
+    ggrp = GenomeGroup()
+    with pytest.raises(TypeError):
+        ggrp.add_genome(Genome())
+
+
+def test_GenomeGroup_basic_properties(binop_file, boolop_file, compare_file):
+    """Basic class property tests and dictionary manipulation."""
+    ggrp = GenomeGroup(binop_file)
+    ggrp.add_file(boolop_file)
+    ggrp.add_file(compare_file)
+
+    # test ValuesView is iterable view.
+    for v in ggrp.values():
+        assert isinstance(v, Genome)
+
+    # test basic __iter__ property
+    keys = [k for k in ggrp]
+    assert len(keys) == 3
+
+    # __repr__ is a string representation of the store
+    assert isinstance(ggrp.__repr__(), str)
+
+    # test basic .items() method, uses .pop() to activate __del__
+    key_values = [(k, v) for k, v in ggrp.items()]
+    for k, v in key_values:
+        v2 = ggrp.pop(k)
+        assert v2 == v

@@ -132,14 +132,18 @@ def test_MutateAST_visit_boolop(boolop_file, boolop_expected_loc):
             assert l.op_type == test_mutation
 
 
-def test_MutateAST_visit_compare(compare_file, compare_expected_loc):
+@pytest.mark.parametrize(  # based on the fixture definitions for compare_file and expected_locs
+    "idx, mut_op, lineno",
+    [(0, ast.NotEq, 2), (1, ast.IsNot, 5), (2, ast.NotIn, 8)],
+    ids=["Compare", "CompareIs", "CompareIn"],
+)
+def test_MutateAST_visit_compare(idx, mut_op, lineno, compare_file, compare_expected_locs):
     """Test mutation of the == to != in the compare op."""
     tree = Genome(compare_file).ast
-    test_mutation = ast.NotEq
 
     # apply the mutation to the original tree copy
     testing_tree = deepcopy(tree)
-    mutated_tree = MutateAST(target_idx=compare_expected_loc, mutation=test_mutation).visit(
+    mutated_tree = MutateAST(target_idx=compare_expected_locs[idx], mutation=mut_op).visit(
         testing_tree
     )
 
@@ -147,14 +151,15 @@ def test_MutateAST_visit_compare(compare_file, compare_expected_loc):
     mast = MutateAST(readonly=True)
     mast.visit(mutated_tree)
 
-    # four locations from the binary operations in binop_file
-    assert len(mast.locs) == 1
+    assert len(mast.locs) == 3
 
-    # there will only be one loc, but this still works
-    # basedon the col and line offset in the fixture for compare_expected_loc
+    # check that the lineno marked for mutation is changed, otherwise original ops should
+    # still be present without modification
     for l in mast.locs:
-        if l.lineno == 2 and l.col_offset == 11:
-            assert l.op_type == test_mutation
+        if l.lineno == lineno and l.col_offset == 11:
+            assert l.op_type == mut_op
+        else:
+            assert l.op_type in {ast.Eq, ast.Is, ast.In}  # based on compare_file fixture
 
 
 def test_MutateAST_visit_if(if_file, if_expected_locs):

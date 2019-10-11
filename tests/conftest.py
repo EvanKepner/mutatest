@@ -6,6 +6,7 @@ import sys
 
 from datetime import timedelta
 from io import StringIO
+from operator import attrgetter
 from pathlib import Path
 from textwrap import dedent
 from typing import NamedTuple, Set
@@ -175,6 +176,7 @@ def augassign_expected_locs():
 
 ####################################################################################################
 # TRANSFORMERS: BINOP FIXTURES
+# Used as a baseline fixture in many running tests
 ####################################################################################################
 
 
@@ -214,6 +216,25 @@ def binop_file(tmp_path_factory):
 
 
 @pytest.fixture(scope="session")
+def mock_binop_coverage_file(binop_file, tmp_path_factory):
+    """Mock .coverage file based on the binop_file fixture."""
+    mock_contents = (
+        """!coverage.py: This is a private format, don't read it directly!"""
+        """{"lines":{"%s":[6,10]}}""" % binop_file.resolve()
+    )
+
+    folder = tmp_path_factory.mktemp("binop_cov")
+    mock_cov_file = folder / ".coverage"
+
+    with open(mock_cov_file, "w") as ostream:
+        ostream.write(mock_contents)
+
+    yield mock_cov_file
+
+    mock_cov_file.unlink()
+
+
+@pytest.fixture(scope="session")
 def binop_expected_locs():
     """Expected target locations for the binop_file fixture."""
     return {
@@ -222,6 +243,19 @@ def binop_expected_locs():
         LocIndex(ast_class="BinOp", lineno=10, col_offset=11, op_type=ast.Add),
         LocIndex(ast_class="BinOp", lineno=15, col_offset=11, op_type=ast.Div),
     }
+
+
+@pytest.fixture(scope="session")
+def sorted_binop_expected_locs(binop_expected_locs):
+    """Sorted expected locs when used in tests for sample generation."""
+    sort_by = attrgetter("lineno", "col_offset")
+    return sorted(binop_expected_locs, key=sort_by)
+
+
+@pytest.fixture(scope="session")
+def mock_LocIdx():
+    """Mock Single Location Index, not a valid target member of file."""
+    return LocIndex(ast_class="BinOp", lineno=1, col_offset=2, op_type=ast.Add)
 
 
 ####################################################################################################
@@ -342,6 +376,11 @@ def compare_file(tmp_path_factory):
     def equal_test(a, b):
         return a == b
 
+    def is_test(a, b):
+        return a is b
+
+    def in_test(a, b):
+        return a in b
     print(equal_test(1,1))
     """
     )
@@ -357,9 +396,13 @@ def compare_file(tmp_path_factory):
 
 
 @pytest.fixture(scope="session")
-def compare_expected_loc():
-    """The compare expected location based on the fixture"""
-    return LocIndex(ast_class="Compare", lineno=2, col_offset=11, op_type=ast.Eq)
+def compare_expected_locs():
+    """The compare expected locations based on the fixture"""
+    return [
+        LocIndex(ast_class="Compare", lineno=2, col_offset=11, op_type=ast.Eq),
+        LocIndex(ast_class="CompareIs", lineno=5, col_offset=11, op_type=ast.Is),
+        LocIndex(ast_class="CompareIn", lineno=8, col_offset=11, op_type=ast.In),
+    ]
 
 
 ####################################################################################################
