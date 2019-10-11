@@ -400,8 +400,7 @@ Run ``mutatest --help`` to see command line arguments and supported operations:
 Mutations
 =========
 
-``mutatest`` is early in development and supports the following mutation operations based
-on the `Python AST grammar`_:
+``mutatest`` supports the following mutation operations based on the `Python AST grammar`_:
 
 Supported operations:
     - ``AugAssign`` mutations e.g. ``+= -= *= /=``.
