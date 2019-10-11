@@ -1,4 +1,4 @@
-``mutatest`: Python mutation testing
+``mutatest``: Python mutation testing
 ==========================================
 
 
@@ -64,7 +64,7 @@ The mutation trial process follows these steps when ``mutatest`` is run:
 2. Create an abstract syntax tree (AST) from the source files.
 3. Identify locations in the code that may be mutated (line and column). If you are running with
    ``coverage`` the sample is restricted only to lines that are marked as covered in the
-   ```.coverage`` file.
+   ``.coverage`` file.
 4. Take a random sample of the identified locations.
 5. Apply a mutation at the location by modifying a copy of the AST and writing a new cache file
    to the appropriate ``__pycache__`` location with the source file statistics.
@@ -132,10 +132,10 @@ is that no files are excluded.
 These commands can all be combined in different ways to target your sample space for mutations.
 
 
-Coverage optimization
----------------------
+Coverage filtering
+-------------------
 
-Any command combination that generates a ```.coverage`` file will use that as a restriction
+Any command combination that generates a ``.coverage`` file will use that as a restriction
 mechanism for the sample space to only select mutation locations that are covered. For example,
 running:
 
@@ -147,7 +147,7 @@ running:
     $ mutatest -t "pytest --cov=mypackage tests/test_run.py"
 
 
-would generate the ```.coverage`` file based on ``tests/test_run.py``. Therefore, even though
+would generate the ``.coverage`` file based on ``tests/test_run.py``. Therefore, even though
 the entire package is seen only the lines covered by ``tests/test_run.py`` will be mutated
 during the trials.
 If you specified a source with ``-s`` only the covered lines in that source file would become
