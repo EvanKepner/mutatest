@@ -2,10 +2,10 @@ Changelog
 =========
 
 Beta Releases
-=============
+-------------
 
 1.0.0
------
+~~~~~
 
     - Moving from the alpha to the beta version with an API design. The alpha releases were focused
       on defining the functionality of the CLI. In the beta version, the CLI remains unchanged; however,
@@ -15,24 +15,24 @@ Beta Releases
 
 
 Alpha Releases
-==============
+--------------
 
 0.9.2
------
+~~~~~
 
     - Added ``--exception`` and ``-x`` as a survivor tolerance to raise an exception
       after the trial completes if the count of surviving mutants is greater than or equal to the
       specified value.
 
 0.9.1
------
+~~~~~
 
     - Added ``--whitelist`` and ``--blacklist`` with category codes for mutation families.
     - Provides CLI selection of mutation types to be used during the trials.
 
 
 0.9.0
------
+~~~~~
 
     - Added new ``If`` mutation:
         1. Original statements are represented by ``If_Statement`` and mutated to be either
@@ -41,7 +41,7 @@ Alpha Releases
 
 
 0.8.0
------
+~~~~~
 
     - Breaking changes to the CLI arguments and new defaults:
         1. Output files are now optional, the default behavior has changed from always writing an RST
@@ -57,14 +57,14 @@ Alpha Releases
 
 
 0.7.1
------
+~~~~~
 
     - Internal changes to ``Slice`` mutations for clearer categorization and report output.
     - Includes clearing names to ``Slice_Swap`` and ``Slice_RangeChange`` for categories.
     - Updates operation names to ``Slice_Unbounded...`` with "lower" or "upper".
 
 0.7.0
------
+~~~~~
 
     - Added new slice mutations:
         1. ``Slice_SwapNoneUL`` and ``Slice_SwapNoneLU`` for swapping the upper and lower
@@ -74,14 +74,14 @@ Alpha Releases
 
 
 0.6.1
------
+~~~~~
 
     - Added explicit tests for ``argparse`` cli options.
     - Added mechanism to sort reporting mutations by source file, then line number, then column
       number.
 
 0.6.0
------
+~~~~~
 
     - Including ``pytest`` in the installation requirements. Technically, any test runner can
       be used but with all base package assumptions being built around ``pytest`` this feels
@@ -96,7 +96,7 @@ Alpha Releases
     - Fixed a zero-division bug in the ``cli`` when reporting coverage percentage.
 
 0.5.0
------
+~~~~~
 
     - Addition of ``optimizers``, including the new class ``CoverageOptimizer``.
     - This optimizer restricts the full sample space only to source locations that are marked
@@ -105,19 +105,19 @@ Alpha Releases
 
 
 0.4.2
------
+~~~~~
 
     - More behind the scenes maintenance: updated debug level logging to include source file
       names and line numbers for all visit operations and separated colorized output to a new
       function.
 
 0.4.1
------
+~~~~~
 
     - Updated the reporting functions to return colorized display results to CLI.
 
 0.4.0
------
+~~~~~
 
     - Added new mutation support for:
         1. ``AugAssign`` in AST e.g. ``+= -= *= /=``.
@@ -129,7 +129,7 @@ Alpha Releases
     - Updated the cli help display to show the description and valid members.
 
 0.3.0
------
+~~~~~
 
     - Added new mutation support for ``NameConstant`` in AST.
     - This includes substitutions for singleton assignments such as: ``True``, ``False``,
@@ -140,14 +140,14 @@ Alpha Releases
       the mixed types. This was more flexible than a series of ``overload`` signatures.
 
 0.2.0
------
+~~~~~
 
     - Added new compare mutation support for:
         1. ``Compare Is`` mutations e.g. ``is, is not``.
         2. ``Compare In`` mutations e.g. ``in, not in``.
 
 0.1.0
------
+~~~~~
 
     - Initial release!
     - Requires Python 3.7 due to the ``importlib`` internal references for manipulating cache.
