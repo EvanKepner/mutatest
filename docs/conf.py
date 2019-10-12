@@ -13,8 +13,6 @@
 import os
 import sys
 
-from mutatest import __version__ as version
-
 sys.path.insert(0, os.path.abspath(".."))
 
 
@@ -26,7 +24,7 @@ author = "Evan Kepner"
 
 # The full version, including alpha/beta/rc tags
 # release = '1.0.0'
-release = version
+release = "1.0.0"
 
 
 # -- General configuration ---------------------------------------------------
