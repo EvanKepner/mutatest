@@ -1,0 +1,2 @@
+coverage==4.5.4
+Sphinx==2.2.0
