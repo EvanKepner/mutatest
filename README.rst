@@ -29,6 +29,10 @@ Features:
     - Flexible enough to run on a whole package or a single file.
     - Includes an API for custom mutation controls.
 
+Full documentation: https://mutatest.readthedocs.io/
+
+PyPI: https://pypi.org/project/mutatest/
+
 
 Installation
 ============

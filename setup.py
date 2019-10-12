@@ -13,7 +13,7 @@ PACKAGES = find_packages()
 META_PATH = os.path.join("mutatest", "__init__.py")
 KEYWORDS = ["mutatest", "mutation", "testing", "test", "mutant", "mutate", "pytest"]
 PROJECT_URLS = {
-    "Documentation": "https://github.com/EvanKepner/mutatest",
+    "Documentation": "https://mutatest.readthedocs.io/",
     "Bug Tracker": "https://github.com/EvanKepner/mutatest/issues",
     "Source Code": "https://github.com/EvanKepner/mutatest",
 }
