@@ -1,5 +1,28 @@
-"""API definitions.
-These are high level objects for interacting with mutatest.
+"""
+API
+---
+
+These are high level objects for interacting with ``mutatest``. The primary objects include:
+
+1. The ``Genome``
+2. The ``GenomeGroup``
+3. The ``Mutant``
+
+``Genomes`` are representations of a Python source code file. This includes a representation of
+the Abstract Syntax Tree (AST) and the locations within the AST that could be mutated. The
+locations are accessed by the ``targets`` and ``covered_targets`` properties of the ``Genome``,
+the latter being available if a coverage file is set for the ``Genome``.
+Locations are represented as ``LocIndex`` objects from ``mutatest.transformers`` which may be
+referenced as specific points of mutation.
+
+``Mutants`` are created from ``Genome.mutate()`` for a specific ``LocIndex`` in the ``Genome``
+targets. A ``mutant`` is an immutable named-tuple with all of the attributes necessary to mutate
+the appropriate ``__pycache__`` file with the ``write_cache()`` method.
+
+Collections of ``Genomes`` can be managed through a ``GenomeGroup``. The ``GenomeGroup`` provides
+methods for setting global filters, coverage files, and producing targets of ``LocIndex`` objects
+across the collection of ``Genomes``. This is a useful representation when dealing with a folder
+of multiple source files.
 """
 import ast
 import importlib
@@ -33,7 +56,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 class MutationException(Exception):
-    """Mutation Exception type."""
+    """Mutation Exception type specifically for mismatches in mutation operations."""
 
     pass
 
@@ -42,7 +65,10 @@ class Mutant(NamedTuple):
     """Mutant definition.
 
     Mutants are created through the Genome at specific targets using the mutate method.
-    Mutants are immutable and can be written to disk in the __pycache__.
+    Mutants are immutable and can be written to disk in the ``__pycache__``.
+
+    You can create ``Mutants`` using ``Genome.mutate``, and then ``write_cache`` to apply to
+    the ``__pycache__``.
     """
 
     mutant_code: Any
@@ -55,14 +81,11 @@ class Mutant(NamedTuple):
     mutation: Any
 
     def write_cache(self) -> None:
-        """Create the cache file for the mutant on disk in __pycache__.
+        """Create the cache file for the mutant on disk in ``__pycache__``.
 
         Existing target cache files are removed to ensure clean overwrites.
 
         Reference: https://github.com/python/cpython/blob/master/Lib/py_compile.py#L157
-
-        Args:
-            mutant: the mutant definition to create
 
         Returns:
             None, creates the cache file on disk.
@@ -85,10 +108,11 @@ class Genome:
     """The Genome class describes the source file to be mutated.
 
     The class describes a single .py file and has properties for the abstract syntax tree (AST)
-    and the viable mutation targets. You can initialize without any arguments. If the source_file
-    is changed the ast and targets properties will be recalculated for that file.
+    and the viable mutation targets. You can initialize without any arguments. If the
+    ``source_file`` is changed the ast and targets properties will be recalculated for that file.
 
-    Locations in the Genome may be mutated and written to the __pycache__ using the mutate method.
+    Locations in the Genome may be mutated and written to the ``__pycache__`` using the mutate
+    method.
     """
 
     def __init__(
@@ -150,7 +174,7 @@ class Genome:
             None
 
         Raises:
-            ValueError if the 2-letter codes in value are not supported by the transformer.
+            ValueError: if the 2-letter codes in value are not supported by the transformer.
         """
         value, valid_codes = set(value), set(CATEGORIES.values())
         if not value.issubset(valid_codes):
@@ -168,7 +192,7 @@ class Genome:
         """The source .py file represented by this Genome.
 
         Returns:
-            The source_file path.
+            The ``source_file`` path.
         """
         return self._source_file
 
@@ -189,7 +213,7 @@ class Genome:
             Parsed AST for the source file.
 
         Raises:
-            TypeError if source_file is not set.
+            TypeError: if ``source_file`` is not set.
         """
         if self._ast is None:
             if not self.source_file:
@@ -201,10 +225,10 @@ class Genome:
 
     @property
     def targets(self) -> Set[LocIndex]:
-        """Viable mutation targets within the AST of the source_file.
+        """Viable mutation targets within the AST of the ``source_file``.
 
         This is cached locally and updated if the source_file is changed. Filtering is not
-        cached and applies any time the filter_codes are changed.
+        cached and applies any time the ``filter_codes`` are changed.
 
         Returns:
              The set of the location index objects from the transformer that could be
@@ -230,13 +254,13 @@ class Genome:
 
     @coverage_file.setter
     def coverage_file(self, value: Optional[Union[str, Path]]) -> None:
-        """Setter for coverage_file, clears the cached covered_targets."""
+        """Setter for ``coverage_file``, clears the cached ``covered_targets``."""
         self._coverage_file = Path(value) if value else None
         self._covered_targets = None
 
     @property
     def covered_targets(self) -> Set[LocIndex]:
-        """Targets that are marked as covered based on the coverage_file.
+        """Targets that are marked as covered based on the ``coverage_file``.
 
         This is cached locally and updated if the coverage_file is changed. Filtering is not
         cached and applies any time the filter_codes are changed.
@@ -245,7 +269,7 @@ class Genome:
             The targets that are covered.
 
         Raises:
-            TypeError if the source_file or coverage_file is not set for the Genome.
+            TypeError: if the ``source_file`` or ``coverage_file`` is not set for the Genome.
         """
         if not self.source_file:
             raise TypeError("Source_file property is set to NoneType.")
@@ -268,21 +292,21 @@ class Genome:
         """Create a mutant from a single LocIndex that is in the Genome.
 
         Mutation_op must be a valid mutation for the target_idx operation code type.
-        Optionally, use write_cache to write the mutant to __pycache__ based on the detected
+        Optionally, use write_cache to write the mutant to ``__pycache__`` based on the detected
         location at the time of creation. The Genome AST is unmodified by mutate.
 
         Args:
             target_idx: the target location index (member of .targets)
             mutation_op: the mutation operation to use
-            write_cache: optional flag to write to __pycache__
+            write_cache: optional flag to write to ``__pycache__``
 
         Returns:
             The mutant definition
 
         Raises:
-            MutationException if mutation_op is not a valid mutation for the location index.
-            TypeError if the source_file property is not set on the Genome.
-            ValueError if the target_idx is not a member of Genome targets.
+            MutationException: if ``mutation_op`` is not a valid mutation for the location index.
+            TypeError: if the source_file property is not set on the Genome.
+            ValueError: if the target_idx is not a member of Genome targets.
         """
         op_code = CATEGORIES[target_idx.ast_class]
         valid_mutations = CategoryCodeFilter(codes=(op_code,)).valid_mutations
@@ -342,14 +366,14 @@ class GenomeGroup(MutableMapping):  # type: ignore
     def __init__(self, source_location: Optional[Union[str, Path]] = None) -> None:
         """Initialize the GenomeGroup.
 
-        GenomeGroup is a MutableMapping collection of Genomes with defined source_file locations.
-        You can use it to apply standard filters or coverage files across the group and get
-        all mutation targets for the group. Folders and files can be added through methods.
+        GenomeGroup is a MutableMapping collection of Genomes with defined ``source_file``
+        locations. You can use it to apply standard filters or coverage files across the group and
+        get all mutation targets for the group. Folders and files can be added through methods.
 
         Args:
             source_location: an optional folder for initialization using the default settings
                 of no file exclusions except 'test' files. For more flexibility, initialize
-                the class and then use the .add_folder() method directly.
+                the class and then use the ``.add_folder()`` method directly.
         """
 
         # internal mapping for Genomes, not designed for direct modification, use class properties
@@ -418,16 +442,16 @@ class GenomeGroup(MutableMapping):  # type: ignore
         return self._store.values()
 
     def add_genome(self, genome: Genome) -> None:
-        """Add a Genome to the GenomeGroup. Genomes must have a defined source_file.
+        """Add a Genome to the GenomeGroup. Genomes must have a defined ``source_file``.
 
         Args:
-            genome: the genome to add
+            genome: the ``Genome`` to add
 
         Returns:
             None
 
         Raises:
-            TypeError if the genome.source_file is not set.
+            TypeError: if the ``Genome.source_file`` is not set.
         """
         if genome.source_file is None:
             raise TypeError("Genome source_file is set to NoneType.")
@@ -438,7 +462,8 @@ class GenomeGroup(MutableMapping):  # type: ignore
         source_file: Union[str, Path],
         coverage_file: Optional[Union[str, Path]] = Path(".coverage"),
     ) -> None:
-        """Add a .py source file to the group as a new Genome. The Genome is created automatically.
+        """Add a ``.py`` source file to the group as a new Genome.
+        The Genome is created automatically.
 
         Args:
             source_file: the source file to add with Genome creation
@@ -455,19 +480,19 @@ class GenomeGroup(MutableMapping):  # type: ignore
         exclude_files: Optional[Iterable[Union[str, Path]]] = None,
         ignore_test_files: bool = True,
     ) -> None:
-        """Add a folder (recursively) to the GenomeGroup for all .py files.
+        """Add a folder (recursively) to the GenomeGroup for all ``.py`` files.
 
         Args:
             source_folder: the folder to recursively search
             exclude_files: optional iterable of specific files in the source_folder to skip
             ignore_test_files: optional flag, default to true, to ignore files prefixed with
-                'test_' or suffixed with '_test' in the stem of the file name.
+                ``test_`` or suffixed with ``_test`` in the stem of the file name.
 
         Returns:
             None, adds all files as Genomes to the group.
 
         Raises:
-            TypeError if source_folder is not a folder.
+            TypeError: if ``source_folder`` is not a folder.
         """
         source_folder = Path(source_folder)
         exclude_files = [Path(e) for e in exclude_files] if exclude_files else set()
@@ -508,12 +533,12 @@ class GenomeGroup(MutableMapping):  # type: ignore
 
     @property
     def targets(self) -> Set[GenomeGroupTarget]:
-        """All mutation targets in the group, returned as tuples of source-file and location
+        """All mutation targets in the group, returned as tuples of ``source_file`` and location
         indices in a single set.
 
         Returns:
-            Set of tuples of source-file and location index for all targets in the group.
-            These are GenomeGroupTargets to make attribute access easier.
+            Set of tuples of ``source_file`` and location index for all targets in the group.
+            These are ``GenomeGroupTargets`` to make attribute access easier.
         """
         targets = set()
         for k, v in self.items():
@@ -523,11 +548,11 @@ class GenomeGroup(MutableMapping):  # type: ignore
     @property
     def covered_targets(self) -> Set[GenomeGroupTarget]:
         """All mutation targets in the group that are covered,
-        returned as tuples of source-file and location indices in a single set.
+        returned as tuples of ``source_file`` and location indices in a single set.
 
         Returns:
-            Set of tuples of source-file and location index for all covered targets in the group.
-            These are GenomeGroupTargets to make attribute access easier.
+            Set of tuples of ``source_file`` and location index for all covered targets in the
+            group. These are ``GenomeGroupTargets`` to make attribute access easier.
         """
         covered_targets = set()
         for k, v in self.items():
