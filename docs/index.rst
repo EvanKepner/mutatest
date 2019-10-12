@@ -127,6 +127,9 @@ reset when the mutation trials are finished.
    commandline
    mutants
    modules
+   license
+   changelog
+   contributing
    GitHub <https://github.com/EvanKepner/mutatest>
 
 

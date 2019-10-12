@@ -77,19 +77,35 @@ valid targets for mutation. Excluded files with ``-e`` are still skipped.
 You can override this behavior with the ``--nocov`` flag on the command line.
 
 If you have a ``pytest.ini`` file that includes the ``--cov`` command the default behavior
-of ``mutatest`` will generate the coverage file. You will see this in the CLI output at the
-beginning of the trials:
+of ``mutatest`` will generate the coverage file. You will see a message in the CLI output at the
+beginning of the trials if coverage is ignored.
 
 .. code-block:: bash
+
+    # note the smaller sample based on the coverage
 
     $ mutatest -n 4 -t "pytest --cov=mypackage"
 
     ... prior output...
 
-    ... Get mutatest targets from AST.
-    ... Full sample space size: 115
-    ... Coverage optimized sample space size: 75
-    ... Selecting 4 locations from 75 potentials.
+    ... Total sample space size: 287
+    ... Selecting 4 locations from 287 potentials.
+    ... Starting individual mutation trials!
+
+    ... continued output...
+
+
+    # even with coverage specified the --nocov flag is used
+    # sample size is larger, and the note on ignoring is present
+
+    $ mutatest -n 4 -t "pytest --cov=mypackage" --nocov
+
+    ... prior output...
+
+    ... Ignoring coverage file for sample space creation.
+    ... Total sample space size: 311
+    ... Selecting 4 locations from 311 potentials.
+    ... Starting individual mutation trials!
 
     ... continued output...
 
@@ -193,12 +209,12 @@ as an input list on the CLI.
 
     ... prior output...
 
-    ... Full sample space size: 246
-    ... Restricting sample based on existing coverage file.
-    ... Coverage optimized sample space size: 215
-    ... Optimized sample set, size: 215
-    ... Category restriction, valid categories: ['aa', 'bn', 'ix']
-    ... Category restricted sample size: 21
+    ... Category restriction, chosen categories: ['aa', 'bn', 'ix']
+    ... Setting random.seed to: None
+    ... Ignoring coverage file for sample space creation.
+    ... Total sample space size: 311
+    ... Selecting 10 locations from 311 potentials.
+    ... Starting individual mutation trials!
 
     ... continued output...
 

@@ -33,13 +33,13 @@ Open questions I'm working through on the design:
 
 
 Development Guidelines
-======================
+----------------------
 
 The following guidelines are used in the style formatting of this package. Many are enforced through
 ``pre-commit`` Git hooks and in the test running configuration of ``tox``.
 
 Development environment setup
------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Here is how to get up and running for development on ``mutatest``. Referenced tools are included
 in the development dependencies as part of the set up procedure.
@@ -84,7 +84,7 @@ in the development dependencies as part of the set up procedure.
 
 
 Style: all files
-----------------
+~~~~~~~~~~~~~~~~
 
     - Generally hard-wrap at 100 characters for all files, including text files or RST.
     - Prefer RST over markdown or plaintext for explanations and outputs.
@@ -93,7 +93,7 @@ Style: all files
 
 
 Style: Package Python code
---------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Many of these points are automated with ``pre-commit`` and the existing configuration settings
 for ``black`` and ``flake8``. In general:
@@ -113,7 +113,7 @@ for ``black`` and ``flake8``. In general:
 
 
 Style: Test Python code
------------------------
+~~~~~~~~~~~~~~~~~~~~~~~
 
 ``Pytest`` is used to manage unit tests, and ``tox`` is used to run various environment
 tests. ``Hypothesis`` is used for property testing in addition to the unit tests.
@@ -135,7 +135,7 @@ Some style enforcing is relaxed on the test files:
 
 
 Commits
--------
+~~~~~~~
 
     - Use descriptive commit messages in "action form". Messages should be read as, "If applied,
       this commit will... <<your commit message>>" e.g. "add tests for coverage of bool_op visit".
