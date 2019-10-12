@@ -34,7 +34,8 @@ CLASSIFIERS = [
     "Topic :: Software Development :: Testing :: Unit",
 ]
 
-INSTALL_REQUIRES = ["pytest", "coverage>=4.4"]
+# Built to run with pytest, but not an installation requirement for the API
+INSTALL_REQUIRES = ["coverage>=4.4"]
 EXTRAS_REQUIRE = {
     "docs": ["sphinx"],
     "tests": [
