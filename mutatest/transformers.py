@@ -1,4 +1,16 @@
-"""AST Transformers.
+"""
+Transformers
+------------
+
+Transformers defines the mutations that can be applied. The ``CATEGORIES`` dictionary lists all
+valid category codes that are valid filters. The primary classes are:
+
+1. ``LocIndex``
+2. ``MutateAST``
+
+The ``LocIndex`` is a location index within a given Abstract Syntax Tree (AST) that can be mutated.
+The ``MutateAST`` class walks the AST of a given source file to identify all of the locations,
+and optionally create the mutation at that node. These are implemented in the ``Genome`` object.
 """
 import ast
 import logging
@@ -27,7 +39,7 @@ CATEGORIES = {
 
 
 class LocIndex(NamedTuple):
-    """Location index within AST to mark mutatest targets."""
+    """Location index within AST to mark mutation targets."""
 
     ast_class: str
     lineno: int
@@ -59,11 +71,13 @@ class MutateAST(ast.NodeTransformer):
         If readonly is set to True then no transformations are applied;
         however, the locs attribute is updated with the locations of nodes that could
         be transformed. This allows the class to function both as an inspection method
-        and as a mutatest transformer.
+        and as a mutation transformer.
 
-        Note that different nodes hand the LocIndex differently based on the context. For
-        example, visit_BinOp uses direct AST types, while visit_NameConstant uses values,
-        and visit_AugAssign uses custom strings in a dictionary mapping.
+        Note that different nodes handle the ``LocIndex`` differently based on the context. For
+        example, ``visit_BinOp`` uses direct AST types, while ``visit_NameConstant`` uses values,
+        and ``visit_AugAssign`` uses custom strings in a dictionary mapping.
+
+        All ``visit_`` methods take the ``node`` as an argument and rely on the class properties.
 
         Args:
             target_idx: Location index for the mutatest in the AST
@@ -81,26 +95,26 @@ class MutateAST(ast.NodeTransformer):
 
     @property
     def target_idx(self) -> Optional[LocIndex]:
-        """target_idx: Location index for the mutatest in the AST"""
+        """Location index for the mutation in the AST"""
         return self._target_idx
 
     @property
     def mutation(self) -> Optional[Any]:
-        """mutation: the mutatest to apply, may be a type or a value"""
+        """The mutation to apply, may be a type or a value"""
         return self._mutation
 
     @property
     def readonly(self) -> bool:
-        """readonly: flag for read-only operations, used to visit nodes instead of transform"""
+        """A flag for read-only operations, used to visit nodes instead of transform"""
         return self._readonly
 
     @property
     def src_file(self) -> Optional[Union[Path, str]]:
-        """src_file: Source file name, used for logging purposes"""
+        """Source file name, used for logging purposes"""
         return self._src_file
 
     def visit_AugAssign(self, node: ast.AugAssign) -> ast.AST:
-        """AugAssign is -=, +=, /=, *= for augmented assignment."""
+        """AugAssign is ``-=, +=, /=, *=`` for augmented assignment."""
         self.generic_visit(node)
         log_header = f"visit_AugAssign: {self.src_file}:"
 
@@ -180,7 +194,7 @@ class MutateAST(ast.NodeTransformer):
         return node
 
     def visit_Compare(self, node: ast.Compare) -> ast.AST:
-        """Compare nodes are ==, >= etc."""
+        """Compare nodes are ``==, >=, is, in`` etc. There are multiple Compare categories."""
         self.generic_visit(node)
         log_header = f"visit_Compare: {self.src_file}:"
 
@@ -231,7 +245,7 @@ class MutateAST(ast.NodeTransformer):
         return node
 
     def visit_If(self, node: ast.If) -> ast.AST:
-        """If statements e.g. If x == y transformed to If True and If False."""
+        """If statements e.g. If ``x == y`` is transformed to ``if True`` and ``if False``."""
         self.generic_visit(node)
         log_header = f"visit_If: {self.src_file}:"
 
@@ -264,7 +278,7 @@ class MutateAST(ast.NodeTransformer):
         return node
 
     def visit_Index(self, node: ast.Index) -> ast.AST:
-        """Index visit e.g. i[0], i[0][1]."""
+        """Index visit e.g. ``i[0], i[0][1]``."""
         self.generic_visit(node)
         log_header = f"visit_Index: {self.src_file}:"
 
@@ -310,7 +324,7 @@ class MutateAST(ast.NodeTransformer):
         return node
 
     def visit_NameConstant(self, node: ast.NameConstant) -> ast.AST:
-        """NameConstants: True/False/None."""
+        """NameConstants: ``True, False, None``."""
         self.generic_visit(node)
         log_header = f"visit_NameConstant: {self.src_file}:"
 
@@ -325,7 +339,7 @@ class MutateAST(ast.NodeTransformer):
         return node
 
     def visit_Subscript(self, node: ast.Subscript) -> ast.AST:
-        """Subscript slice operations.g. x[1:] or y[::2]"""
+        """Subscript slice operations e.g., ``x[1:]`` or ``y[::2]``."""
         self.generic_visit(node)
         log_header = f"visit_Subscript: {self.src_file}:"
         idx = None
@@ -417,7 +431,7 @@ def get_compatible_operation_sets() -> List[MutationOpSet]:
     also to list the support operations in the CLI help function.
 
     Returns:
-        List of MutationOpSets that have substitutable operations
+        List of ``MutationOpSets`` that have substitutable operations
     """
 
     # AST operations that are sensible mutations for each other
@@ -540,7 +554,7 @@ def get_mutations_for_target(target: LocIndex) -> Set[Any]:
         target: the location index target
 
     Returns:
-        Set of types that can mutated into the target op
+        Set of types that can mutated into the target location.
     """
     search_space: List[Set[Any]] = [m.operations for m in get_compatible_operation_sets()]
     mutation_ops: Set[Any] = set()

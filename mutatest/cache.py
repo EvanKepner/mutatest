@@ -1,4 +1,10 @@
-"""Cache file controls.
+"""
+Cache
+-----
+
+These functions are used to manipulate the ``__pycache__`` when writing mutations to disk for
+detection by the test runners.
+Many functions are encapsulated in the ``Mutant.write_cache()`` method.
 """
 import importlib
 import logging
@@ -17,8 +23,7 @@ def check_cache_invalidation_mode() -> PycInvalidationMode:
 
     Reference: https://github.com/python/cpython/blob/master/Lib/py_compile.py#L72
     The above reference does both time and hash invalidation.
-    This method only supports time invalidation because it's not clear what the
-    hash invalidation is seeking for testing purposes.
+    This method only supports time invalidation.
 
     Hash invalidation is a future TODO.
 
@@ -26,7 +31,7 @@ def check_cache_invalidation_mode() -> PycInvalidationMode:
         None
 
     Raises:
-        EnvironmentError if the SOURCE_DATE_EPOCH environment variable is set.
+        EnvironmentError: if the SOURCE_DATE_EPOCH environment variable is set.
     """
     if os.environ.get("SOURCE_DATE_EPOCH"):
         raise EnvironmentError(
@@ -50,7 +55,7 @@ def get_cache_file_loc(src_file: Union[str, Path]) -> Path:
         Path to the cache file
 
     Raises:
-        FileExistsError if the cache-file path is symlink or irregular file
+        FileExistsError: if the cache-file path is symlink or irregular file
     """
     if not src_file:
         raise ValueError("src_file cannot be an empty string.")
@@ -75,7 +80,7 @@ def get_cache_file_loc(src_file: Union[str, Path]) -> Path:
 
 
 def create_cache_dirs(cache_file: Path) -> None:
-    """Create the __pycache__ directories if needed for the cache_file.
+    """Create the ``__pycache__`` directories if needed for the ``cache_file``.
 
     Args:
         cache_file: Path to the cache_file

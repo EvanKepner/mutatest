@@ -24,7 +24,7 @@ Features:
     - Uses ``coverage`` to create only meaningful mutants.
     - Built for efficiency with multiple running modes and random sampling of mutation targets.
     - Flexible enough to run on a whole package or a single file.
-    - Includes a flexible API for custom mutation controls.
+    - Includes an API for custom mutation controls.
 
 Quick Start
 -----------
@@ -36,7 +36,7 @@ Quick Start
     $ pip install mutatest
 
 
-Alternatively, clone this repo and install locally:
+Alternatively, clone the repo from `GitHub`_ and install from the source code:
 
 
 .. code-block:: bash
@@ -49,8 +49,7 @@ Alternatively, clone this repo and install locally:
 and are prefixed with ``test_``. See `Pytest Test Layout`_ for more details.
 
 
-``mutatest`` is designed to be a diagnostic command line tool for your test coverage assessment.
-
+``mutatest`` is a diagnostic command line tool for your test coverage assessment.
 If you have a Python package in with an associated ``tests/`` folder, or internal ``test_`` prefixed files,
 that are auto-detected with ``pytest``, then you can run ``mutatest`` without any arguments.
 
@@ -128,6 +127,7 @@ reset when the mutation trials are finished.
    commandline
    mutants
    modules
+   GitHub <https://github.com/EvanKepner/mutatest>
 
 
 
@@ -141,4 +141,5 @@ Indices and tables
 
 
 .. target-notes::
+.. _GitHub: https://github.com/EvanKepner/mutatest
 .. _Pytest Test Layout: https://docs.pytest.org/en/latest/goodpractices.html#choosing-a-test-layout-import-rules

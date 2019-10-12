@@ -1,4 +1,20 @@
-"""Filters for location index sets.
+"""
+Filters
+-------
+
+Filters operate on the sets of location indices, the ``LocIndex`` objects, returned by ``Genomes``
+using ``targets`` or ``covered_targets``. There are two main filters:
+
+1. ``CoverageFilter``
+2. ``CategoryCodeFilter``
+
+The ``CoverageFilter`` is used to create the ``covered_targets`` returned by the ``Genome``.
+The ``CategoryCodeFilter`` is used to restrict the returned sets of ``LocIndex`` objects to
+specific types of mutations e.g., only ``BinOp``, only ``Compare``, or a combination of multiple
+mutation categories.
+
+Both of these filters are implemented in ``Genome`` and ``GenomeGroup`` for basic usage in
+filtering by category code or covered lines.
 """
 import itertools
 import logging
@@ -27,7 +43,7 @@ class Filter(ABC):
     def filter(self, loc_idxs: Set[LocIndex], invert: bool = False) -> Set[LocIndex]:
         """General filter method that should return a location index set.
 
-        A filter should take a set of location indices (loc_idxs) and return
+        A filter should take a set of location indices (``loc_idxs``) and return
         the filtered set of location indices. The invert kwarg is set as a reversible filter e.g.,
         to specify NOT for the filtering effect.
 
@@ -55,7 +71,7 @@ class CoverageFilter(Filter):
 
     @property
     def coverage_file(self) -> Path:
-        """Property accessor for _coverage_file set at initialization.
+        """Property accessor for ``_coverage_file`` set at initialization.
 
         Returns:
             The coverage file path.
@@ -82,10 +98,10 @@ class CoverageFilter(Filter):
         This is cached locally and updated if the coverage_file is changed.
 
         Returns:
-             A CoverageData object based on the coverage_file.
+             A CoverageData object based on the ``coverage_file``.
 
         Raises:
-            FileNotFoundError if coverage_file does not exist.
+            FileNotFoundError: if coverage_file does not exist.
         """
         if not self.coverage_file.exists():
             raise FileNotFoundError(
@@ -104,7 +120,7 @@ class CoverageFilter(Filter):
         """Filter based on coverage measured file.
 
         This adds the source_file argument to the filter abstract method because the coverage
-        file holds multiple measured-files, and the LocIndex object does not have a source
+        file holds multiple measured-files, and the ``LocIndex`` object does not have a source
         file attribute. The choice is that the coverage file can be set and read once for the
         class instance, and any valid measured file can be used in the filter.
 
@@ -136,7 +152,7 @@ class CategoryCodeFilter(Filter):
                 The codes property must be set prior to filtering.
                 Only codes that are valid categories are added, others are discarded.
                 Make sure you set appropriately as an iterable for single string values e.g.,
-                codes=("bn",); otherwise, the codes property will set as empty.
+                ``codes=("bn",)``; otherwise, the codes property will set as empty.
         """
         # managed by class properties, no direct setters
         self._valid_categories = CATEGORIES  # defined in transformers.py
@@ -159,7 +175,7 @@ class CategoryCodeFilter(Filter):
         """All valid 2 letter codes.
 
         Returns:
-            Dictionary view of the values of valid_categories.
+            View of the values of ``valid_categories``.
         """
         return self._valid_categories.values()
 
@@ -212,7 +228,7 @@ class CategoryCodeFilter(Filter):
             None
 
         Raises:
-            ValueError if an invalid code is passed.
+            ValueError: if an invalid code is passed.
         """
         if code not in self.valid_codes:
             raise ValueError(f"{code} is not an allowed code.")
@@ -221,7 +237,7 @@ class CategoryCodeFilter(Filter):
     def discard_code(self, code: str) -> None:
         """Discard a 2-letter code from the codes set.
 
-        This uses the built-in set.discard() so that a KeyError is not raised if the code
+        This uses the built-in ``set.discard()`` so that a KeyError is not raised if the code
         does not exist in the set already.
 
         Args:
@@ -235,7 +251,7 @@ class CategoryCodeFilter(Filter):
     def filter(self, loc_idxs: Set[LocIndex], invert: bool = False) -> Set[LocIndex]:
         """Filter a set of location indices based on the set codes.
 
-        If the codes property is an empty set, the loc_idxs is returned unmodified.
+        If the codes property is an empty set, the ``loc_idxs`` is returned unmodified.
 
         Args:
             loc_idxs: the set of location indices to filter.

@@ -1,4 +1,10 @@
-"""Command line interface.
+"""
+CLI
+---
+
+The command line interface controls. This module defines the entry point for running ``mutatest``
+from the command line and the full main trial routine - clean trials, mutations trials, reporting
+results.
 """
 import argparse
 import logging
@@ -24,7 +30,8 @@ DEBUG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
 
 class RunMode(NamedTuple):
-    """Running mode choices."""
+    """Running mode choices. This translate the ``-m`` argument into valid ``Config`` options.
+    """
 
     mode: str
 
@@ -91,6 +98,7 @@ class SurvivingMutantException(Exception):
 
 
 def cli_epilog() -> str:
+    """Epilog for the help output."""
 
     main_epilog = dedent(
         """
@@ -376,7 +384,7 @@ def cli_summary_report(
 
 
 def get_src_location(src_loc: Optional[Path] = None) -> Path:
-    """Find packages if the src_loc is not set
+    """Find packages is used if the ``src_loc`` is not set
 
     Args:
         src_loc: current source location, defaults to None
@@ -385,7 +393,7 @@ def get_src_location(src_loc: Optional[Path] = None) -> Path:
         Path to the source location
 
     Raises:
-        FileNoeFoundError if the source location doesn't exist.
+        FileNoeFoundError: if the source location doesn't exist.
     """
     if not src_loc:
         find_pkgs = find_packages()
@@ -403,7 +411,7 @@ def get_src_location(src_loc: Optional[Path] = None) -> Path:
 
 
 def selected_categories(whitelist: List[str], blacklist: List[str]) -> List[str]:
-    """Create the selected categories from the whitelist/blacklist set.
+    """Create the selected categories from the whitelist/blacklist set to use in filtering.
 
     Args:
         whitelist: list of categories
@@ -423,7 +431,7 @@ def selected_categories(whitelist: List[str], blacklist: List[str]) -> List[str]
 
 
 def exception_processing(n_survivors: int, trial_results: List[MutantTrialResult]) -> None:
-    """Raise a custom mutation exception if n_survivors count is met.
+    """Raise a custom mutation exception if ``n_survivors`` count is met.
 
     Args:
         n_survivors: tolerance number for survivors
@@ -433,7 +441,7 @@ def exception_processing(n_survivors: int, trial_results: List[MutantTrialResult
         None
 
     Raises:
-        Surviving mutant exception
+        SurvivingMutantException: if the number of survivors is exceeded.
     """
     survived = report.get_reported_results(trial_results, "SURVIVED")
     if len(survived.mutants) >= n_survivors:

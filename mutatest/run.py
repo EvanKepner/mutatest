@@ -1,4 +1,10 @@
-"""Run mutation trials.
+"""
+Run
+---
+
+The run functions are used to run mutation trials from the CLI. These can be used directly
+for other customized running requirements. The ``Config`` data-class defines the running
+parameters for the full trial suite. Sampling functions are defined here as well.
 """
 import logging
 import random
@@ -88,7 +94,7 @@ def colorize_output(output: str, color: str) -> str:
 
 
 def capture_output(log_level: int) -> bool:
-    """Utility function used in subprocess for caputred output.
+    """Utility function used in subprocess for captured output.
 
     Available log levels are: https://docs.python.org/3/library/logging.html#levels
     10 is the value for Debug, so if it's not "DEBUG", return true and capture output.
@@ -118,7 +124,7 @@ def clean_trial(src_loc: Path, test_cmds: List[str]) -> timedelta:
         None
 
     Raises:
-        Exception if the clean trial does not pass from the test run.
+        BaselineTestException: if the clean trial does not pass from the test run.
     """
     cache.remove_existing_cache_files(src_loc)
 
@@ -146,15 +152,15 @@ def clean_trial(src_loc: Path, test_cmds: List[str]) -> timedelta:
 def get_sample(ggrp: GenomeGroup, ignore_coverage: bool) -> List[GenomeGroupTarget]:
     """Get the sample space for the mutation trials.
 
-    This will attempt to use covered-targets as the default unless ignore_coverage is set to True.
-    If the set .coverage file is not found then the total targets are returned instead.
+    This will attempt to use covered-targets as the default unless ``ignore_coverage`` is set
+    to True. If the set .coverage file is not found then the total targets are returned instead.
 
     Args:
         ggrp: the Genome Group to generate the sample space of targets
         ignore_coverage: flag to ignore coverage if present
 
     Returns:
-        Sorted list of Path-LocIndex pairs as complete sample space from the Genome Group.
+        Sorted list of Path-LocIndex pairs as complete sample space from the ``GenomeGroup``.
     """
     if ignore_coverage:
         LOGGER.info("Ignoring coverage file for sample space creation.")
@@ -176,7 +182,7 @@ def get_mutation_sample_locations(
 ) -> List[GenomeGroupTarget]:
     """Create the mutation sample space and set n_locations to a correct value for reporting.
 
-    n_locations will change if it is larger than the total sample_space.
+    ``n_locations`` will change if it is larger than the total sample_space.
 
     Args:
         sample_space: sample space to draw random locations from
@@ -217,16 +223,16 @@ def get_mutation_sample_locations(
 
 
 def get_genome_group(src_loc: Path, config: Config) -> GenomeGroup:
-    """Get the GenomeGroup based on src_loc and config.
+    """Get the ``GenomeGroup`` based on ``src_loc`` and ``config``.
 
-    Config is used to set global filter codes and exclude files on group creation.
+    ``Config`` is used to set global filter codes and exclude files on group creation.
 
     Args:
         src_loc: Path, can be directory or file
         config: the running config object
 
     Returns:
-        GenomeGroup based on src_loc and config.
+        ``GenomeGroup`` based on ``src_loc`` and config.
     """
     ggrp = GenomeGroup()
 
@@ -263,7 +269,7 @@ def trial_output_check_break(
 ) -> bool:
     """Flagging function to break the mutation operations loop and output logging.
 
-    This is called within the run_mutation_trials as a utility function to determine the
+    This is called within the ``run_mutation_trials`` as a utility function to determine the
     break-on behavior for progression e.g., break-on-survival.
 
     Args:
@@ -361,7 +367,8 @@ def trial_output_check_break(
 def create_mutation_run_trial(
     genome: Genome, target_idx: LocIndex, mutation_op: Any, test_cmds: List[str]
 ) -> MutantTrialResult:
-    """Run a single mutation trial.
+    """Run a single mutation trial by creating a new mutated cache file, running the
+    test commands, and then removing the mutated cache file.
 
     Args:
         genome: the genome to mutate
@@ -397,7 +404,7 @@ def run_mutation_trials(src_loc: Path, test_cmds: List[str], config: Config) -> 
         config: the running config object
 
     Returns:
-        ResultsSummary object of the mutation trials
+        ``ResultsSummary`` object of the mutation trials.
     """
 
     start = datetime.now()

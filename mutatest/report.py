@@ -1,4 +1,8 @@
-"""Report creation.
+"""
+Report
+------
+
+Functions used to aggregate and produce the final RST reports seen on the CLI.
 """
 import logging
 
@@ -39,7 +43,7 @@ def get_reported_results(trial_results: List[MutantTrialResult], status: str) ->
         status: the status to filter by
 
     Returns:
-        The reported mutants as a ReportedMutants container.
+        The reported mutants as a ``ReportedMutants`` container.
     """
     mutants = [t.mutant for t in trial_results if t.status == status]
     return ReportedMutants(status, mutants)
@@ -69,25 +73,27 @@ def analyze_mutant_trials(trial_results: List[MutantTrialResult]) -> Tuple[str, 
 
     It will look like:
 
-    Overall mutation trial summary:
-    ===============================
-    DETECTED: x
-    SURVIVED: y
-    ...
+    .. code-block::
 
-    Breakdown by section:
-    =====================
+        Overall mutation trial summary:
+        ===============================
+        DETECTED: x
+        SURVIVED: y
+        ...
 
-    Section title
-    -------------
-    source_file.py: (l: 1, c: 10) - mutation from op.Original to op.Mutated
-    source_file.py: (l: 3, c: 10) - mutation from op.Original to op.Mutated
+        Breakdown by section:
+        =====================
+
+        Section title
+        -------------
+        source_file.py: (l: 1, c: 10) - mutation from op.Original to op.Mutated
+        source_file.py: (l: 3, c: 10) - mutation from op.Original to op.Mutated
 
     Args:
-        trial_results: list of MutantTrial results
+        trial_results: list of ``MutantTrial`` results
 
     Returns:
-        Tuple: (text report, DisplayResults)
+        Tuple: (text report, ``DisplayResults``)
     """
     status = get_status_summary(trial_results)
 
@@ -135,10 +141,12 @@ def build_report_section(title: str, mutants: List[Mutant]) -> str:
 
     It will look like:
 
-    Title
-    -----
-    source_file.py: (l: 1, c: 10) - mutation from op.Original to op.Mutated
-    source_file.py: (l: 3, c: 10) - mutation from op.Original to op.Mutated
+    .. code-block::
+
+        Title
+        -----
+        source_file.py: (l: 1, c: 10) - mutation from op.Original to op.Mutated
+        source_file.py: (l: 3, c: 10) - mutation from op.Original to op.Mutated
 
 
     Args:
