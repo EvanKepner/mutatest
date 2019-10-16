@@ -18,5 +18,6 @@ recursive-include tests *.py
 recursive-include docs *.bat
 recursive-include docs *.py
 recursive-include docs *.rst
+recursive-include docs *.ini
 recursive-include docs Makefile
 recursive-include docs requirements.txt
