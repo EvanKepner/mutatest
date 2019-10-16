@@ -1,2 +1,3 @@
 coverage==4.5.4
+ipython==7.8.0
 Sphinx==2.2.0

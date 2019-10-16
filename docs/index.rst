@@ -5,8 +5,10 @@
     :target: https://www.python.org/
 .. image:: https://travis-ci.org/EvanKepner/mutatest.svg?branch=master
     :target: https://travis-ci.org/EvanKepner/mutatest
+.. image:: https://readthedocs.org/projects/mutatest/badge/?version=latest
+    :target: https://mutatest.readthedocs.io/en/latest/?badge=latest
 .. image:: https://codecov.io/gh/EvanKepner/mutatest/branch/master/graph/badge.svg
-  :target: https://codecov.io/gh/EvanKepner/mutatest
+    :target: https://codecov.io/gh/EvanKepner/mutatest
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
     :target: https://github.com/ambv/black
 .. image:: https://pepy.tech/badge/mutatest
@@ -126,6 +128,7 @@ reset when the mutation trials are finished.
    install
    commandline
    mutants
+   api_tutorial/api_tutorial
    modules
    license
    changelog

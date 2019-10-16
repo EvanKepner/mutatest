@@ -37,7 +37,7 @@ CLASSIFIERS = [
 # Built to run with pytest, but not an installation requirement for the API
 INSTALL_REQUIRES = ["coverage>=4.4"]
 EXTRAS_REQUIRE = {
-    "docs": ["sphinx"],
+    "docs": ["coverage", "ipython", "sphinx"],  # kept in docs/requirements.txt for RTD
     "tests": [
         "pytest >= 4.0.0",
         "freezegun",

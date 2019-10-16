@@ -6,6 +6,8 @@
     :target: https://www.python.org/
 .. image:: https://travis-ci.org/EvanKepner/mutatest.svg?branch=master
     :target: https://travis-ci.org/EvanKepner/mutatest
+.. image:: https://readthedocs.org/projects/mutatest/badge/?version=latest
+    :target: https://mutatest.readthedocs.io/en/latest/?badge=latest
 .. image:: https://codecov.io/gh/EvanKepner/mutatest/branch/master/graph/badge.svg
   :target: https://codecov.io/gh/EvanKepner/mutatest
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
@@ -293,7 +295,6 @@ as an input list on the CLI.
 
     ... Category restriction, chosen categories: ['aa', 'bn', 'ix']
     ... Setting random.seed to: None
-    ... Ignoring coverage file for sample space creation.
     ... Total sample space size: 311
     ... Selecting 10 locations from 311 potentials.
     ... Starting individual mutation trials!

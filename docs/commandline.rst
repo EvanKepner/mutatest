@@ -211,7 +211,6 @@ as an input list on the CLI.
 
     ... Category restriction, chosen categories: ['aa', 'bn', 'ix']
     ... Setting random.seed to: None
-    ... Ignoring coverage file for sample space creation.
     ... Total sample space size: 311
     ... Selecting 10 locations from 311 potentials.
     ... Starting individual mutation trials!
