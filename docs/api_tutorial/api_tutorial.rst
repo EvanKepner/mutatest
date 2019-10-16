@@ -1,14 +1,15 @@
-.. _API Tutorial:
 
 API Tutorial
 ============
 
 This is a walkthrough of using the ``mutatest`` API. These are the same
 method calls used by the CLI and provide additional flexibility for
-customization. The code and notebook to generate these tutorials is
-located under the ``docs`` folder on GitHub.
+customization. The code and notebook to generate this tutorial is
+located under the ``docs/api_tutorial`` folder on GitHub.
 
 .. code:: ipython3
+
+    # Imports used throughout the tutorial
 
     import ast
 
@@ -19,8 +20,8 @@ located under the ``docs`` folder on GitHub.
     from mutatest.api import Genome, GenomeGroup
     from mutatest.filters import CoverageFilter, CategoryCodeFilter
 
-Setup
------
+Tutorial setup and example files
+--------------------------------
 
 The ``example/`` folder has two Python files, ``a.py`` and ``b.py``,
 with a ``test_ab.py`` file that would be automatically detected by
@@ -43,12 +44,82 @@ with a ``test_ab.py`` file that would be automatically detected by
     example/b.py
 
 
+.. code:: ipython3
+
+    # Contents of a.py example source file
+    print(open(src_loc / "a.py").read())
+
+
+.. parsed-literal::
+
+    """Example A.
+    """
+
+
+    def add_five(a):
+        return a + 5
+
+
+    def greater_than(a, b):
+        return a > b
+
+
+    print(add_five(5))
+
+
+
+.. code:: ipython3
+
+    # Contents of b.py example source file
+
+    print(open(src_loc / "b.py").read())
+
+
+.. parsed-literal::
+
+    """Example B.
+    """
+
+
+    def is_match(a, b):
+        return a is b
+
+
+    print(is_match(1, 1))
+    print(is_match(1, 2))
+
+
+
+.. code:: ipython3
+
+    # Contents of test_ab.py example test file
+
+    print(open(src_loc / "test_ab.py").read())
+
+
+.. parsed-literal::
+
+    from a import add_five
+    from b import is_match
+
+
+    def test_add_five():
+        assert add_five(6) > 10
+
+
+    def test_is_match():
+        assert is_match("one", "one")
+
+
+
 Run a clean trial and generate coverage
 ---------------------------------------
 
 We can use ``run`` to perform a “clean trial” of our test commands based
 on the source location. This will generate a ``.coverage`` file that
 will be used by the ``Genome``. A ``.coverage`` file is not required.
+This run method is useful for doing clean trials before and after
+mutation trials as a way to reset the ``__pycache__``.
 
 .. code:: ipython3
 
@@ -62,7 +133,7 @@ will be used by the ``Genome``. A ``.coverage`` file is not required.
 
 .. parsed-literal::
 
-    datetime.timedelta(microseconds=440740)
+    datetime.timedelta(microseconds=587271)
 
 
 
@@ -154,8 +225,8 @@ have lines covered by the set ``coverage_file`` property.
 
 .. parsed-literal::
 
-    {LocIndex(ast_class='BinOp', lineno=5, col_offset=11, op_type=<class '_ast.Add'>),
-     LocIndex(ast_class='Compare', lineno=8, col_offset=11, op_type=<class '_ast.Gt'>)}
+    {LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>),
+     LocIndex(ast_class='Compare', lineno=10, col_offset=11, op_type=<class '_ast.Gt'>)}
 
 
 
@@ -168,7 +239,7 @@ have lines covered by the set ``coverage_file`` property.
 
 .. parsed-literal::
 
-    {LocIndex(ast_class='BinOp', lineno=5, col_offset=11, op_type=<class '_ast.Add'>)}
+    {LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>)}
 
 
 
@@ -181,7 +252,7 @@ have lines covered by the set ``coverage_file`` property.
 
 .. parsed-literal::
 
-    {LocIndex(ast_class='Compare', lineno=8, col_offset=11, op_type=<class '_ast.Gt'>)}
+    {LocIndex(ast_class='Compare', lineno=10, col_offset=11, op_type=<class '_ast.Gt'>)}
 
 
 
@@ -201,7 +272,7 @@ targets through ``transformers.MutateAST``.
 
 .. parsed-literal::
 
-    <_ast.Module at 0x7f8190310358>
+    <_ast.Module at 0x7f3f6a385da0>
 
 
 
@@ -214,10 +285,10 @@ targets through ``transformers.MutateAST``.
 
 .. parsed-literal::
 
-    [<_ast.Expr at 0x7f8190310390>,
-     <_ast.FunctionDef at 0x7f8190310400>,
-     <_ast.FunctionDef at 0x7f8190310588>,
-     <_ast.Expr at 0x7f8190310748>]
+    [<_ast.Expr at 0x7f3f6a385dd8>,
+     <_ast.FunctionDef at 0x7f3f6a385e48>,
+     <_ast.FunctionDef at 0x7f3f6a385fd0>,
+     <_ast.Expr at 0x7f3f6a38d1d0>]
 
 
 
@@ -231,11 +302,11 @@ targets through ``transformers.MutateAST``.
 .. parsed-literal::
 
     {'name': 'add_five',
-     'args': <_ast.arguments at 0x7f8190310438>,
-     'body': [<_ast.Return at 0x7f81903104a8>],
+     'args': <_ast.arguments at 0x7f3f6a385e80>,
+     'body': [<_ast.Return at 0x7f3f6a385ef0>],
      'decorator_list': [],
      'returns': None,
-     'lineno': 4,
+     'lineno': 5,
      'col_offset': 0}
 
 
@@ -307,7 +378,7 @@ covered targets to only ``BinOp`` class operations.
 
 .. parsed-literal::
 
-    {LocIndex(ast_class='BinOp', lineno=5, col_offset=11, op_type=<class '_ast.Add'>)}
+    {LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>)}
 
 
 
@@ -320,7 +391,7 @@ covered targets to only ``BinOp`` class operations.
 
 .. parsed-literal::
 
-    {LocIndex(ast_class='BinOp', lineno=5, col_offset=11, op_type=<class '_ast.Add'>)}
+    {LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>)}
 
 
 
@@ -340,8 +411,8 @@ covered targets to only ``BinOp`` class operations.
 
 .. parsed-literal::
 
-    {LocIndex(ast_class='BinOp', lineno=5, col_offset=11, op_type=<class '_ast.Add'>),
-     LocIndex(ast_class='Compare', lineno=8, col_offset=11, op_type=<class '_ast.Gt'>)}
+    {LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>),
+     LocIndex(ast_class='Compare', lineno=10, col_offset=11, op_type=<class '_ast.Gt'>)}
 
 
 
@@ -365,7 +436,7 @@ includes targets, covered targets, and AST.
 
 .. parsed-literal::
 
-    {LocIndex(ast_class='CompareIs', lineno=5, col_offset=11, op_type=<class '_ast.Is'>)}
+    {LocIndex(ast_class='CompareIs', lineno=6, col_offset=11, op_type=<class '_ast.Is'>)}
 
 
 
@@ -378,4 +449,4 @@ includes targets, covered targets, and AST.
 
 .. parsed-literal::
 
-    {LocIndex(ast_class='BinOp', lineno=5, col_offset=11, op_type=<class '_ast.Add'>)}
+    {LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>)}
