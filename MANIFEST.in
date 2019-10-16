@@ -15,6 +15,9 @@ include .coveragerc
 recursive-include tests *.py
 
 # docs
+include docs/_static/placeholder
+include docs/_templates/placeholder
+
 recursive-include docs *.bat
 recursive-include docs *.py
 recursive-include docs *.rst
