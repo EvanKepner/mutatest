@@ -20,8 +20,8 @@ located under the ``docs/api_tutorial`` folder on GitHub.
     from mutatest.api import Genome, GenomeGroup, MutationException
     from mutatest.filters import CoverageFilter, CategoryCodeFilter
 
-Tutorial setup and example files
---------------------------------
+Tutorial setup
+--------------
 
 The ``example/`` folder has two Python files, ``a.py`` and ``b.py``,
 with a ``test_ab.py`` file that would be automatically detected by
@@ -45,6 +45,13 @@ with a ``test_ab.py`` file that would be automatically detected by
     example/test_ab.py
     example/b.py
 
+
+``a.py`` holds two functions: one to add five to an input value, another
+to return ``True`` if the first input value is greater than the second
+input value. The add operation is represented in the AST as ``ast.Add``,
+a ``BinOp`` operation type, and the greater-than operation is
+represented by ``ast.Gt``, a ``CompareOp`` operation type. If the source
+code is executed the expected value is to print ``10``.
 
 .. code:: ipython3
 
@@ -75,6 +82,11 @@ with a ``test_ab.py`` file that would be automatically detected by
 
 
 
+``b.py`` has a single function that returns whether or not the first
+input ``is`` the second input. ``is`` is represented by ``ast.Is`` and
+is a ``CompareIs`` operation type. The expected value if this source
+code is executed is ``True``.
+
 .. code:: ipython3
 
     # Contents of b.py example source file
@@ -95,6 +107,11 @@ with a ``test_ab.py`` file that would be automatically detected by
     print(is_match(1, 1))
 
 
+
+``test_ab.py`` is the test script for both ``a.py`` and ``b.py``. The
+``test_add_five`` function is intentionally broken to demonstrate later
+mutations. It will pass if the value is greater than 10 in the test
+using 6 as an input value, and fail otherwise.
 
 .. code:: ipython3
 
@@ -141,7 +158,7 @@ mutation trials as a way to reset the ``__pycache__``.
 
 .. parsed-literal::
 
-    datetime.timedelta(microseconds=457205)
+    datetime.timedelta(microseconds=500006)
 
 
 
@@ -272,7 +289,8 @@ Accessing the AST
 
 The ``ast`` property is the AST of the source file. You can access the
 properties directly. This is used to generate the targets and covered
-targets through ``transformers.MutateAST``.
+targets. The AST parser is defined in ``transformers`` but is
+encapsulted in the ``Genome``.
 
 .. code:: ipython3
 
@@ -283,7 +301,7 @@ targets through ``transformers.MutateAST``.
 
 .. parsed-literal::
 
-    <_ast.Module at 0x7fb97868de48>
+    <_ast.Module at 0x7f0d6bd88da0>
 
 
 
@@ -296,10 +314,10 @@ targets through ``transformers.MutateAST``.
 
 .. parsed-literal::
 
-    [<_ast.Expr at 0x7fb97868de80>,
-     <_ast.FunctionDef at 0x7fb97868def0>,
-     <_ast.FunctionDef at 0x7fb9786970b8>,
-     <_ast.Expr at 0x7fb978697278>]
+    [<_ast.Expr at 0x7f0d6bd88dd8>,
+     <_ast.FunctionDef at 0x7f0d6bd88e48>,
+     <_ast.FunctionDef at 0x7f0d6bd88fd0>,
+     <_ast.Expr at 0x7f0d6bd911d0>]
 
 
 
@@ -313,8 +331,8 @@ targets through ``transformers.MutateAST``.
 .. parsed-literal::
 
     {'name': 'add_five',
-     'args': <_ast.arguments at 0x7fb97868df28>,
-     'body': [<_ast.Return at 0x7fb97868df98>],
+     'args': <_ast.arguments at 0x7f0d6bd88e80>,
+     'body': [<_ast.Return at 0x7f0d6bd88ef0>],
      'decorator_list': [],
      'returns': None,
      'lineno': 5,
@@ -333,6 +351,7 @@ covered targets to only ``BinOp`` class operations.
 
     # All available categories are listed
     # in transformers.CATEGORIES
+
     print(*[f"Category:{k}, Code: {v}"
             for k,v in transformers.CATEGORIES.items()],
           sep="\n")
@@ -428,6 +447,212 @@ covered targets to only ``BinOp`` class operations.
 
 
 
+Using custom filters
+~~~~~~~~~~~~~~~~~~~~
+
+If you need more flexibility, the ``filters`` define the two classes of
+filter used by ``Genome``: the ``CoverageFilter`` and the
+``CategoryCodeFilter``. These are encapsultated by ``Genome`` and
+``GenomeGroup`` already but can be accessed directly.
+
+Coverage Filter
+^^^^^^^^^^^^^^^
+
+.. code:: ipython3
+
+    cov_filter = CoverageFilter(coverage_file=Path(".coverage"))
+
+.. code:: ipython3
+
+    # Use the filter method to filter targets based on
+    # a given source file.
+
+    cov_filter.filter(
+        genome.targets, genome.source_file
+    )
+
+
+
+
+.. parsed-literal::
+
+    {LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>)}
+
+
+
+.. code:: ipython3
+
+    # You can invert the filtering as well
+
+    cov_filter.filter(
+        genome.targets, genome.source_file,
+        invert=True
+    )
+
+
+
+
+.. parsed-literal::
+
+    {LocIndex(ast_class='Compare', lineno=10, col_offset=11, op_type=<class '_ast.Gt'>)}
+
+
+
+Category Code Filter
+^^^^^^^^^^^^^^^^^^^^
+
+.. code:: ipython3
+
+    # Instantiate using a set of codes
+    # or add them later
+
+    catcode_filter = CategoryCodeFilter(codes=("bn",))
+
+.. code:: ipython3
+
+    # Valid codes provide all potential values
+
+    catcode_filter.valid_codes
+
+
+
+
+.. parsed-literal::
+
+    dict_values(['aa', 'bn', 'bc', 'bs', 'bl', 'cp', 'cn', 'cs', 'if', 'ix', 'nc', 'su', 'sr'])
+
+
+
+.. code:: ipython3
+
+    # Valid categories are also available
+
+    catcode_filter.valid_categories
+
+
+
+
+.. parsed-literal::
+
+    {'AugAssign': 'aa',
+     'BinOp': 'bn',
+     'BinOpBC': 'bc',
+     'BinOpBS': 'bs',
+     'BoolOp': 'bl',
+     'Compare': 'cp',
+     'CompareIn': 'cn',
+     'CompareIs': 'cs',
+     'If': 'if',
+     'Index': 'ix',
+     'NameConstant': 'nc',
+     'SliceUS': 'su',
+     'SliceRC': 'sr'}
+
+
+
+.. code:: ipython3
+
+    # add more codes
+
+    catcode_filter.add_code("aa")
+    catcode_filter.codes
+
+
+
+
+.. parsed-literal::
+
+    {'aa', 'bn'}
+
+
+
+.. code:: ipython3
+
+    # see all validation mutations
+    # based on the set codes
+
+    catcode_filter.valid_mutations
+
+
+
+
+.. parsed-literal::
+
+    {_ast.Add,
+     _ast.Div,
+     _ast.FloorDiv,
+     _ast.Mod,
+     _ast.Mult,
+     _ast.Pow,
+     _ast.Sub,
+     'AugAssign_Add',
+     'AugAssign_Div',
+     'AugAssign_Mult',
+     'AugAssign_Sub'}
+
+
+
+.. code:: ipython3
+
+    # discard codes
+
+    catcode_filter.discard_code("aa")
+    catcode_filter.codes
+
+
+
+
+.. parsed-literal::
+
+    {'bn'}
+
+
+
+.. code:: ipython3
+
+    catcode_filter.valid_mutations
+
+
+
+
+.. parsed-literal::
+
+    {_ast.Add, _ast.Div, _ast.FloorDiv, _ast.Mod, _ast.Mult, _ast.Pow, _ast.Sub}
+
+
+
+.. code:: ipython3
+
+    # Filter a set of targets based on codes
+
+    catcode_filter.filter(genome.targets)
+
+
+
+
+.. parsed-literal::
+
+    {LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>)}
+
+
+
+.. code:: ipython3
+
+    # Optionally, invert the filter
+
+    catcode_filter.filter(
+        genome.targets, invert=True
+    )
+
+
+
+
+.. parsed-literal::
+
+    {LocIndex(ast_class='Compare', lineno=10, col_offset=11, op_type=<class '_ast.Gt'>)}
+
+
+
 Changing the source file in a Genome
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -473,6 +698,11 @@ You must speicfy a valid operation e.g., “add” can be mutated to
 “divide” or “subtract”, but not “is”. The ``Genome`` itself is not
 modified, a returned ``Mutant`` object holds the information required to
 create a mutated version of the ``__pycache__`` for that source file.
+For this example, we’ll change ``a.py`` to use a multiplication
+operation instead of an addition operation for the ``add_five``
+function. The original expected result of the code was ``10`` from
+``5 + 5`` if executed, with the mutation it will be ``25`` since the
+mutation creates ``5 * 5``.
 
 .. code:: ipython3
 
@@ -533,7 +763,7 @@ create a mutated version of the ``__pycache__`` for that source file.
 
 .. parsed-literal::
 
-    Mutant(mutant_code=<code object <module> at 0x7fb9789d39c0, file "example/a.py", line 2>, src_file=PosixPath('example/a.py'), cfile=PosixPath('example/__pycache__/a.cpython-37.pyc'), loader=<_frozen_importlib_external.SourceFileLoader object at 0x7fb9786a5fd0>, source_stats={'mtime': 1571245955.1276326, 'size': 118}, mode=33204, src_idx=LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>), mutation=<class '_ast.Mult'>)
+    Mutant(mutant_code=<code object <module> at 0x7f0d800ceae0, file "example/a.py", line 2>, src_file=PosixPath('example/a.py'), cfile=PosixPath('example/__pycache__/a.cpython-37.pyc'), loader=<_frozen_importlib_external.SourceFileLoader object at 0x7f0d6bd3bbe0>, source_stats={'mtime': 1571245955.1276326, 'size': 118}, mode=33204, src_idx=LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>), mutation=<class '_ast.Mult'>)
 
 
 
@@ -553,7 +783,8 @@ create a mutated version of the ``__pycache__`` for that source file.
 
 .. code:: ipython3
 
-    # Mutants have a write_cache() method to apply the change
+    # Mutants have a write_cache() method to apply
+    # the change to __pycache__
 
     mutant.write_cache()
 
@@ -569,6 +800,8 @@ create a mutated version of the ``__pycache__`` for that source file.
 .. code:: ipython3
 
     # In this case the mutation would survive
+    # The test passes if the value is
+    # greater than 10.
 
     mutant_trial_result.status
 
@@ -578,3 +811,208 @@ create a mutated version of the ``__pycache__`` for that source file.
 .. parsed-literal::
 
     'SURVIVED'
+
+
+
+.. code:: ipython3
+
+    # Using a different operation, such as Div
+    # will be a detected mutation
+    # since the test will fail.
+
+    mutant_trial_result = run.create_mutation_run_trial(
+        genome, mutation_target, ast.Div, ["pytest"]
+    )
+
+    mutant_trial_result.status
+
+
+
+
+.. parsed-literal::
+
+    'DETECTED'
+
+
+
+GenomeGroups
+------------
+
+The ``GenomeGroup`` is a way to interact with multiple ``Genomes``. You
+can create a ``GenomeGroup`` from a folder of files, add new
+``Genomes``, and access shared properties across the ``Genomes``. It is
+a ``MutableMapping`` and behaves accordingly, though it only accepts
+``Path`` keys and ``Genome`` values. You can use the ``GenomeGroup`` to
+assign common filters, common coverage files, and to get all targets
+across an entire collection of ``Genomes``.
+
+.. code:: ipython3
+
+    ggrp = GenomeGroup(src_loc)
+
+.. code:: ipython3
+
+    # key-value pairs in the GenomeGroup are
+    # the path to the source file
+    # and the Genome object for that file
+
+    for k,v in ggrp.items():
+        print(k, v)
+
+
+.. parsed-literal::
+
+    example/a.py <mutatest.api.Genome object at 0x7f0d6bd4b518>
+    example/b.py <mutatest.api.Genome object at 0x7f0d6bd4b4e0>
+
+
+.. code:: ipython3
+
+    # targets, and covered_targets produce
+    # GenomeGroupTarget objects that have
+    # attributes for the source path and
+    # LocIdx for the target
+
+    for t in ggrp.targets:
+        print(
+            t.source_path, t.loc_idx
+        )
+
+
+.. parsed-literal::
+
+    example/a.py LocIndex(ast_class='Compare', lineno=10, col_offset=11, op_type=<class '_ast.Gt'>)
+    example/b.py LocIndex(ast_class='CompareIs', lineno=6, col_offset=11, op_type=<class '_ast.Is'>)
+    example/a.py LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>)
+
+
+.. code:: ipython3
+
+    # You can set a filter or
+    # coverage file for the entire set
+    # of genomes
+
+    ggrp.set_coverage = Path(".coverage")
+
+    for t in ggrp.covered_targets:
+        print(
+            t.source_path, t.loc_idx
+        )
+
+
+.. parsed-literal::
+
+    example/a.py LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>)
+    example/b.py LocIndex(ast_class='CompareIs', lineno=6, col_offset=11, op_type=<class '_ast.Is'>)
+
+
+.. code:: ipython3
+
+    # Setting filter codes on all Genomes
+    # in the group
+
+    ggrp.set_filter(("cs",))
+    ggrp.targets
+
+
+
+
+.. parsed-literal::
+
+    {GenomeGroupTarget(source_path=PosixPath('example/b.py'), loc_idx=LocIndex(ast_class='CompareIs', lineno=6, col_offset=11, op_type=<class '_ast.Is'>))}
+
+
+
+.. code:: ipython3
+
+    for k, v in ggrp.items():
+        print(k, v.filter_codes)
+
+
+.. parsed-literal::
+
+    example/a.py {'cs'}
+    example/b.py {'cs'}
+
+
+.. code:: ipython3
+
+    # MutableMapping operations are
+    # available as well
+
+    ggrp.values()
+
+
+
+
+.. parsed-literal::
+
+    dict_values([<mutatest.api.Genome object at 0x7f0d6bd4b518>, <mutatest.api.Genome object at 0x7f0d6bd4b4e0>])
+
+
+
+.. code:: ipython3
+
+    ggrp.keys()
+
+
+
+
+.. parsed-literal::
+
+    dict_keys([PosixPath('example/a.py'), PosixPath('example/b.py')])
+
+
+
+.. code:: ipython3
+
+    # pop a Genome out of the Group
+
+    genome_a = ggrp.pop(Path("example/a.py"))
+    ggrp
+
+
+
+
+.. parsed-literal::
+
+    {PosixPath('example/b.py'): <mutatest.api.Genome object at 0x7f0d6bd4b4e0>}
+
+
+
+.. code:: ipython3
+
+    # add a Genome to the group
+
+    ggrp.add_genome(genome_a)
+    ggrp
+
+
+
+
+.. parsed-literal::
+
+    {PosixPath('example/b.py'): <mutatest.api.Genome object at 0x7f0d6bd4b4e0>, PosixPath('example/a.py'): <mutatest.api.Genome object at 0x7f0d6bd4b518>}
+
+
+
+.. code:: ipython3
+
+    # the add_folder options provides
+    # more flexibility e.g., to include
+    # the test_ files.
+
+    ggrp_with_tests = GenomeGroup()
+    ggrp_with_tests.add_folder(
+        src_loc, ignore_test_files=False
+    )
+
+    for k, v in ggrp_with_tests.items():
+        print(k, v)
+
+
+.. parsed-literal::
+
+    example/a.py <mutatest.api.Genome object at 0x7f0d6bd5e160>
+    example/test_ab.py <mutatest.api.Genome object at 0x7f0d6bd5e198>
+    example/b.py <mutatest.api.Genome object at 0x7f0d6bd5e1d0>

@@ -14,4 +14,4 @@ __author__ = "Evan Kepner"
 __email__ = "EvanKepner@users.noreply.github.com"
 
 __license__ = "MIT"
-__copyright__ = "Copyright (c) 2018 Evan Kepner"
+__copyright__ = "Copyright (c) 2018-2019 Evan Kepner"
