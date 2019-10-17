@@ -41,13 +41,12 @@ Features
     Running clean trial
     2 mutation targets found in example/a.py AST.
     1 mutation targets found in example/b.py AST.
-    Setting random.seed to: None
+    Setting random.seed to: 314
     Total sample space size: 2
     10 exceeds sample space, using full sample: 2.
-    Starting individual mutation trials!
 
+    Starting individual mutation trials!
     Current target location: a.py, LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>)
-    Detected mutation at example/a.py: (6, 11)
     Detected mutation at example/a.py: (6, 11)
     Detected mutation at example/a.py: (6, 11)
     Surviving mutation at example/a.py: (6, 11)
@@ -55,7 +54,6 @@ Features
 
     Current target location: b.py, LocIndex(ast_class='CompareIs', lineno=6, col_offset=11, op_type=<class '_ast.Is'>)
     Detected mutation at example/b.py: (6, 11)
-
     Running clean trial
 
     Mutatest diagnostic summary
@@ -76,31 +74,32 @@ Features
 
     Running time details
     --------------------
-     - Clean trial 1 run time: 0:00:00.347335
-     - Clean trial 2 run time: 0:00:00.345532
-     - Mutation trials total run time: 0:00:00.687629
+     - Clean trial 1 run time: 0:00:00.348999
+     - Clean trial 2 run time: 0:00:00.350213
+     - Mutation trials total run time: 0:00:01.389095
 
-    2019-10-17 16:36:40,288: Trial Summary Report:
+    2019-10-17 16:57:08,645: Trial Summary Report:
 
     Overall mutation trial summary
     ==============================
+     - DETECTED: 3
      - SURVIVED: 1
-     - DETECTED: 1
-     - TOTAL RUNS: 2
-     - RUN DATETIME: 2019-10-17 16:36:40.288077
+     - TOTAL RUNS: 4
+     - RUN DATETIME: 2019-10-17 16:57:08.645355
 
-    2019-10-17 16:36:40,288: Detected mutations:
+    2019-10-17 16:57:08,645: Detected mutations:
 
     DETECTED
     --------
+     - example/a.py: (l: 6, c: 11) - mutation from <class '_ast.Add'> to <class '_ast.Sub'>
+     - example/a.py: (l: 6, c: 11) - mutation from <class '_ast.Add'> to <class '_ast.Mod'>
      - example/b.py: (l: 6, c: 11) - mutation from <class '_ast.Is'> to <class '_ast.IsNot'>
 
-    2019-10-17 16:36:40,288: Surviving mutations:
+    2019-10-17 16:57:08,645: Surviving mutations:
 
     SURVIVED
     --------
-     - example/a.py: (l: 6, c: 11) - mutation from <class '_ast.Add'> to <class '_ast.Pow'>
-
+     - example/a.py: (l: 6, c: 11) - mutation from <class '_ast.Add'> to <class '_ast.Mult'>
 
 
 Documentation

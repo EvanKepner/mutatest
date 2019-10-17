@@ -406,7 +406,6 @@ def run_mutation_trials(src_loc: Path, test_cmds: List[str], config: Config) -> 
     Returns:
         ``ResultsSummary`` object of the mutation trials.
     """
-
     start = datetime.now()
 
     # Create a GenomeGroup from the source-location with config flags
