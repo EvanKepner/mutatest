@@ -138,7 +138,7 @@ def clean_trial(src_loc: Path, test_cmds: List[str]) -> timedelta:
     if clean_run.returncode != 0:
         raise BaselineTestException(
             f"Clean trial does not pass, mutant tests will be meaningless.\n"
-            f"Output: {clean_run.stdout}"
+            f"Output: {str(clean_run.stdout)}"
         )
 
     return end - start

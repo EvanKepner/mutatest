@@ -11,7 +11,7 @@ import logging
 import os
 
 from pathlib import Path
-from py_compile import PycInvalidationMode  # type: ignore
+from py_compile import PycInvalidationMode
 from typing import Union
 
 
