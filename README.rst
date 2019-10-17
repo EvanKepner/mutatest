@@ -113,7 +113,7 @@ Bugs/Requests
 -------------
 
 Please use the `GitHub issue tracker <https://github.com/EvanKepner/mutatest/issues>`_ to submit bugs
-or request features. As with many projects, this is volunteer lead.
+or request features.
 See `Contributing Guidelines <https://mutatest.readthedocs.io/en/latest/contributing.html>`_ if you
 are interested in submitting code in the form of pull requests.
 
@@ -128,6 +128,6 @@ License
 
 Copyright Evan Kepner 2018-2019.
 
-Distributed under the terms of the `MIT`_ license, pytest is free and open source software.
+Distributed under the terms of the `MIT`_ license, ``mutatest`` is free and open source software.
 
 .. _`MIT`: https://github.com/pytest-dev/pytest/blob/master/LICENSE
