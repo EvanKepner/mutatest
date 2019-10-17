@@ -19,12 +19,11 @@ sys.path.insert(0, os.path.abspath(".."))
 # -- Project information -----------------------------------------------------
 
 project = "Mutatest"
-copyright = "2019, Evan Kepner"
+copyright = "2018-2019, Evan Kepner"
 author = "Evan Kepner"
 
 # The full version, including alpha/beta/rc tags
-# release = '1.0.0'
-release = "1.0.0"
+release = "1.0.1"
 
 
 # -- General configuration ---------------------------------------------------
