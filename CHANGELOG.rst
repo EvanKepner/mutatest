@@ -12,6 +12,8 @@ Beta Releases
       a full internal design has been applied to create a coherent API. The ``controller``, ``optimizers``,
       and ``maker`` modules have been fully replaced by ``run``, ``api``, and ``filters``. See
       the new full API documentation for details on using these modules outside of the CLI.
+    - Additionally, ``pytest`` was removed from the installation requirements since it is assumed
+      for the default running modes but not required for the API or installation.
 
 
 Alpha Releases
