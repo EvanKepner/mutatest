@@ -4,6 +4,13 @@ Changelog
 Beta Releases
 -------------
 
+1.0.1
+-----
+
+    - Documentation updates, including the API tutorial.
+    - Fix on latest ``mypy`` errors related to ``strict`` processing of ``run`` and ``cache``.
+
+
 1.0.0
 ~~~~~
 
