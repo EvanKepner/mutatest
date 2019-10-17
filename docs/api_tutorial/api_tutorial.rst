@@ -17,7 +17,7 @@ located under the ``docs/api_tutorial`` folder on GitHub.
 
     from mutatest import run
     from mutatest import transformers
-    from mutatest.api import Genome, GenomeGroup
+    from mutatest.api import Genome, GenomeGroup, MutationException
     from mutatest.filters import CoverageFilter, CategoryCodeFilter
 
 Tutorial setup and example files
@@ -29,25 +29,32 @@ with a ``test_ab.py`` file that would be automatically detected by
 
 .. code:: ipython3
 
+    # This folder and included .py files are in docs/api_tutoral/
+
     src_loc = Path("example")
 
 .. code:: ipython3
 
-    print(*src_loc.iterdir(), sep="\n")
+    print(*[i for i in src_loc.iterdir()
+            if i.is_file()], sep="\n")
 
 
 .. parsed-literal::
 
     example/a.py
-    example/__pycache__
     example/test_ab.py
     example/b.py
 
 
 .. code:: ipython3
 
+    def open_print(fn):
+        """Open a print file contents."""
+        with open(fn) as f:
+            print(f.read())
+
     # Contents of a.py example source file
-    print(open(src_loc / "a.py").read())
+    open_print(src_loc / "a.py")
 
 
 .. parsed-literal::
@@ -72,7 +79,7 @@ with a ``test_ab.py`` file that would be automatically detected by
 
     # Contents of b.py example source file
 
-    print(open(src_loc / "b.py").read())
+    open_print(src_loc / "b.py")
 
 
 .. parsed-literal::
@@ -86,7 +93,6 @@ with a ``test_ab.py`` file that would be automatically detected by
 
 
     print(is_match(1, 1))
-    print(is_match(1, 2))
 
 
 
@@ -94,7 +100,7 @@ with a ``test_ab.py`` file that would be automatically detected by
 
     # Contents of test_ab.py example test file
 
-    print(open(src_loc / "test_ab.py").read())
+    open_print(src_loc / "test_ab.py")
 
 
 .. parsed-literal::
@@ -126,14 +132,16 @@ mutation trials as a way to reset the ``__pycache__``.
     # The return value of clean_trial is the time to run
     # this is used in reporting from the CLI
 
-    run.clean_trial(src_loc, test_cmds=["pytest", "--cov=example"])
+    run.clean_trial(
+        src_loc, test_cmds=["pytest", "--cov=example"]
+    )
 
 
 
 
 .. parsed-literal::
 
-    datetime.timedelta(microseconds=587271)
+    datetime.timedelta(microseconds=457205)
 
 
 
@@ -163,7 +171,9 @@ filtering.
 .. code:: ipython3
 
     # Initialize with the source file location
-    # By default, the ".coverage" file is set for the coverage_file property
+    # By default, the ".coverage" file is set
+    # for the coverage_file property
+
     genome = Genome(src_loc / "a.py")
 
 .. code:: ipython3
@@ -196,6 +206,7 @@ filtering.
 
     # By default, no filter codes are set
     # These are categories of mutations to filter
+
     genome.filter_codes
 
 
@@ -272,7 +283,7 @@ targets through ``transformers.MutateAST``.
 
 .. parsed-literal::
 
-    <_ast.Module at 0x7f3f6a385da0>
+    <_ast.Module at 0x7fb97868de48>
 
 
 
@@ -285,10 +296,10 @@ targets through ``transformers.MutateAST``.
 
 .. parsed-literal::
 
-    [<_ast.Expr at 0x7f3f6a385dd8>,
-     <_ast.FunctionDef at 0x7f3f6a385e48>,
-     <_ast.FunctionDef at 0x7f3f6a385fd0>,
-     <_ast.Expr at 0x7f3f6a38d1d0>]
+    [<_ast.Expr at 0x7fb97868de80>,
+     <_ast.FunctionDef at 0x7fb97868def0>,
+     <_ast.FunctionDef at 0x7fb9786970b8>,
+     <_ast.Expr at 0x7fb978697278>]
 
 
 
@@ -302,8 +313,8 @@ targets through ``transformers.MutateAST``.
 .. parsed-literal::
 
     {'name': 'add_five',
-     'args': <_ast.arguments at 0x7f3f6a385e80>,
-     'body': [<_ast.Return at 0x7f3f6a385ef0>],
+     'args': <_ast.arguments at 0x7fb97868df28>,
+     'body': [<_ast.Return at 0x7fb97868df98>],
      'decorator_list': [],
      'returns': None,
      'lineno': 5,
@@ -320,7 +331,8 @@ covered targets to only ``BinOp`` class operations.
 
 .. code:: ipython3
 
-    # All available categories are listed in transformers.CATEGORIES
+    # All available categories are listed
+    # in transformers.CATEGORIES
     print(*[f"Category:{k}, Code: {v}"
             for k,v in transformers.CATEGORIES.items()],
           sep="\n")
@@ -450,3 +462,119 @@ includes targets, covered targets, and AST.
 .. parsed-literal::
 
     {LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>)}
+
+
+
+Creating Mutations
+------------------
+
+Mutations are applied to specific ``LocIndex`` targets in a ``Genome``.
+You must speicfy a valid operation e.g., “add” can be mutated to
+“divide” or “subtract”, but not “is”. The ``Genome`` itself is not
+modified, a returned ``Mutant`` object holds the information required to
+create a mutated version of the ``__pycache__`` for that source file.
+
+.. code:: ipython3
+
+    # Set the Genome back to example a
+    # filter to only the BinOp targets
+
+    genome.source_file = src_loc / "a.py"
+    genome.filter_codes = ("bn",)
+
+    # there is only one Binop target
+
+    mutation_target = list(genome.targets)[0]
+    mutation_target
+
+
+
+
+.. parsed-literal::
+
+    LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>)
+
+
+
+.. code:: ipython3
+
+    # The mutate() method applies a mutation operation
+    # and returns a mutant
+
+    mutant = genome.mutate(mutation_target, ast.Mult)
+
+.. code:: ipython3
+
+    # applying an invalid mutation
+    # raises a MutationException
+
+    try:
+        genome.mutate(mutation_target, ast.IsNot)
+
+    except MutationException as e:
+        print(e)
+
+
+.. parsed-literal::
+
+    <class '_ast.IsNot'> is not a member of mutation category bn.
+    Valid mutations for bn: {<class '_ast.Sub'>, <class '_ast.Add'>, <class '_ast.Pow'>, <class '_ast.FloorDiv'>, <class '_ast.Mod'>, <class '_ast.Div'>, <class '_ast.Mult'>}.
+
+
+.. code:: ipython3
+
+    # mutants have all of the properties
+    # needed to write mutated __pycache__
+
+    mutant
+
+
+
+
+.. parsed-literal::
+
+    Mutant(mutant_code=<code object <module> at 0x7fb9789d39c0, file "example/a.py", line 2>, src_file=PosixPath('example/a.py'), cfile=PosixPath('example/__pycache__/a.cpython-37.pyc'), loader=<_frozen_importlib_external.SourceFileLoader object at 0x7fb9786a5fd0>, source_stats={'mtime': 1571245955.1276326, 'size': 118}, mode=33204, src_idx=LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>), mutation=<class '_ast.Mult'>)
+
+
+
+.. code:: ipython3
+
+    # You can directly execute the mutant_code
+    # This result is with the mutated target being
+    # applied as Mult instead of Add in a.py
+
+    exec(mutant.mutant_code)
+
+
+.. parsed-literal::
+
+    25
+
+
+.. code:: ipython3
+
+    # Mutants have a write_cache() method to apply the change
+
+    mutant.write_cache()
+
+.. code:: ipython3
+
+    # Alternatively, use run to do a single trial
+    # and return the result
+
+    mutant_trial_result = run.create_mutation_run_trial(
+        genome, mutation_target, ast.Mult, ["pytest"]
+    )
+
+.. code:: ipython3
+
+    # In this case the mutation would survive
+
+    mutant_trial_result.status
+
+
+
+
+.. parsed-literal::
+
+    'SURVIVED'

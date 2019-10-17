@@ -7,4 +7,3 @@ def is_match(a, b):
 
 
 print(is_match(1, 1))
-print(is_match(1, 2))
