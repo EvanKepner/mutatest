@@ -26,13 +26,24 @@ integration checks would miss.
 Features
 ---------
 
-    - Simple command line tool with multiple configuration options.
-    - Built on Python's Abstract Syntax Tree (AST) grammar to ensure mutants are valid.
-    - No source code modification, only the ``__pycache__`` is changed.
-    - Uses ``coverage`` to create only meaningful mutants.
-    - Built for efficiency with multiple running modes and random sampling of mutation targets.
-    - Flexible enough to run on a whole package or a single file.
-    - Includes an API for custom mutation controls.
+    - Simple command line tool with `multiple configuration options <https://mutatest.readthedocs.io/en/latest/commandline.html>`_.
+    - Built on Python's Abstract Syntax Tree (AST) grammar to ensure `mutants are valid <https://mutatest.readthedocs.io/en/latest/mutants.html>`_.
+    - `No source code modification <https://mutatest.readthedocs.io/en/latest/install.html#mutation-trial-process>`_,
+      only the ``__pycache__`` is changed.
+    - Uses ``coverage`` to create `only meaningful mutants <https://mutatest.readthedocs.io/en/latest/commandline.html#coverage-filtering>`_.
+    - Built for efficiency with `multiple running modes <https://mutatest.readthedocs.io/en/latest/commandline.html#selecting-a-running-mode>`_
+      and `random sampling of mutation targets <https://mutatest.readthedocs.io/en/latest/commandline.html#controlling-randomization-behavior-and-trial-number>`_.
+    - Flexible enough to run on a `whole package <https://mutatest.readthedocs.io/en/latest/commandline.html#auto-detected-package-structures>`_
+      or a `single file <https://mutatest.readthedocs.io/en/latest/commandline.html#specifying-source-files-and-test-commands>`_.
+    - Includes an `API for custom mutation controls <https://mutatest.readthedocs.io/en/latest/modules.html>`_.
+
+
+Example Output
+--------------
+
+This is an output example running mutation trials against the
+`API Tutorial example folder <https://mutatest.readthedocs.io/en/latest/api_tutorial/api_tutorial.html>`_
+example folder.
 
 .. code-block:: bash
 
@@ -58,7 +69,7 @@ Features
 
     Mutatest diagnostic summary
     ===========================
-     - Source location: /home/zassoc/Github/mutatest/docs/api_tutorial/example
+     - Source location: /home/user/Github/mutatest/docs/api_tutorial/example
      - Test commands: ['pytest']
      - Mode: s
      - Excluded files: []
@@ -78,7 +89,7 @@ Features
      - Clean trial 2 run time: 0:00:00.350213
      - Mutation trials total run time: 0:00:01.389095
 
-    2019-10-17 16:57:08,645: Trial Summary Report:
+    Trial Summary Report:
 
     Overall mutation trial summary
     ==============================
@@ -87,7 +98,7 @@ Features
      - TOTAL RUNS: 4
      - RUN DATETIME: 2019-10-17 16:57:08.645355
 
-    2019-10-17 16:57:08,645: Detected mutations:
+    Detected mutations:
 
     DETECTED
     --------
@@ -95,7 +106,7 @@ Features
      - example/a.py: (l: 6, c: 11) - mutation from <class '_ast.Add'> to <class '_ast.Mod'>
      - example/b.py: (l: 6, c: 11) - mutation from <class '_ast.Is'> to <class '_ast.IsNot'>
 
-    2019-10-17 16:57:08,645: Surviving mutations:
+    Surviving mutations:
 
     SURVIVED
     --------
@@ -104,6 +115,7 @@ Features
 
 Documentation
 -------------
+
 For full documentation, including installation, CLI references, API references, and tutorials,
 please see https://mutatest.readthedocs.io/en/latest/.
 The project is hosted on PyPI at https://pypi.org/project/mutatest/.

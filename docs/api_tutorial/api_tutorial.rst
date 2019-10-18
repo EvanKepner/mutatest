@@ -1,3 +1,4 @@
+.. _API Tutorial:
 
 API Tutorial
 ============

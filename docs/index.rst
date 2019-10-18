@@ -62,6 +62,10 @@ that are auto-detected with ``pytest``, then you can run ``mutatest`` without an
 
 See more examples with additional configuration options in :ref:`Command Line Controls`.
 
+
+Help
+~~~~
+
 Run ``mutatest --help`` to see command line arguments and supported operations:
 
 .. code-block:: bash
@@ -98,32 +102,85 @@ Run ``mutatest --help`` to see command line arguments and supported operations:
       --nocov               Ignore coverage files for optimization.
 
 
-The mutation trial process follows these steps when ``mutatest`` is run from the CLI:
+Example Output
+~~~~~~~~~~~~~~
 
-1. Scan for your existing Python package, or use the input source location.
-2. Create an abstract syntax tree (AST) from the source files.
-3. Identify locations in the code that may be mutated (line and column). If you are running with
-   ``coverage`` the sample is restricted only to lines that are marked as covered in the
-   ``.coverage`` file.
-4. Take a random sample of the identified locations.
-5. Apply a mutation at the location by modifying a copy of the AST and writing a new cache file
-   to the appropriate ``__pycache__`` location with the source file statistics.
-6. Run the test suite. This will use the mutated ``__pycache__`` file since the source statistics
-   are the same for modification time.
-7. See if the test suite detected the mutation by a failed test.
-8. Remove the modified ``__pycache__`` file.
-9. Repeat steps 5-9 for the remaining selected locations to mutate.
-10. Write an output report of the various mutation results.
+This is an output example running mutation trials against the :ref:`API Tutorial` example folder.
 
-A "clean trial" of your tests is run before any mutations are applied. This same "clean trial" is
-run at the end of the mutation testing. This ensures that your original test suite passes before
-attempting to detect surviving mutations and that the ``__pycache__`` has been appropriately
-reset when the mutation trials are finished.
+.. code-block:: bash
+
+    $ mutatest -s example/ -t "pytest" -r 314
+
+    Running clean trial
+    2 mutation targets found in example/a.py AST.
+    1 mutation targets found in example/b.py AST.
+    Setting random.seed to: 314
+    Total sample space size: 2
+    10 exceeds sample space, using full sample: 2.
+
+    Starting individual mutation trials!
+    Current target location: a.py, LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>)
+    Detected mutation at example/a.py: (6, 11)
+    Detected mutation at example/a.py: (6, 11)
+    Surviving mutation at example/a.py: (6, 11)
+    Break on survival: stopping further mutations at location.
+
+    Current target location: b.py, LocIndex(ast_class='CompareIs', lineno=6, col_offset=11, op_type=<class '_ast.Is'>)
+    Detected mutation at example/b.py: (6, 11)
+    Running clean trial
+
+    Mutatest diagnostic summary
+    ===========================
+     - Source location: /home/user/Github/mutatest/docs/api_tutorial/example
+     - Test commands: ['pytest']
+     - Mode: s
+     - Excluded files: []
+     - N locations input: 10
+     - Random seed: 314
+
+    Random sample details
+    ---------------------
+     - Total locations mutated: 2
+     - Total locations identified: 2
+     - Location sample coverage: 100.00 %
+
+
+    Running time details
+    --------------------
+     - Clean trial 1 run time: 0:00:00.348999
+     - Clean trial 2 run time: 0:00:00.350213
+     - Mutation trials total run time: 0:00:01.389095
+
+    Trial Summary Report:
+
+    Overall mutation trial summary
+    ==============================
+     - DETECTED: 3
+     - SURVIVED: 1
+     - TOTAL RUNS: 4
+     - RUN DATETIME: 2019-10-17 16:57:08.645355
+
+    Detected mutations:
+
+    DETECTED
+    --------
+     - example/a.py: (l: 6, c: 11) - mutation from <class '_ast.Add'> to <class '_ast.Sub'>
+     - example/a.py: (l: 6, c: 11) - mutation from <class '_ast.Add'> to <class '_ast.Mod'>
+     - example/b.py: (l: 6, c: 11) - mutation from <class '_ast.Is'> to <class '_ast.IsNot'>
+
+    Surviving mutations:
+
+    SURVIVED
+    --------
+     - example/a.py: (l: 6, c: 11) - mutation from <class '_ast.Add'> to <class '_ast.Mult'>
+
+
+Contents
+========
 
 
 .. toctree::
    :maxdepth: 4
-   :caption: Contents:
 
    install
    commandline
