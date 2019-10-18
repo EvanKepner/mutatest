@@ -20,13 +20,19 @@ undetectable by your tests. These mutants are potential modifications in source 
 integration checks would miss.
 
 Features:
-    - Simple command line tool.
-    - Built on Python's Abstract Syntax Tree (AST) grammar to ensure mutants are valid.
-    - No source code modification, only the ``__pycache__`` is changed.
-    - Uses ``coverage`` to create only meaningful mutants.
-    - Built for efficiency with multiple running modes and random sampling of mutation targets.
-    - Flexible enough to run on a whole package or a single file.
-    - Includes an API for custom mutation controls.
+---------
+
+    - Simple command line tool with `multiple configuration options <https://mutatest.readthedocs.io/en/latest/commandline.html>`_.
+    - Built on Python's Abstract Syntax Tree (AST) grammar to ensure `mutants are valid <https://mutatest.readthedocs.io/en/latest/mutants.html>`_.
+    - `No source code modification <https://mutatest.readthedocs.io/en/latest/install.html#mutation-trial-process>`_,
+      only the ``__pycache__`` is changed.
+    - Uses ``coverage`` to create `only meaningful mutants <https://mutatest.readthedocs.io/en/latest/commandline.html#coverage-filtering>`_.
+    - Built for efficiency with `multiple running modes <https://mutatest.readthedocs.io/en/latest/commandline.html#selecting-a-running-mode>`_
+      and `random sampling of mutation targets <https://mutatest.readthedocs.io/en/latest/commandline.html#controlling-randomization-behavior-and-trial-number>`_.
+    - Flexible enough to run on a `whole package <https://mutatest.readthedocs.io/en/latest/commandline.html#auto-detected-package-structures>`_
+      or a `single file <https://mutatest.readthedocs.io/en/latest/commandline.html#specifying-source-files-and-test-commands>`_.
+    - Includes an `API for custom mutation controls <https://mutatest.readthedocs.io/en/latest/modules.html>`_.
+
 
 Quick Start
 -----------

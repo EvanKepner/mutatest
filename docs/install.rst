@@ -52,6 +52,60 @@ run at the end of the mutation testing. This ensures that your original test sui
 attempting to detect surviving mutations and that the ``__pycache__`` has been appropriately
 reset when the mutation trials are finished.
 
+.. _Motivation:
+
+Motivation and FAQs
+===================
+
+Mutation Testing Overview
+-------------------------
+
+Mutation testing is designed to assess the quality of other testing; typically, unit tests.
+The idea is that unit tests should fail given a specific mutation in a tested function.
+For example, if a new contributor were to submit a pull request for an important numerical library
+and accidentally typo a ``>`` to be ``>=`` in an existing tested function, the maintainer should
+expect that the change is detected through unit test failure.
+Mutation testing is a way to ensure this assumption is valid.
+Essentially, mutation testing is a test of the alarm system created by the unit tests.
+
+
+Why random sampling instead of all possible mutants?
+----------------------------------------------------
+
+By nature, mutation testing can be slow.
+You have to make a small modification in your source code and then see if your test suite fails.
+For fast tests and smaller projects running every possible mutation may be feasible.
+For larger projects, this could be prohibitively expensive in time.
+Random sampling of the target locations, as well as of the mutations to apply, takes advantage
+of the "alarm testing" nature of mutation testing.
+You do not need to exhaustively test every mutation to have a good understanding of whether or not
+your test suite is generally sufficient to detect these changes, and it provides a sense of
+the types of mutations that could slip past your unit tests.
+Using the source and test commands targeting, as well as the category filters, you can create specific
+mutation trials for important components of your code.
+Setting a `random seed <https://mutatest.readthedocs.io/en/latest/commandline.html#controlling-randomization-behavior-and-trial-number>`_
+on the command line ensures reproducibility for the same set of arguments.
+
+Why modify the pycache?
+-----------------------
+
+In short, protection of source code.
+A goal of ``mutatest`` is to avoid source code modification so that mutations are not accidentally
+committed to version control.
+Writing the mutations from memory to the ``__pycache__`` is a safety mechanism to ensure that the
+worst-case scenario of a killed process in a trial is to clear you cache.
+
+
+Can I use mutatest in CICD?
+---------------------------
+
+Yes, though because of the slow nature of running your test suite multiple times it is not something
+you would run across your entire codebase on every commit.
+``Mutatest`` includes an option to `raise survivor exceptions <https://mutatest.readthedocs.io/en/latest/commandline.html#raising-exceptions-for-survivor-tolerances>`_
+based on a tolerance level e.g., you may tolerate up to 2 surviving mutants (you set the threshold)
+out of 20 with specific pieces of your source code.
+``Mutatest`` is most useful as a diagnostic tool to determine weak spots in your overall test structure.
+
 
 Known limitations
 -----------------
