@@ -7,14 +7,17 @@ from the command line and the full main trial routine - clean trials, mutations 
 results.
 """
 import argparse
+import configparser
+import itertools
 import logging
+import re
 import shlex
 import sys
 
 from datetime import timedelta
 from pathlib import Path
 from textwrap import dedent
-from typing import List, NamedTuple, Optional, Sequence
+from typing import Any, Dict, List, NamedTuple, Optional, Sequence
 
 from setuptools import find_packages  # type:ignore
 
@@ -95,6 +98,13 @@ class SurvivingMutantException(Exception):
     """Exception for surviving mutations."""
 
     pass
+
+
+class ParserActionMap(NamedTuple):
+    """Container for parser mappings used in ConfigParsing with CLI args."""
+
+    actions: Dict[str, str]
+    action_types: Dict[Any, List[str]]
 
 
 def cli_epilog() -> str:
@@ -201,12 +211,159 @@ def cli_epilog() -> str:
     return "\n".join([main_epilog] + mutation_epilog + [meta_info])
 
 
-def cli_args(args: Optional[Sequence[str]]) -> argparse.Namespace:
-    """Command line arguments.
+def cli_args(args: Sequence[str]) -> argparse.Namespace:
+    """Command line arguments as parsed args.
+
+    If a INI configuration file is set it is used to set additional default arguments, but
+    the CLI arguments override any INI file settings.
 
     Returns:
-        parsed args from ArgumentParser
+        Parsed args from ArgumentParser
     """
+    parser = cli_parser()
+    ini_config_file = Path("mutatest.ini")
+
+    if ini_config_file.exists():
+        ini_config = read_ini_config(ini_config_file)
+        ini_cli_args = parse_ini_config_with_cli(parser, ini_config, args)
+        return parser.parse_args(ini_cli_args)
+
+    return parser.parse_args(args)
+
+
+def get_parser_actions(parser: argparse.ArgumentParser) -> ParserActionMap:
+    """Create a parser action map used when creating the command list mixed from the
+    CLI and the ini config file.
+
+    ParserActionMap has both actions and types e.g.,
+
+    .. code-block:: python
+
+        # action-types:
+
+        {argparse._HelpAction: ['help'],
+         mutatest.cli.ValidCategoryAction: ['blacklist', 'whitelist'],
+         argparse._AppendAction: ['exclude'],
+         argparse._StoreAction: ['mode', 'output', 'src', 'testcmds'],
+         mutatest.cli.PositiveIntegerAction: ['nlocations', 'rseed', 'exception'],
+         argparse._StoreTrueAction: ['debug', 'nocov']}
+
+        # actions:
+
+        {'-h': '--help',
+         '-b': '--blacklist',
+         '-e': '--exclude',
+         '-m': '--mode',
+         '-n': '--nlocations',
+         '-o': '--output',
+         '-r': '--rseed',
+         '-s': '--src',
+         '-t': '--testcmds',
+         '-w': '--whitelist',
+         '-x': '--exception',
+         '--debug': '--debug',
+         '--nocov': '--nocov'}
+
+    Args:
+        parser: the argparser
+
+    Returns:
+        ParserActionMap: includes actions and action_types
+    """
+    actions: Dict[str, str] = {}
+    action_types: Dict[Any, List[str]] = {}
+
+    for action in parser._actions:
+        # build the actions
+        # option_strings is either [-r, --rseed] or [--debug] for short-hand options
+        actions[action.option_strings[0]] = action.option_strings[-1]
+
+        # build the action_types
+        # values align to the keywords that can be used in the INI config
+        try:
+            action_types[type(action)].append(action.option_strings[-1].strip("--"))
+
+        except KeyError:
+            action_types[type(action)] = [action.option_strings[-1].strip("--")]
+
+    return ParserActionMap(actions=actions, action_types=action_types)
+
+
+def read_ini_config(config_path: Path, section: str = "mutatest") -> configparser.SectionProxy:
+    """Read a config_path using ConfigParser
+
+    Args:
+        config_path: path to the INI config file
+        section: section of config file to return, default to 'mutatest'
+
+    Returns:
+        config section proxy
+    """
+
+    config = configparser.ConfigParser()
+    # ensures [  mutatest  ] is valid like [mutatest] in a section key
+    config.SECTCRE = re.compile(r"\[ *(?P<header>[^]]+?) *\]")
+
+    config.read(config_path)
+    return config[section]
+
+
+def parse_ini_config_with_cli(
+    parser: argparse.ArgumentParser, ini_config: configparser.SectionProxy, cli_args: Sequence[str]
+) -> List[str]:
+    """Combine the INI file settings with the CLI args, using the CLI args as the override.
+
+    Args:
+        parser: the argparser
+        ini_config: the section of the parsed INI file
+        cli_args: the original cli args
+
+    Returns:
+        Updated args mixing INI and CLI, with CLI used as the override
+    """
+
+    action_maps = get_parser_actions(parser)
+    final_args_list = [action_maps.actions.get(i, i) for i in cli_args]
+
+    def ws_proc(value: str) -> List[str]:
+        """Convenience function for stripping newlines from configparser section values
+        and splitting whitespace to a list.
+        """
+        return value.replace("\n", " ").split()
+
+    for k in ini_config.keys():
+        arg_key = f"--{k}"
+
+        if arg_key in action_maps.actions.values():
+            if arg_key not in final_args_list:
+
+                if k in action_maps.action_types[mutatest.cli.ValidCategoryAction]:
+                    values = ws_proc(ini_config[k])
+                    final_args_list.extend([arg_key] + values)
+
+                elif k in action_maps.action_types[argparse._StoreTrueAction]:
+                    if ini_config.getboolean(k):
+                        final_args_list.append(arg_key)
+
+                elif k in action_maps.action_types[argparse._AppendAction]:
+                    values = ws_proc(ini_config[k])
+                    final_args_list.extend(
+                        [i for j in list(itertools.product([arg_key], values)) for i in j]
+                    )
+
+                else:
+                    final_args_list.extend([arg_key, ini_config[k]])
+
+    return final_args_list
+
+
+def cli_parser() -> argparse.ArgumentParser:
+    """CLI argument parser.
+
+    Returns:
+        The ArgumentParser
+    """
+
     parser = argparse.ArgumentParser(
         prog="Mutatest",
         description=("Python mutation testing. Mutatest will manipulate local __pycache__ files."),
@@ -311,7 +468,7 @@ def cli_args(args: Optional[Sequence[str]]) -> argparse.Namespace:
         "--nocov", action="store_true", help="Ignore coverage files for optimization."
     )
 
-    return parser.parse_args(args)
+    return parser
 
 
 def cli_summary_report(
