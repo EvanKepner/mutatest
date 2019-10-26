@@ -333,6 +333,38 @@ Run ``mutatest --help`` to see command line arguments and supported operations:
       --debug               Turn on DEBUG level logging output.
       --nocov               Ignore coverage files for optimization.
 
+Using an INI config file
+------------------------
+
+Arguments for ``mutatest`` can be stored in a ``mutatest.ini`` config file in the directory where
+you run the command.
+Use the full argument names and either spaces or newlines to separate multiple values for a given
+argument.
+The flag commands (``--debug`` and ``--nocov``) are given boolean flags that can be interpreted by
+the Python ``ConfigParser``.
+If you have a configuration file any command line arguments passed to ``mutatest`` will override
+the values in the ``ini`` file.
+
+Example INI file
+~~~~~~~~~~~~~~~~
+
+The contents of an example ``mutatest.ini``:
+
+.. code-block:: ini
+
+   [mutatest]
+
+   blacklist = nc su sr
+   exclude =
+       mutatest/__init__.py
+       mutatest/_devtools.py
+   mode = sd
+   rseed = 567
+   testcmds = pytest -m 'not slow'
+   debug = no
+   nocov = no
+
+
 .. target-notes::
 .. _Pytest Test Layout: https://docs.pytest.org/en/latest/goodpractices.html#choosing-a-test-layout-import-rules
 .. _Python AST grammar: https://docs.python.org/3/library/ast.html#abstract-grammar

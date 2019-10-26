@@ -4,6 +4,12 @@ Changelog
 Beta Releases
 -------------
 
+1.1.0
+~~~~~
+
+    - Add support for a ``mutatest.ini`` configuration file for command line arguments.
+
+
 1.0.1
 ~~~~~
 
