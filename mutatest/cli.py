@@ -107,254 +107,9 @@ class ParserActionMap(NamedTuple):
     action_types: Dict[Any, List[str]]
 
 
-def cli_epilog() -> str:
-    """Epilog for the help output."""
-
-    main_epilog = dedent(
-        """
-    Additional command argument information:
-    ========================================
-
-    Black/White List:
-    -----------------
-     - Use -b and -w to set black/white lists of mutation categories. If -w categories are set then
-       all mutation categories except those specified are skipped during trials. If -b categories
-       are set then all mutations categories except those specified are considered. If you set both
-       -w and -b then the whitelisted categories are selected first, and then the blacklisted
-       categories are removed from the candidate set.
-
-    Exclude:
-    --------
-     - Useful for excluding files that are not included in test coverage. You can set the arg
-       multiple times for additional files e.g. mutatest -e src/__init__.py -e src/_devtools.py
-       would exclude both src/__init__.py and src/_devtools.py from mutation processing.
-
-    Mode:
-    ------
-     - f: full mode, run all possible combinations (slowest but most thorough).
-     - s: break on first SURVIVOR per mutated location e.g. if there is a single surviving mutation
-          at a location move to the next location without further testing.
-          This is the default mode.
-     - d: break on the first DETECTION per mutated location e.g. if there is a detected mutation on
-          at a location move to the next one.
-     - sd: break on the first SURVIVOR or DETECTION (fastest, and least thorough).
-
-     The API for mutatest.controller.run_mutation_trials offers finer control over the
-     run method beyond the CLI.
-
-    Output:
-    -------
-     - You can specify a file name or a full path. The folders in the path will be created if they
-       do not already exist. The output is a text file formatted in RST headings.
-
-    Src:
-    ----
-     - This can be a file or a directory. If it is a directory it is recursively searched for .py
-       files. Note that the __pycache__ file associated with the file (or sub-files in a directory)
-       will be manipulated during mutation testing. If this argument is unspecified, mutatest will
-       attempt to find Python packages (using setuptools.find_packages) and use the first
-       entry from that auto-detection attempt.
-
-    Testcmds:
-    ---------
-     - Specify custom test commands as a string e.g. 'pytest -m "not slow"' for running only
-       the test suite without the marked "slow" tests. Shlex.split() is used to parse the
-       entered command string. Mutant status e.g. SURVIVED vs. DETECTED is based on the
-       return code of the command. Return code 0 = SURVIVED, 1 = DETECTED, 2 = ERROR, and
-       all others are UNKNOWN. Stdout is shown from the command if --debug mode is enabled.
-
-    Exception:
-    ----------
-     - A count of survivors for raising an exception after the trails. This is useful if you want
-       to raise a system-exit error in automatic running of the trials. For example, you could
-       have a continuous integration pipeline stage that runs mutatest over an important section
-       of tests (optionally specifying a random seed or categories) and cause a system exit if
-       a set number of allowable survivors is exceeded.
-    """
-    )
-
-    header = "Supported mutation sets"
-    description = (
-        "These are the current operations that are mutated as compatible sets. "
-        "Use the category code for whitelist/blacklist selections."
-    )
-    mutation_epilog = [header, "=" * len(header), description, "\n"]
-    for mutop in transformers.get_compatible_operation_sets():
-        mutation_epilog.extend(
-            [
-                mutop.name,
-                "-" * len(mutop.name),
-                f" - Description: {mutop.desc}",
-                f" - Members: {str(mutop.operations)}",
-                f" - Category Code: {str(mutop.category)}\n",
-            ]
-        )
-
-    meta_info = dedent(
-        """
-    Mutatest information
-    ====================
-     - Version: {version}
-     - License: {license}
-     - URL: {url}
-     - {copyright}
-    """
-    ).format_map(
-        {
-            "version": mutatest.__version__,
-            "license": mutatest.__license__,
-            "url": mutatest.__uri__,
-            "copyright": mutatest.__copyright__,
-        }
-    )
-
-    return "\n".join([main_epilog] + mutation_epilog + [meta_info])
-
-
-def cli_args(args: Sequence[str]) -> argparse.Namespace:
-    """Command line arguments as parsed args.
-
-    If a INI configuration file is set it is used to set additional default arguments, but
-    the CLI arguments override any INI file settings.
-
-    Returns:
-        Parsed args from ArgumentParser
-    """
-    parser = cli_parser()
-    ini_config_file = Path("mutatest.ini")
-
-    if ini_config_file.exists():
-        ini_config = read_ini_config(ini_config_file)
-        ini_cli_args = parse_ini_config_with_cli(parser, ini_config, args)
-        return parser.parse_args(ini_cli_args)
-
-    return parser.parse_args(args)
-
-
-def get_parser_actions(parser: argparse.ArgumentParser) -> ParserActionMap:
-    """Create a parser action map used when creating the command list mixed from the
-    CLI and the ini config file.
-
-    ParserActionMap has both actions and types e.g.,
-
-    .. code-block:: python
-
-        # action-types:
-
-        {argparse._HelpAction: ['help'],
-         mutatest.cli.ValidCategoryAction: ['blacklist', 'whitelist'],
-         argparse._AppendAction: ['exclude'],
-         argparse._StoreAction: ['mode', 'output', 'src', 'testcmds'],
-         mutatest.cli.PositiveIntegerAction: ['nlocations', 'rseed', 'exception'],
-         argparse._StoreTrueAction: ['debug', 'nocov']}
-
-        # actions:
-
-        {'-h': '--help',
-         '-b': '--blacklist',
-         '-e': '--exclude',
-         '-m': '--mode',
-         '-n': '--nlocations',
-         '-o': '--output',
-         '-r': '--rseed',
-         '-s': '--src',
-         '-t': '--testcmds',
-         '-w': '--whitelist',
-         '-x': '--exception',
-         '--debug': '--debug',
-         '--nocov': '--nocov'}
-
-    Args:
-        parser: the argparser
-
-    Returns:
-        ParserActionMap: includes actions and action_types
-    """
-    actions: Dict[str, str] = {}
-    action_types: Dict[Any, List[str]] = {}
-
-    for action in parser._actions:
-        # build the actions
-        # option_strings is either [-r, --rseed] or [--debug] for short-hand options
-        actions[action.option_strings[0]] = action.option_strings[-1]
-
-        # build the action_types
-        # values align to the keywords that can be used in the INI config
-        try:
-            action_types[type(action)].append(action.option_strings[-1].strip("--"))
-
-        except KeyError:
-            action_types[type(action)] = [action.option_strings[-1].strip("--")]
-
-    return ParserActionMap(actions=actions, action_types=action_types)
-
-
-def read_ini_config(config_path: Path, section: str = "mutatest") -> configparser.SectionProxy:
-    """Read a config_path using ConfigParser
-
-    Args:
-        config_path: path to the INI config file
-        section: section of config file to return, default to 'mutatest'
-
-    Returns:
-        config section proxy
-    """
-
-    config = configparser.ConfigParser()
-    # ensures [  mutatest  ] is valid like [mutatest] in a section key
-    config.SECTCRE = re.compile(r"\[ *(?P<header>[^]]+?) *\]")
-
-    config.read(config_path)
-    return config[section]
-
-
-def parse_ini_config_with_cli(
-    parser: argparse.ArgumentParser, ini_config: configparser.SectionProxy, cli_args: Sequence[str]
-) -> List[str]:
-    """Combine the INI file settings with the CLI args, using the CLI args as the override.
-
-    Args:
-        parser: the argparser
-        ini_config: the section of the parsed INI file
-        cli_args: the original cli args
-
-    Returns:
-        Updated args mixing INI and CLI, with CLI used as the override
-    """
-
-    action_maps = get_parser_actions(parser)
-    final_args_list = [action_maps.actions.get(i, i) for i in cli_args]
-
-    def ws_proc(value: str) -> List[str]:
-        """Convenience function for stripping newlines from configparser section values
-        and splitting whitespace to a list.
-        """
-        return value.replace("\n", " ").split()
-
-    for k in ini_config.keys():
-        arg_key = f"--{k}"
-
-        if arg_key in action_maps.actions.values():
-            if arg_key not in final_args_list:
-
-                if k in action_maps.action_types[mutatest.cli.ValidCategoryAction]:
-                    values = ws_proc(ini_config[k])
-                    final_args_list.extend([arg_key] + values)
-
-                elif k in action_maps.action_types[argparse._StoreTrueAction]:
-                    if ini_config.getboolean(k):
-                        final_args_list.append(arg_key)
-
-                elif k in action_maps.action_types[argparse._AppendAction]:
-                    values = ws_proc(ini_config[k])
-                    final_args_list.extend(
-                        [i for j in list(itertools.product([arg_key], values)) for i in j]
-                    )
-
-                else:
-                    final_args_list.extend([arg_key, ini_config[k]])
-
-    return final_args_list
+####################################################################################################
+# COMMAND LINE OUTPUTS AND PARSER DEFINITION
+####################################################################################################
 
 
 def cli_parser() -> argparse.ArgumentParser:
@@ -471,6 +226,246 @@ def cli_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def cli_epilog() -> str:
+    """Epilog for the help output."""
+
+    main_epilog = dedent(
+        """
+    Additional command argument information:
+    ========================================
+
+    Black/White List:
+    -----------------
+     - Use -b and -w to set black/white lists of mutation categories. If -w categories are set then
+       all mutation categories except those specified are skipped during trials. If -b categories
+       are set then all mutations categories except those specified are considered. If you set both
+       -w and -b then the whitelisted categories are selected first, and then the blacklisted
+       categories are removed from the candidate set.
+
+    Exclude:
+    --------
+     - Useful for excluding files that are not included in test coverage. You can set the arg
+       multiple times for additional files e.g. mutatest -e src/__init__.py -e src/_devtools.py
+       would exclude both src/__init__.py and src/_devtools.py from mutation processing.
+
+    Mode:
+    ------
+     - f: full mode, run all possible combinations (slowest but most thorough).
+     - s: break on first SURVIVOR per mutated location e.g. if there is a single surviving mutation
+          at a location move to the next location without further testing.
+          This is the default mode.
+     - d: break on the first DETECTION per mutated location e.g. if there is a detected mutation on
+          at a location move to the next one.
+     - sd: break on the first SURVIVOR or DETECTION (fastest, and least thorough).
+
+     The API for mutatest.controller.run_mutation_trials offers finer control over the
+     run method beyond the CLI.
+
+    Output:
+    -------
+     - You can specify a file name or a full path. The folders in the path will be created if they
+       do not already exist. The output is a text file formatted in RST headings.
+
+    Src:
+    ----
+     - This can be a file or a directory. If it is a directory it is recursively searched for .py
+       files. Note that the __pycache__ file associated with the file (or sub-files in a directory)
+       will be manipulated during mutation testing. If this argument is unspecified, mutatest will
+       attempt to find Python packages (using setuptools.find_packages) and use the first
+       entry from that auto-detection attempt.
+
+    Testcmds:
+    ---------
+     - Specify custom test commands as a string e.g. 'pytest -m "not slow"' for running only
+       the test suite without the marked "slow" tests. Shlex.split() is used to parse the
+       entered command string. Mutant status e.g. SURVIVED vs. DETECTED is based on the
+       return code of the command. Return code 0 = SURVIVED, 1 = DETECTED, 2 = ERROR, and
+       all others are UNKNOWN. Stdout is shown from the command if --debug mode is enabled.
+
+    Exception:
+    ----------
+     - A count of survivors for raising an exception after the trails. This is useful if you want
+       to raise a system-exit error in automatic running of the trials. For example, you could
+       have a continuous integration pipeline stage that runs mutatest over an important section
+       of tests (optionally specifying a random seed or categories) and cause a system exit if
+       a set number of allowable survivors is exceeded.
+    """
+    )
+
+    header = "Supported mutation sets"
+    description = (
+        "These are the current operations that are mutated as compatible sets. "
+        "Use the category code for whitelist/blacklist selections."
+    )
+    mutation_epilog = [header, "=" * len(header), description, "\n"]
+    for mutop in transformers.get_compatible_operation_sets():
+        mutation_epilog.extend(
+            [
+                mutop.name,
+                "-" * len(mutop.name),
+                f" - Description: {mutop.desc}",
+                f" - Members: {str(mutop.operations)}",
+                f" - Category Code: {str(mutop.category)}\n",
+            ]
+        )
+
+    meta_info = dedent(
+        """
+    Mutatest information
+    ====================
+     - Version: {version}
+     - License: {license}
+     - URL: {url}
+     - {copyright}
+    """
+    ).format_map(
+        {
+            "version": mutatest.__version__,
+            "license": mutatest.__license__,
+            "url": mutatest.__uri__,
+            "copyright": mutatest.__copyright__,
+        }
+    )
+
+    return "\n".join([main_epilog] + mutation_epilog + [meta_info])
+
+
+####################################################################################################
+#  INI FILE CONFIGURATION AND OVERRIDES FROM CLI
+####################################################################################################
+
+
+def get_parser_actions(parser: argparse.ArgumentParser) -> ParserActionMap:
+    """Create a parser action map used when creating the command list mixed from the
+    CLI and the ini config file.
+
+    ParserActionMap has both actions and types e.g.,
+
+    .. code-block:: python
+
+        # action-types:
+
+        {argparse._HelpAction: ['help'],
+         mutatest.cli.ValidCategoryAction: ['blacklist', 'whitelist'],
+         argparse._AppendAction: ['exclude'],
+         argparse._StoreAction: ['mode', 'output', 'src', 'testcmds'],
+         mutatest.cli.PositiveIntegerAction: ['nlocations', 'rseed', 'exception'],
+         argparse._StoreTrueAction: ['debug', 'nocov']}
+
+        # actions:
+
+        {'-h': '--help',
+         '-b': '--blacklist',
+         '-e': '--exclude',
+         '-m': '--mode',
+         '-n': '--nlocations',
+         '-o': '--output',
+         '-r': '--rseed',
+         '-s': '--src',
+         '-t': '--testcmds',
+         '-w': '--whitelist',
+         '-x': '--exception',
+         '--debug': '--debug',
+         '--nocov': '--nocov'}
+
+    Args:
+        parser: the argparser
+
+    Returns:
+        ParserActionMap: includes actions and action_types
+    """
+    actions: Dict[str, str] = {}
+    action_types: Dict[Any, List[str]] = {}
+
+    for action in parser._actions:
+        # build the actions
+        # option_strings is either [-r, --rseed] or [--debug] for short-hand options
+        actions[action.option_strings[0]] = action.option_strings[-1]
+
+        # build the action_types
+        # values align to the keywords that can be used in the INI config
+        try:
+            action_types[type(action)].append(action.option_strings[-1].strip("--"))
+
+        except KeyError:
+            action_types[type(action)] = [action.option_strings[-1].strip("--")]
+
+    return ParserActionMap(actions=actions, action_types=action_types)
+
+
+def read_ini_config(config_path: Path, section: str = "mutatest") -> configparser.SectionProxy:
+    """Read a config_path using ConfigParser
+
+    Args:
+        config_path: path to the INI config file
+        section: section of config file to return, default to 'mutatest'
+
+    Returns:
+        config section proxy
+    """
+
+    config = configparser.ConfigParser()
+    # ensures [  mutatest  ] is valid like [mutatest] in a section key
+    config.SECTCRE = re.compile(r"\[ *(?P<header>[^]]+?) *\]")  # type: ignore
+
+    config.read(config_path)
+    return config[section]
+
+
+def parse_ini_config_with_cli(
+    parser: argparse.ArgumentParser, ini_config: configparser.SectionProxy, cli_args: Sequence[str]
+) -> List[str]:
+    """Combine the INI file settings with the CLI args, using the CLI args as the override.
+
+    Args:
+        parser: the argparser
+        ini_config: the section of the parsed INI file
+        cli_args: the original cli args
+
+    Returns:
+        Updated args mixing INI and CLI, with CLI used as the override
+    """
+
+    action_maps = get_parser_actions(parser)
+    final_args_list = [action_maps.actions.get(i, i) for i in cli_args]
+
+    def ws_proc(value: str) -> List[str]:
+        """Convenience function for stripping newlines from configparser section values
+        and splitting whitespace to a list.
+        """
+        return value.replace("\n", " ").split()
+
+    for k in ini_config.keys():
+        arg_key = f"--{k}"
+
+        if arg_key in action_maps.actions.values():
+            if arg_key not in final_args_list:
+
+                if k in action_maps.action_types[mutatest.cli.ValidCategoryAction]:
+                    values = ws_proc(ini_config[k])
+                    final_args_list.extend([arg_key] + values)
+
+                elif k in action_maps.action_types[argparse._StoreTrueAction]:
+                    if ini_config.getboolean(k):
+                        final_args_list.append(arg_key)
+
+                elif k in action_maps.action_types[argparse._AppendAction]:
+                    values = ws_proc(ini_config[k])
+                    final_args_list.extend(
+                        [i for j in list(itertools.product([arg_key], values)) for i in j]
+                    )
+
+                else:
+                    final_args_list.extend([arg_key, ini_config[k]])
+
+    return final_args_list
+
+
+####################################################################################################
+# CLI REPORTING OUTPUTS:w
+####################################################################################################
+
+
 def cli_summary_report(
     src_loc: Path,
     args: argparse.Namespace,
@@ -538,6 +533,11 @@ def cli_summary_report(
     }
 
     return cli_summary_template.format_map(fmt_map)
+
+
+####################################################################################################
+# CLI ACTIONS - LOCATIONS, EXCEPTIONS, FILTERING SELECTIONS
+####################################################################################################
 
 
 def get_src_location(src_loc: Optional[Path] = None) -> Path:
@@ -613,6 +613,36 @@ def exception_processing(n_survivors: int, trial_results: List[MutantTrialResult
             f"Survivor tolerance OK: {len(survived.mutants)} / {n_survivors}", "green"
         ),
     )
+
+
+####################################################################################################
+# MAIN COMMAND LINE ROUTINE
+####################################################################################################
+
+
+def cli_args(
+    args: Sequence[str], ini_config_file: Path = Path("mutatest.ini")
+) -> argparse.Namespace:
+    """Command line arguments as parsed args.
+
+    If a INI configuration file is set it is used to set additional default arguments, but
+    the CLI arguments override any INI file settings.
+
+    Args:
+        args: the argument sequence from the command line
+        ini_config_file: the ini config file for the default settings
+
+    Returns:
+        Parsed args from ArgumentParser
+    """
+    parser = cli_parser()
+
+    if ini_config_file.exists():
+        ini_config = read_ini_config(ini_config_file)
+        ini_cli_args = parse_ini_config_with_cli(parser, ini_config, args)
+        return parser.parse_args(ini_cli_args)
+
+    return parser.parse_args(args)
 
 
 def cli_main() -> None:

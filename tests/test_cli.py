@@ -1,6 +1,8 @@
 """Tests for the cli module.
 """
 
+import argparse
+
 from datetime import timedelta
 from pathlib import Path
 from textwrap import dedent
@@ -14,18 +16,8 @@ from hypothesis import given
 
 import mutatest.cli
 
-from mutatest.cli import (
-    RunMode,
-    SurvivingMutantException,
-    TrialTimes,
-    cli_args,
-    cli_epilog,
-    cli_main,
-    cli_summary_report,
-    exception_processing,
-    get_src_location,
-    selected_categories,
-)
+from mutatest import cli
+from mutatest.cli import RunMode, SurvivingMutantException, TrialTimes
 
 
 class MockArgs(NamedTuple):
@@ -104,7 +96,7 @@ def test_get_src_location_pkg(monkeypatch):
     # therefore the mock of the imported instance
     monkeypatch.setattr(mutatest.cli, "find_packages", mock_find_packages)
 
-    result = get_src_location()
+    result = cli.get_src_location()
     assert result.name == "srcdir"
 
 
@@ -119,19 +111,19 @@ def test_get_src_location_error(monkeypatch):
     monkeypatch.setattr(mutatest.cli, "find_packages", mock_find_packages)
 
     with pytest.raises(FileNotFoundError):
-        _ = get_src_location()
+        _ = cli.get_src_location()
 
 
 def test_get_src_location_missing_file(monkeypatch):
     """If a missing file is passed an exception is raised."""
 
     with pytest.raises(FileNotFoundError):
-        _ = get_src_location(Path("/tmp/filethatdoesnotexist/sdf/asdf/23rjsdfu.py"))
+        _ = cli.get_src_location(Path("/tmp/filethatdoesnotexist/sdf/asdf/23rjsdfu.py"))
 
 
 def test_get_src_location_file(monkeypatch, binop_file):
     """If an existing file is passed it is returned without modification."""
-    result = get_src_location(binop_file)
+    result = cli.get_src_location(binop_file)
     assert result.resolve() == binop_file.resolve()
 
 
@@ -155,21 +147,21 @@ def mock_get_compatible_sets(monkeypatch):
 
 def test_selected_categories_empty_lists(mock_get_compatible_sets):
     """Empty lists should be the full set."""
-    result = selected_categories([], [])
+    result = cli.selected_categories([], [])
     assert sorted(result) == sorted(EXPECTED_CATEGORIES)
 
 
 def test_selected_categories_wlist(mock_get_compatible_sets):
     """Whitelisted categories are only selections."""
     wl = ["a", "b"]
-    result = selected_categories(wl, [])
+    result = cli.selected_categories(wl, [])
     assert sorted(result) == sorted(wl)
 
 
 def test_selected_categories_blist(mock_get_compatible_sets):
     """Blacklisted categories are the inverse selection."""
     bl = ["a", "b", "c"]
-    result = selected_categories([], bl)
+    result = cli.selected_categories([], bl)
     assert sorted(result) == sorted(["d", "e"])
 
 
@@ -177,7 +169,7 @@ def test_selected_categories_wblist(mock_get_compatible_sets):
     """Mixing white/black list results in the differentiated set."""
     wl = ["a", "b"]
     bl = ["a"]
-    result = selected_categories(wl, bl)
+    result = cli.selected_categories(wl, bl)
     assert result == ["b"]
 
 
@@ -185,19 +177,19 @@ def test_selected_categories_wblist_long(mock_get_compatible_sets):
     """Mixing white/black list results in the differentiated set if blist is longer."""
     wl = ["a", "b"]
     bl = ["a", "d", "e"]
-    result = selected_categories(wl, bl)
+    result = cli.selected_categories(wl, bl)
     assert result == ["b"]
 
 
 def test_exception_raised(mock_trial_results):
     """Mock trials results should have 1 survivor"""
     with pytest.raises(SurvivingMutantException):
-        exception_processing(1, mock_trial_results)
+        cli.exception_processing(1, mock_trial_results)
 
 
 def test_exception_not_raised(mock_trial_results):
     """Mock trials results should have 1 survivor"""
-    exception_processing(5, mock_trial_results)
+    cli.exception_processing(5, mock_trial_results)
 
 
 @freeze_time("2019-01-01")
@@ -270,16 +262,13 @@ def test_main(monkeypatch, mock_args, mock_results_summary):
     def mock_cli_args(*args, **kwargs):
         return mock_args
 
-    def mock_wtw_opt(*args, **kwargs):
-        return None, timedelta(0)
-
     monkeypatch.setattr(mutatest.cli.run, "clean_trial", mock_clean_trial)
     monkeypatch.setattr(mutatest.cli.run, "run_mutation_trials", mock_run_mutation_trials)
 
     monkeypatch.delenv("SOURCE_DATE_EPOCH", raising=False)
     monkeypatch.setattr(mutatest.cli, "cli_args", mock_cli_args)
 
-    cli_main()
+    cli.cli_main()
 
     with open(mock_args.output, "r") as f:
         results = f.read()
@@ -288,7 +277,7 @@ def test_main(monkeypatch, mock_args, mock_results_summary):
 
 def test_expected_arg_attrs():
     """With an empty list we should always get args with the specified attributes."""
-    args = cli_args([])
+    args = cli.cli_args([])
     expected_args = [
         "exclude",
         "mode",
@@ -304,6 +293,126 @@ def test_expected_arg_attrs():
         assert hasattr(args, e)
 
 
+@pytest.fixture
+def mock_parser():
+    """Mock parser."""
+    parser = argparse.ArgumentParser(prog="mock_parser", description=("Mock parser"))
+    parser.add_argument("-e", "--exclude", action="append", default=[], help="Append")
+    parser.add_argument("-b", "--blacklist", nargs="*", default=[], help="Nargs")
+    parser.add_argument("--debug", action="store_true", help="Store True.")
+
+    return parser
+
+
+def test_get_parser_actions(mock_parser):
+    """Parser action types based on basic inputs."""
+    expected_actions = {
+        "-h": "--help",
+        "-e": "--exclude",
+        "-b": "--blacklist",
+        "--debug": "--debug",
+    }
+    expected_types = {
+        argparse._HelpAction: ["help"],
+        argparse._AppendAction: ["exclude"],
+        argparse._StoreAction: ["blacklist"],
+        argparse._StoreTrueAction: ["debug"],
+    }
+
+    parser_actions = cli.get_parser_actions(mock_parser)
+    assert parser_actions.actions == expected_actions
+    assert parser_actions.action_types == expected_types
+
+
+class MockINI(NamedTuple):
+    """Container for the Mock ini config."""
+
+    ini_file: Path
+    args: List[str]
+
+
+@pytest.fixture
+def mock_ini_file(tmp_path):
+    """Basic ini file with mutatest configuration."""
+    ini_contents = dedent(
+        """\
+    [mutatest]
+    blacklist = nc su sr
+    exclude =
+        mutatest/__init__.py
+        mutatest/_devtools.py
+    mode = sd
+    rseed = 567
+    testcmds = pytest -m 'not slow'
+    debug = no
+    nocov = no
+    """
+    )
+
+    ini_file = tmp_path / "testing.ini"
+    with open(ini_file, "w") as fstream:
+        fstream.write(ini_contents)
+
+    default_args = [
+        "--blacklist",
+        "nc",
+        "su",
+        "sr",
+        "--exclude",
+        "mutatest/__init__.py",
+        "--exclude",
+        "mutatest/_devtools.py",
+        "--mode",
+        "sd",
+        "--rseed",
+        "567",
+        "--testcmds",
+        "pytest -m 'not slow'",
+    ]
+
+    return MockINI(ini_file, default_args)
+
+
+def test_read_ini_config_keys(mock_ini_file):
+    """Ensure the keys align to the mock from reading the file."""
+    section = cli.read_ini_config(mock_ini_file.ini_file)
+    expected_keys = ["blacklist", "exclude", "mode", "rseed", "testcmds", "debug", "nocov"]
+    result = [k for k in section.keys()]
+    assert result == expected_keys
+
+
+def test_parse_ini_config_with_cli_empty(mock_ini_file):
+    """With default empty args the ini file should be the only values"""
+    config = cli.read_ini_config(mock_ini_file.ini_file)
+    parser = cli.cli_parser()
+    result = cli.parse_ini_config_with_cli(parser, config, [])
+    assert result == mock_ini_file.args
+
+
+def test_parse_ini_config_with_cli_overrides(mock_ini_file):
+    """Input from the CLI will override the values from the ini file."""
+    override = ["--blacklist", "aa", "-m", "s", "-r", "314", "--debug"]
+    expected = [
+        "--blacklist",
+        "aa",
+        "--mode",
+        "s",
+        "--rseed",
+        "314",
+        "--debug",
+        "--exclude",
+        "mutatest/__init__.py",
+        "--exclude",
+        "mutatest/_devtools.py",
+        "--testcmds",
+        "pytest -m 'not slow'",
+    ]
+    config = cli.read_ini_config(mock_ini_file.ini_file)
+    parser = cli.cli_parser()
+    result = cli.parse_ini_config_with_cli(parser, config, override)
+    assert result == expected
+
+
 ####################################################################################################
 # PROPERTY TESTS
 ####################################################################################################
@@ -316,7 +425,7 @@ def test_cli_epilog_invariant():
     """Property:
         1. cli-epilog always returns a string value for screen printing
     """
-    result = cli_epilog()
+    result = cli.cli_epilog()
     assert isinstance(result, str)
     assert len(result) > 1
 
@@ -328,7 +437,7 @@ def test_cli_summary_report_invariant(mock_args, mock_TrialTimes, s, lm, li):
         locs_mutated and locs_identified.
     """
 
-    results = cli_summary_report(
+    results = cli.cli_summary_report(
         src_loc=s, args=mock_args, locs_mutated=lm, locs_identified=li, runtimes=mock_TrialTimes
     )
 
@@ -343,4 +452,4 @@ def test_syserror_negative_n_and_rseed(n, i):
         1. Given a negative n-value a SystemExit is raised.
     """
     with pytest.raises(SystemExit):
-        _ = cli_args([n, f"{i}"])
+        _ = cli.cli_args([n, f"{i}"])
