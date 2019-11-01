@@ -376,9 +376,7 @@ class MutateAST(ast.NodeTransformer):
         # More likely to generate useful mutants in the positive case.
         if slice.lower is not None and slice.upper is not None:
             if isinstance(slice.upper, ast.Num):
-                idx = LocIndex(
-                    "SliceRC", node.lineno, node.col_offset, "Slice_UPosToZero"
-                )
+                idx = LocIndex("SliceRC", node.lineno, node.col_offset, "Slice_UPosToZero")
                 slice_mutations["Slice_UPosToZero"] = ast.Slice(
                     lower=slice.lower, upper=ast.Num(n=slice.upper.n - 1), step=slice.step
                 )
@@ -388,9 +386,7 @@ class MutateAST(ast.NodeTransformer):
                 self.locs.add(idx)
 
             if isinstance(slice.upper, ast.UnaryOp):
-                idx = LocIndex(
-                    "SliceRC", node.lineno, node.col_offset, "Slice_UNegToZero"
-                )
+                idx = LocIndex("SliceRC", node.lineno, node.col_offset, "Slice_UNegToZero")
 
                 slice_mutations["Slice_UNegToZero"] = ast.Slice(
                     lower=slice.lower,
