@@ -37,7 +37,9 @@ class Config:
     break_on_detected: bool = False
     break_on_error: bool = False
     break_on_unknown: bool = False
+    break_on_timeout: bool = False
     ignore_coverage: bool = False
+    max_runtime: float = 10
 
 
 class MutantTrialResult(NamedTuple):
@@ -49,7 +51,7 @@ class MutantTrialResult(NamedTuple):
     @property
     def status(self) -> str:
         """Based on pytest return codes"""
-        trial_status = {0: "SURVIVED", 1: "DETECTED", 2: "ERROR"}
+        trial_status = {0: "SURVIVED", 1: "DETECTED", 2: "ERROR", 3: "TIMEOUT"}
         return trial_status.get(self.return_code, "UNKNOWN")
 
 
@@ -341,6 +343,26 @@ def trial_output_check_break(
             )
             return True
 
+    if trial_results.status == "TIMEOUT":
+        LOGGER.info(
+            "%s",
+            colorize_output(
+                (
+                    f"Timeout mutation result at "
+                    f"{sample_src}: ({sample_idx.lineno}, {sample_idx.col_offset})"
+                ),
+                "yellow",
+            ),
+        )
+        if config.break_on_timeout:
+            LOGGER.info(
+                "%s",
+                colorize_output(
+                    "Break on timeout: stopping further mutations at location.", "yellow"
+                ),
+            )
+            return True
+
     if trial_results.status == "UNKNOWN":
         LOGGER.info(
             "%s",
@@ -365,7 +387,8 @@ def trial_output_check_break(
 
 
 def create_mutation_run_trial(
-    genome: Genome, target_idx: LocIndex, mutation_op: Any, test_cmds: List[str]
+    genome: Genome, target_idx: LocIndex, mutation_op: Any, test_cmds: List[str],
+    max_runtime: float
 ) -> MutantTrialResult:
     """Run a single mutation trial by creating a new mutated cache file, running the
     test commands, and then removing the mutated cache file.
@@ -382,9 +405,15 @@ def create_mutation_run_trial(
 
     LOGGER.debug("Running trial for %s", mutation_op)
     mutant = genome.mutate(target_idx, mutation_op, write_cache=True)
-    mutant_trial = subprocess.run(
-        test_cmds, capture_output=capture_output(LOGGER.getEffectiveLevel())
-    )
+    try:
+        mutant_trial = subprocess.run(
+            test_cmds, capture_output=capture_output(LOGGER.getEffectiveLevel()),
+            timeout=max_runtime
+        )
+    except subprocess.TimeoutExpired:
+        cache.remove_existing_cache_files(mutant.src_file)
+        return MutantTrialResult(mutant=mutant, return_code=3)
+
     cache.remove_existing_cache_files(mutant.src_file)
 
     return MutantTrialResult(mutant=mutant, return_code=mutant_trial.returncode)
@@ -447,6 +476,7 @@ def run_mutation_trials(src_loc: Path, test_cmds: List[str], config: Config) -> 
                 target_idx=sample_idx,
                 mutation_op=current_mutation,
                 test_cmds=test_cmds,
+                max_runtime=config.max_runtime
             )
 
             results.append(trial_results)

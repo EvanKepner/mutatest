@@ -16,7 +16,7 @@ from mutatest.report import (
 )
 
 
-@pytest.mark.parametrize("status", ["SURVIVED", "DETECTED", "ERROR", "UNKNOWN"])
+@pytest.mark.parametrize("status", ["SURVIVED", "DETECTED", "ERROR", "TIMEOUT", "UNKNOWN"])
 def test_get_reported_results(status, mock_trial_results):
     """Ensure status reporting per type returns appropriate lists."""
     reported = get_reported_results(mock_trial_results, status)
@@ -33,7 +33,8 @@ def test_get_status_summary(mock_trial_results):
         "DETECTED": 1,
         "ERROR": 1,
         "UNKNOWN": 1,
-        "TOTAL RUNS": 4,
+        "TIMEOUT": 1,
+        "TOTAL RUNS": 5,
         "RUN DATETIME": str(datetime(2019, 1, 1)),
     }
 
@@ -82,7 +83,7 @@ def test_analyze_mutant_trials(mock_trial_results):
     SURVIVED
     --------
      - src.py: (l: 1, c: 2) - mutation from <class '_ast.Add'> to <class '_ast.Mult'>
-
+     
 
     DETECTED
     --------

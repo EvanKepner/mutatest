@@ -32,6 +32,7 @@ class DisplayResults(NamedTuple):
 
     summary: str
     survived: str
+    timedout: str
     detected: str
 
 
@@ -78,6 +79,7 @@ def analyze_mutant_trials(trial_results: List[MutantTrialResult]) -> Tuple[str, 
         Overall mutation trial summary:
         ===============================
         DETECTED: x
+        TIMEOUT: w
         SURVIVED: y
         ...
 
@@ -98,6 +100,7 @@ def analyze_mutant_trials(trial_results: List[MutantTrialResult]) -> Tuple[str, 
     status = get_status_summary(trial_results)
 
     detected = get_reported_results(trial_results, "DETECTED")
+    timeouts = get_reported_results(trial_results, "TIMEOUT")
     survived = get_reported_results(trial_results, "SURVIVED")
     errors = get_reported_results(trial_results, "ERROR")
     unknowns = get_reported_results(trial_results, "UNKNOWN")
@@ -112,12 +115,12 @@ def analyze_mutant_trials(trial_results: List[MutantTrialResult]) -> Tuple[str, 
 
     # prepare display of summary results, no color applied
     display_summary = "\n".join(report_sections)
-    display_survived, display_detected = "", ""
+    display_survived, display_timedout, display_detected = "", "", ""
 
     # build the breakout sections for each type
     section_header = "Mutations by result status"
     report_sections.append("\n".join(["\n", section_header, "=" * len(section_header)]))
-    for rpt_results in [survived, detected, errors, unknowns]:
+    for rpt_results in [survived, timeouts, detected, errors, unknowns]:
         if rpt_results.mutants:
             section = build_report_section(rpt_results.status, rpt_results.mutants)
             report_sections.append(section)
@@ -125,13 +128,16 @@ def analyze_mutant_trials(trial_results: List[MutantTrialResult]) -> Tuple[str, 
             if rpt_results.status == "SURVIVED":
                 display_survived = run.colorize_output(section, "red")
 
+            if rpt_results.status == "TIMEOUT":
+                display_timedout = run.colorize_output(section, "yellow")
+
             if rpt_results.status == "DETECTED":
                 display_detected = run.colorize_output(section, "green")
 
     return (
         "\n".join(report_sections),
         DisplayResults(
-            summary=display_summary, detected=display_detected, survived=display_survived
+            summary=display_summary, detected=display_detected, timedout=display_timedout, survived=display_survived
         ),
     )
 

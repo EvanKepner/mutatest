@@ -19,7 +19,7 @@ from mutatest.run import BaselineTestException, Config, MutantTrialResult
 from mutatest.transformers import LocIndex
 
 
-RETURN_CODE_MAPPINGS = [(0, "SURVIVED"), (1, "DETECTED"), (2, "ERROR"), (3, "UNKNOWN")]
+RETURN_CODE_MAPPINGS = [(0, "SURVIVED"), (1, "DETECTED"), (2, "ERROR"), (3, "TIMEOUT"), (4, "UNKNOWN")]
 
 
 @pytest.fixture
@@ -73,7 +73,8 @@ def test_create_mutation_and_run_trial(returncode, expected_status, monkeypatch,
     monkeypatch.setattr(subprocess, "run", mock_subprocess_run)
 
     trial = run.create_mutation_run_trial(
-        genome=genome, target_idx=target_idx, mutation_op=mutation_op, test_cmds=["pytest"]
+        genome=genome, target_idx=target_idx, mutation_op=mutation_op, test_cmds=["pytest"],
+        max_runtime=10
     )
 
     # mutated cache files should be removed after trial run
@@ -187,9 +188,10 @@ def test_get_genome_group_folder_and_file(tmp_path):
         (0, Config(break_on_survival=True)),
         (1, Config(break_on_detected=True)),
         (2, Config(break_on_error=True)),
-        (3, Config(break_on_unknown=True)),
+        (3, Config(break_on_timeout=True)),
+        (4, Config(break_on_unknown=True)),
     ],
-    ids=["survival", "detected", "error", "unknown"],
+    ids=["survival", "detected", "error", "timeout", "unknown"],
 )
 def test_break_on_check(return_code, config, mock_Mutant, mock_LocIdx):
     # positive case

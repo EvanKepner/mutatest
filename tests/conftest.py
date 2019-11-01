@@ -68,7 +68,8 @@ def mock_trial_results(mock_Mutant):
         MutantTrialResult(mock_Mutant, return_code=0),  # SURVIVED
         MutantTrialResult(mock_Mutant, return_code=1),  # DETECTED
         MutantTrialResult(mock_Mutant, return_code=2),  # ERROR
-        MutantTrialResult(mock_Mutant, return_code=3),  # UNKNOWN
+        MutantTrialResult(mock_Mutant, return_code=3),  # TIMEOUT
+        MutantTrialResult(mock_Mutant, return_code=4),  # UNKNOWN
     ]
 
 
