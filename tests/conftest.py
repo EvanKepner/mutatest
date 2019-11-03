@@ -484,10 +484,10 @@ def index_file(tmp_path_factory):
 def index_expected_locs():
     """The index expected location based on the fixture"""
     return [
-        LocIndex(ast_class="Index_NumNeg", lineno=2, col_offset=20, op_type="Index_NumNeg"),
-        LocIndex(ast_class="Index_NumZero", lineno=3, col_offset=20, op_type="Index_NumZero"),
-        LocIndex(ast_class="Index_NumPos", lineno=4, col_offset=20, op_type="Index_NumPos"),
-        LocIndex(ast_class="Index_NumPos", lineno=4, col_offset=23, op_type="Index_NumPos"),
+        LocIndex(ast_class="Index", lineno=2, col_offset=20, op_type="Index_NumNeg"),
+        LocIndex(ast_class="Index", lineno=3, col_offset=20, op_type="Index_NumZero"),
+        LocIndex(ast_class="Index", lineno=4, col_offset=20, op_type="Index_NumPos"),
+        LocIndex(ast_class="Index", lineno=4, col_offset=23, op_type="Index_NumPos"),
     ]
 
 

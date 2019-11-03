@@ -297,17 +297,17 @@ class MutateAST(ast.NodeTransformer):
         if isinstance(n_value, ast.Num):
             # positive integer case
             if n_value.n != 0:
-                idx = LocIndex("Index_NumPos", n_value.lineno, n_value.col_offset, "Index_NumPos")
+                idx = LocIndex("Index", n_value.lineno, n_value.col_offset, "Index_NumPos")
                 self.locs.add(idx)
 
             # zero value case
             else:
-                idx = LocIndex("Index_NumZero", n_value.lineno, n_value.col_offset, "Index_NumZero")
+                idx = LocIndex("Index", n_value.lineno, n_value.col_offset, "Index_NumZero")
                 self.locs.add(idx)
 
         # index is a negative number e.g. i[-1]
         if isinstance(n_value, ast.UnaryOp):
-            idx = LocIndex("Index_NumNeg", n_value.lineno, n_value.col_offset, "Index_NumNeg")
+            idx = LocIndex("Index", n_value.lineno, n_value.col_offset, "Index_NumNeg")
             self.locs.add(idx)
 
         if idx == self.target_idx and self.mutation and not self.readonly:
@@ -362,12 +362,12 @@ class MutateAST(ast.NodeTransformer):
         # Unbounded Swap Operation
         # upper slice range e.g. x[:2] will become x[2:]
         if slice.lower is None and slice.upper is not None:
-            idx = LocIndex("Slice_Swap", node.lineno, node.col_offset, "Slice_UnboundLower")
+            idx = LocIndex("SliceUS", node.lineno, node.col_offset, "Slice_UnboundLower")
             self.locs.add(idx)
 
         # lower slice range e.g. x[1:] will become x[:1]
         if slice.upper is None and slice.lower is not None:
-            idx = LocIndex("Slice_Swap", node.lineno, node.col_offset, "Slice_UnboundUpper")
+            idx = LocIndex("SliceUS", node.lineno, node.col_offset, "Slice_UnboundUpper")
             self.locs.add(idx)
 
         # Range Change Operation
@@ -376,9 +376,7 @@ class MutateAST(ast.NodeTransformer):
         # More likely to generate useful mutants in the positive case.
         if slice.lower is not None and slice.upper is not None:
             if isinstance(slice.upper, ast.Num):
-                idx = LocIndex(
-                    "Slice_RangeChange", node.lineno, node.col_offset, "Slice_UPosToZero"
-                )
+                idx = LocIndex("SliceRC", node.lineno, node.col_offset, "Slice_UPosToZero")
                 slice_mutations["Slice_UPosToZero"] = ast.Slice(
                     lower=slice.lower, upper=ast.Num(n=slice.upper.n - 1), step=slice.step
                 )
@@ -388,9 +386,7 @@ class MutateAST(ast.NodeTransformer):
                 self.locs.add(idx)
 
             if isinstance(slice.upper, ast.UnaryOp):
-                idx = LocIndex(
-                    "Slice_RangeChange", node.lineno, node.col_offset, "Slice_UNegToZero"
-                )
+                idx = LocIndex("SliceRC", node.lineno, node.col_offset, "Slice_UNegToZero")
 
                 slice_mutations["Slice_UNegToZero"] = ast.Slice(
                     lower=slice.lower,
