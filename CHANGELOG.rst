@@ -4,6 +4,12 @@ Changelog
 Beta Releases
 -------------
 
+1.1.1
+~~~~~
+
+    - `Bug Fix #15 <https://github.com/EvanKepner/mutatest/pull/15>`_: Fix ``LocIndex.ast_class`` setting for ``Index`` node mutations.
+
+
 1.1.0
 ~~~~~
 
