@@ -137,7 +137,10 @@ def analyze_mutant_trials(trial_results: List[MutantTrialResult]) -> Tuple[str, 
     return (
         "\n".join(report_sections),
         DisplayResults(
-            summary=display_summary, detected=display_detected, timedout=display_timedout, survived=display_survived
+            summary=display_summary,
+            detected=display_detected,
+            timedout=display_timedout,
+            survived=display_survived,
         ),
     )
 

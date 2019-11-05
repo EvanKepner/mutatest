@@ -228,7 +228,8 @@ def cli_parser() -> argparse.ArgumentParser:
         "--nocov", action="store_true", help="Ignore coverage files for optimization."
     )
     parser.add_argument(
-        "--timeout_factor", help="If the tests take this much longer than expected, they are aborted.",
+        "--timeout_factor",
+        help="If the tests take this much longer than expected, they are aborted.",
         default=5,
         type=int,
     )
@@ -703,7 +704,7 @@ def main(args: argparse.Namespace) -> None:
         break_on_unknown=run_mode.break_on_unknown,
         break_on_timeout=run_mode.break_on_timeout,
         ignore_coverage=args.nocov,
-        max_runtime=args.timeout_factor*clean_runtime_1.seconds
+        max_runtime=args.timeout_factor * clean_runtime_1.seconds,
     )
 
     results_summary = run.run_mutation_trials(

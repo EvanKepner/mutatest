@@ -387,8 +387,7 @@ def trial_output_check_break(
 
 
 def create_mutation_run_trial(
-    genome: Genome, target_idx: LocIndex, mutation_op: Any, test_cmds: List[str],
-    max_runtime: float
+    genome: Genome, target_idx: LocIndex, mutation_op: Any, test_cmds: List[str], max_runtime: float
 ) -> MutantTrialResult:
     """Run a single mutation trial by creating a new mutated cache file, running the
     test commands, and then removing the mutated cache file.
@@ -407,8 +406,9 @@ def create_mutation_run_trial(
     mutant = genome.mutate(target_idx, mutation_op, write_cache=True)
     try:
         mutant_trial = subprocess.run(
-            test_cmds, capture_output=capture_output(LOGGER.getEffectiveLevel()),
-            timeout=max_runtime
+            test_cmds,
+            capture_output=capture_output(LOGGER.getEffectiveLevel()),
+            timeout=max_runtime,
         )
     except subprocess.TimeoutExpired:
         cache.remove_existing_cache_files(mutant.src_file)
@@ -476,7 +476,7 @@ def run_mutation_trials(src_loc: Path, test_cmds: List[str], config: Config) -> 
                 target_idx=sample_idx,
                 mutation_op=current_mutation,
                 test_cmds=test_cmds,
-                max_runtime=config.max_runtime
+                max_runtime=config.max_runtime,
             )
 
             results.append(trial_results)

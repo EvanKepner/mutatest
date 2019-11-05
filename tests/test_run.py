@@ -19,7 +19,13 @@ from mutatest.run import BaselineTestException, Config, MutantTrialResult
 from mutatest.transformers import LocIndex
 
 
-RETURN_CODE_MAPPINGS = [(0, "SURVIVED"), (1, "DETECTED"), (2, "ERROR"), (3, "TIMEOUT"), (4, "UNKNOWN")]
+RETURN_CODE_MAPPINGS = [
+    (0, "SURVIVED"),
+    (1, "DETECTED"),
+    (2, "ERROR"),
+    (3, "TIMEOUT"),
+    (4, "UNKNOWN"),
+]
 
 
 @pytest.fixture
@@ -73,8 +79,11 @@ def test_create_mutation_and_run_trial(returncode, expected_status, monkeypatch,
     monkeypatch.setattr(subprocess, "run", mock_subprocess_run)
 
     trial = run.create_mutation_run_trial(
-        genome=genome, target_idx=target_idx, mutation_op=mutation_op, test_cmds=["pytest"],
-        max_runtime=10
+        genome=genome,
+        target_idx=target_idx,
+        mutation_op=mutation_op,
+        test_cmds=["pytest"],
+        max_runtime=10,
     )
 
     # mutated cache files should be removed after trial run

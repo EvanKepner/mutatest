@@ -54,7 +54,7 @@ def mock_args(tmp_path, binop_file):
         exception=None,
         debug=False,
         nocov=True,
-        timeout_factor=2
+        timeout_factor=2,
     )
 
 

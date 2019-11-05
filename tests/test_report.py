@@ -83,7 +83,7 @@ def test_analyze_mutant_trials(mock_trial_results):
     SURVIVED
     --------
      - src.py: (l: 1, c: 2) - mutation from <class '_ast.Add'> to <class '_ast.Mult'>
-     
+
 
     DETECTED
     --------
