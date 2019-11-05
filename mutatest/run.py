@@ -283,105 +283,74 @@ def trial_output_check_break(
     Returns:
         Bool flag for whether or not to break the outer operations loop.
     """
-    if trial_results.status == "SURVIVED":
-        LOGGER.info(
-            "%s",
-            colorize_output(
-                (
-                    f"Surviving mutation at "
-                    f"{sample_src}: ({sample_idx.lineno}, {sample_idx.col_offset})"
-                ),
-                "red",
-            ),
-        )
-        if config.break_on_survival:
-            LOGGER.info(
-                "%s",
-                colorize_output(
-                    "Break on survival: stopping further mutations at location.", "red"
-                ),
-            )
-            return True
 
-    if trial_results.status == "DETECTED":
-        LOGGER.info(
-            "%s",
-            colorize_output(
-                (
-                    f"Detected mutation at "
-                    f"{sample_src}: ({sample_idx.lineno}, {sample_idx.col_offset})"
-                ),
-                "green",
-            ),
-        )
-        if config.break_on_detected:
-            LOGGER.info(
-                "%s",
-                colorize_output(
-                    "Break on detected: stopping further mutations at location.", "green"
-                ),
-            )
-            return True
+    @dataclass
+    class SwitchDatum:
+        status: str
+        output_desc: str
+        break_config_attr: str
+        break_desc: str
+        color: str
 
-    if trial_results.status == "ERROR":
-        LOGGER.info(
-            "%s",
-            colorize_output(
-                (
-                    f"Error with mutation at "
-                    f"{sample_src}: ({sample_idx.lineno}, {sample_idx.col_offset})"
-                ),
-                "yellow",
-            ),
-        )
-        if config.break_on_error:
-            LOGGER.info(
-                "%s",
-                colorize_output(
-                    "Break on error: stopping further mutations at location.", "yellow"
-                ),
-            )
-            return True
+    switch_data = [
+        SwitchDatum(
+            status="SURVIVED",
+            output_desc="Surviving mutation at ",
+            break_config_attr="break_on_survival",
+            break_desc="Break on survival",
+            color="red",
+        ),
+        SwitchDatum(
+            status="DETECTED",
+            output_desc="Detected mutation at ",
+            break_config_attr="break_on_detected",
+            break_desc="Break on detected",
+            color="green",
+        ),
+        SwitchDatum(
+            status="ERROR",
+            output_desc="Error with mutation at ",
+            break_config_attr="break_on_error",
+            break_desc="Break on error",
+            color="green",
+        ),
+        SwitchDatum(
+            status="TIMEOUT",
+            output_desc="Test timeout for mutation at ",
+            break_config_attr="break_on_timeout",
+            break_desc="Break on timeout",
+            color="yellow",
+        ),
+        SwitchDatum(
+            status="UNKNOWN",
+            output_desc="Unknown mutation result at ",
+            break_config_attr="break_on_unknown",
+            break_desc="Break on unknown",
+            color="yellow",
+        ),
+    ]
 
-    if trial_results.status == "TIMEOUT":
-        LOGGER.info(
-            "%s",
-            colorize_output(
-                (
-                    f"Timeout mutation result at "
-                    f"{sample_src}: ({sample_idx.lineno}, {sample_idx.col_offset})"
-                ),
-                "yellow",
-            ),
-        )
-        if config.break_on_timeout:
+    for switch_type in switch_data:
+        if trial_results.status == switch_type.status:
             LOGGER.info(
                 "%s",
                 colorize_output(
-                    "Break on timeout: stopping further mutations at location.", "yellow"
+                    (
+                        f"{switch_type.output_desc}"
+                        f"{sample_src}: ({sample_idx.lineno}, {sample_idx.col_offset})"
+                    ),
+                    switch_type.color,
                 ),
             )
-            return True
-
-    if trial_results.status == "UNKNOWN":
-        LOGGER.info(
-            "%s",
-            colorize_output(
-                (
-                    f"Unknown mutation result at "
-                    f"{sample_src}: ({sample_idx.lineno}, {sample_idx.col_offset})"
-                ),
-                "yellow",
-            ),
-        )
-        if config.break_on_unknown:
-            LOGGER.info(
-                "%s",
-                colorize_output(
-                    "Break on unknown: stopping further mutations at location.", "yellow"
-                ),
-            )
-            return True
+            if getattr(config, switch_type.break_config_attr, False):
+                LOGGER.info(
+                    "%s",
+                    colorize_output(
+                        f"{switch_type.break_desc}: stopping further mutations at location.",
+                        switch_type.color,
+                    ),
+                )
+                return True
 
     return False
 
