@@ -316,3 +316,45 @@ def test_run_mutation_trials_bad_binop(bos, bod, exp_trials, single_binop_file_w
     for mutant_trial in results_summary.results:
         assert mutant_trial.return_code == 0
         assert mutant_trial.status == "SURVIVED"
+
+
+@pytest.mark.slow
+@pytest.mark.parametrize("bot, exp_timeout_trials", [(False, 3), (True, 2)])
+def test_run_mutation_trials_timeout(bot, exp_timeout_trials, while_loop_with_timeout):
+    """Slow test to run detection trials on a simple mutation on a binop.
+
+    Based on fixture, there is one IfStatement operation, with 2 substitutions e.g.
+    True, False, of these, one is expected to prevent breaking the infinite loop,
+    resulting in a Timeout. There are also two NameConstant operations (on the
+    while and if statements) with 2 substitutions each; changing the NameConstant on the
+    if statement will result in a timeout;
+    In total there are 6 total mutations, 3 of which will timeout.
+
+    Args:
+        bot: break on timeout
+        exp_trials: number of expected trials
+        while_loop_with_timeout: fixture for single op with a timeout test
+    """
+
+    test_cmds = f"pytest {while_loop_with_timeout.test_file.resolve()}".split()
+
+    config = Config(
+        n_locations=100, break_on_survival=False, break_on_detected=False, break_on_timeout=bot
+    )
+
+    results_summary = run.run_mutation_trials(
+        while_loop_with_timeout.src_file.resolve(), test_cmds=test_cmds, config=config
+    )
+
+    # in all trials the status should be survivors or timeouts
+    for mutant_trial in results_summary.results:
+        assert mutant_trial.return_code in {0, 3}
+        if mutant_trial.return_code == 0:
+            assert mutant_trial.status == "SURVIVED"
+        else:
+            assert mutant_trial.status == "TIMEOUT"
+
+    timeout_results = [
+        mutant_trial for mutant_trial in results_summary.results if mutant_trial.status == "TIMEOUT"
+    ]
+    assert len(timeout_results) == exp_timeout_trials

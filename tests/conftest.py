@@ -364,6 +364,45 @@ def single_binop_file_with_bad_test(tmp_path_factory):
     bad_test_fn.unlink()
 
 
+@pytest.fixture(scope="session")
+def while_loop_with_timeout(tmp_path_factory):
+    """A while loop where mutants will timeout."""
+    contents = dedent(
+        """\
+    def odd_loop(x):
+        a = True
+        while True:
+            if a:
+                break
+        return x
+
+    print(odd_loop(5))
+    """
+    )
+
+    test_timeout = dedent(
+        """\
+    from timeout import odd_loop
+
+    def test_odd_loop():
+        assert True
+    """
+    )
+
+    folder = tmp_path_factory.mktemp("timeout_while")
+    fn = folder / "timeout.py"
+    bad_test_fn = folder / "test_timeout.py"
+
+    for f, c in [(fn, contents), (bad_test_fn, test_timeout)]:
+        with open(f, "w") as output_fn:
+            output_fn.write(c)
+
+    yield FileAndTest(fn, bad_test_fn)
+
+    fn.unlink()
+    bad_test_fn.unlink()
+
+
 ####################################################################################################
 # TRANSFORMERS: COMPARE FIXTURES
 ####################################################################################################
@@ -445,7 +484,7 @@ def if_file(tmp_path_factory):
 
 @pytest.fixture(scope="session")
 def if_expected_locs():
-    """Exepected locations in the if_statement."""
+    """Expected locations in the if_statement."""
     return [
         LocIndex(ast_class="If", lineno=2, col_offset=4, op_type="If_Statement"),
         LocIndex(ast_class="If", lineno=4, col_offset=9, op_type="If_Statement"),
