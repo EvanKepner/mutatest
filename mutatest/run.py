@@ -287,47 +287,23 @@ def trial_output_check_break(
     @dataclass
     class SwitchDatum:
         status: str
-        output_desc: str
         break_config_attr: str
-        break_desc: str
         color: str
 
+        @property
+        def break_desc(self) -> str:
+            return self.break_config_attr.replace("_", " ").capitalize()
+
+        @property
+        def output_desc(self) -> str:
+            return f"Result: {self.status.capitalize()} at "
+
     switch_data = [
-        SwitchDatum(
-            status="SURVIVED",
-            output_desc="Surviving mutation at ",
-            break_config_attr="break_on_survival",
-            break_desc="Break on survival",
-            color="red",
-        ),
-        SwitchDatum(
-            status="DETECTED",
-            output_desc="Detected mutation at ",
-            break_config_attr="break_on_detected",
-            break_desc="Break on detected",
-            color="green",
-        ),
-        SwitchDatum(
-            status="ERROR",
-            output_desc="Error with mutation at ",
-            break_config_attr="break_on_error",
-            break_desc="Break on error",
-            color="green",
-        ),
-        SwitchDatum(
-            status="TIMEOUT",
-            output_desc="Test timeout for mutation at ",
-            break_config_attr="break_on_timeout",
-            break_desc="Break on timeout",
-            color="yellow",
-        ),
-        SwitchDatum(
-            status="UNKNOWN",
-            output_desc="Unknown mutation result at ",
-            break_config_attr="break_on_unknown",
-            break_desc="Break on unknown",
-            color="yellow",
-        ),
+        SwitchDatum(status="SURVIVED", break_config_attr="break_on_survival", color="red",),
+        SwitchDatum(status="DETECTED", break_config_attr="break_on_detected", color="green",),
+        SwitchDatum(status="ERROR", break_config_attr="break_on_error", color="yellow",),
+        SwitchDatum(status="TIMEOUT", break_config_attr="break_on_timeout", color="yellow",),
+        SwitchDatum(status="UNKNOWN", break_config_attr="break_on_unknown", color="yellow",),
     ]
 
     for switch_type in switch_data:
@@ -373,6 +349,8 @@ def create_mutation_run_trial(
 
     LOGGER.debug("Running trial for %s", mutation_op)
     mutant = genome.mutate(target_idx, mutation_op, write_cache=True)
+
+    return_code = None
     try:
         mutant_trial = subprocess.run(
             test_cmds,
@@ -380,12 +358,10 @@ def create_mutation_run_trial(
             timeout=max_runtime,
         )
     except subprocess.TimeoutExpired:
-        cache.remove_existing_cache_files(mutant.src_file)
-        return MutantTrialResult(mutant=mutant, return_code=3)
+        return_code = 3
 
     cache.remove_existing_cache_files(mutant.src_file)
-
-    return MutantTrialResult(mutant=mutant, return_code=mutant_trial.returncode)
+    return MutantTrialResult(mutant=mutant, return_code=(return_code or mutant_trial.returncode))
 
 
 def run_mutation_trials(src_loc: Path, test_cmds: List[str], config: Config) -> ResultsSummary:

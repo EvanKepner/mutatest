@@ -17,7 +17,7 @@ import sys
 from datetime import timedelta
 from pathlib import Path
 from textwrap import dedent
-from typing import Any, Dict, List, NamedTuple, Optional, Sequence
+from typing import Any, Dict, List, NamedTuple, Optional, Sequence, Type
 
 from setuptools import find_packages  # type:ignore
 
@@ -78,6 +78,23 @@ class PositiveIntegerAction(argparse.Action):
             parser.error("{0} must be a non-zero positive integer.".format(option_string))
 
         setattr(namespace, self.dest, values)
+
+
+def get_constrained_float_action(
+    min_val: Optional[float] = None, max_val: Optional[float] = None
+) -> Type[argparse.Action]:
+    class ConstrainedFloatAction(argparse.Action):
+        """Custom action for ensuring floats arguments meet these."""
+
+        def __call__(self, parser, namespace, values, option_string=None):  # type: ignore
+            if min_val is not None and values < min_val:
+                parser.error("{0} must be no smaller than {1}.".format(option_string, min_val))
+            if max_val is not None and values > max_val:
+                parser.error("{0} must be no greater than {1}.".format(option_string, max_val))
+
+            setattr(namespace, self.dest, values)
+
+    return ConstrainedFloatAction
 
 
 class ValidCategoryAction(argparse.Action):
@@ -229,9 +246,12 @@ def cli_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--timeout_factor",
-        help="If the tests take this much longer than expected, they are aborted.",
+        help="If a mutation trial running time is beyond this factor multiplied by the "
+        "first clean trial running time then that mutation trial is aborted and "
+        "logged as a timeout.",
         default=5,
-        type=int,
+        type=float,
+        action=get_constrained_float_action(min_val=1, max_val=None),
     )
 
     return parser
