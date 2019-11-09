@@ -251,6 +251,7 @@ def cli_parser() -> argparse.ArgumentParser:
         "logged as a timeout.",
         default=5,
         type=float,
+        metavar="FLOAT > 1",
         action=get_constrained_float_action(min_val=1, max_val=None),
     )
 
@@ -713,6 +714,7 @@ def main(args: argparse.Namespace) -> None:
 
     # Build the running configuration for the mutation trials
     run_mode = RunMode(args.mode)
+
     config = Config(
         n_locations=args.nlocations,
         exclude_files=args.exclude,
@@ -724,7 +726,7 @@ def main(args: argparse.Namespace) -> None:
         break_on_unknown=run_mode.break_on_unknown,
         break_on_timeout=run_mode.break_on_timeout,
         ignore_coverage=args.nocov,
-        max_runtime=args.timeout_factor * clean_runtime_1.seconds,
+        max_runtime=args.timeout_factor * clean_runtime_1.total_seconds(),
     )
 
     results_summary = run.run_mutation_trials(

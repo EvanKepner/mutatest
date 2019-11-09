@@ -81,6 +81,7 @@ Run ``mutatest --help`` to see command line arguments and supported operations:
     usage: Mutatest [-h] [-b [STR [STR ...]]] [-e PATH] [-m {f,s,d,sd}] [-n INT]
                     [-o PATH] [-r INT] [-s PATH] [-t STR_CMDS]
                     [-w [STR [STR ...]]] [-x INT] [--debug] [--nocov]
+                    [--timeout_factor FLOAT > 1]
 
     Python mutation testing. Mutatest will manipulate local __pycache__ files.
 
@@ -106,6 +107,9 @@ Run ``mutatest --help`` to see command line arguments and supported operations:
                             Count of survivors to raise Mutation Exception for system exit.
       --debug               Turn on DEBUG level logging output.
       --nocov               Ignore coverage files for optimization.
+      --timeout_factor FLOAT > 1
+                            If a mutation trial running time is beyond this factor multiplied by the first
+                            clean trial running time then that mutation trial is aborted and logged as a timeout.
 
 
 Example Output

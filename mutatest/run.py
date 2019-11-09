@@ -299,11 +299,11 @@ def trial_output_check_break(
             return f"Result: {self.status.capitalize()} at "
 
     switch_data = [
-        SwitchDatum(status="SURVIVED", break_config_attr="break_on_survival", color="red",),
-        SwitchDatum(status="DETECTED", break_config_attr="break_on_detected", color="green",),
-        SwitchDatum(status="ERROR", break_config_attr="break_on_error", color="yellow",),
-        SwitchDatum(status="TIMEOUT", break_config_attr="break_on_timeout", color="yellow",),
-        SwitchDatum(status="UNKNOWN", break_config_attr="break_on_unknown", color="yellow",),
+        SwitchDatum(status="SURVIVED", break_config_attr="break_on_survival", color="red"),
+        SwitchDatum(status="DETECTED", break_config_attr="break_on_detected", color="green"),
+        SwitchDatum(status="ERROR", break_config_attr="break_on_error", color="yellow"),
+        SwitchDatum(status="TIMEOUT", break_config_attr="break_on_timeout", color="yellow"),
+        SwitchDatum(status="UNKNOWN", break_config_attr="break_on_unknown", color="yellow"),
     ]
 
     for switch_type in switch_data:
@@ -350,18 +350,19 @@ def create_mutation_run_trial(
     LOGGER.debug("Running trial for %s", mutation_op)
     mutant = genome.mutate(target_idx, mutation_op, write_cache=True)
 
-    return_code = None
     try:
         mutant_trial = subprocess.run(
             test_cmds,
             capture_output=capture_output(LOGGER.getEffectiveLevel()),
             timeout=max_runtime,
         )
+        return_code = mutant_trial.returncode
+
     except subprocess.TimeoutExpired:
         return_code = 3
 
     cache.remove_existing_cache_files(mutant.src_file)
-    return MutantTrialResult(mutant=mutant, return_code=(return_code or mutant_trial.returncode))
+    return MutantTrialResult(mutant=mutant, return_code=return_code)
 
 
 def run_mutation_trials(src_loc: Path, test_cmds: List[str], config: Config) -> ResultsSummary:

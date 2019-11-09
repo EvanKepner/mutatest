@@ -4,6 +4,14 @@ Changelog
 Beta Releases
 -------------
 
+1.2.0
+~~~~~
+
+    - `Feature #18 <https://github.com/EvanKepner/mutatest/pull/18>`_: Allow mutation trials to time out.
+      There are cases where a mutation could cause an infinite loop, such as changing the comparator in
+      a ``while`` statement e.g., ``while x < 5`` becomes ``while x >= 5``. A new ``--timeout_factor``
+      argument is added to set a cap on the maximum trial time as a multiplier of the clean-trial run.
+
 1.1.1
 ~~~~~
 

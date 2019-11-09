@@ -337,9 +337,14 @@ def test_run_mutation_trials_timeout(bot, exp_timeout_trials, while_loop_with_ti
     """
 
     test_cmds = f"pytest {while_loop_with_timeout.test_file.resolve()}".split()
+    max_runtime = 0.5  # manually set to keep the timeout time reasonable
 
     config = Config(
-        n_locations=100, break_on_survival=False, break_on_detected=False, break_on_timeout=bot
+        n_locations=100,
+        break_on_survival=False,
+        break_on_detected=False,
+        break_on_timeout=bot,
+        max_runtime=max_runtime,
     )
 
     results_summary = run.run_mutation_trials(

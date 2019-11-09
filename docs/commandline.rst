@@ -276,6 +276,31 @@ The exception type is a ``SurvivingMutantException``:
     mutatest.cli.SurvivingMutantException: Survivor tolerance breached: 8 / 2
 
 
+Controlling trial timeout behavior
+----------------------------------
+
+.. versionadded:: 1.2
+    The ``--timeout_factor`` argument.
+
+Typically mutation trials take approximately the same time as the first clean trial with some small
+variance.
+There are instances where a mutation could cause source code to enter an infinite loop, such
+as changing a ``while`` statement using a comparison operation like ``<`` to ``>`` or ``==``.
+To protect against these effects a ``--timeout_factor`` controls a multiplier of the
+first clean run that will act as the timeout cap for any mutation trials.
+For example, if the clean trial takes 2 seconds, and the ``--timeout_factor`` is set to 5 (the
+default value), the maximum run time for a mutation trial before being stopped and logged as
+a ``TIMEOUT`` is 10 seconds (2 seconds * 5).
+
+.. code-block:: bash
+
+    $ mutatest --timeout_factor=1.5
+
+
+Note that if you set the ``--timeout_factor`` to be exactly 1 you will likely get timeout trials
+by natural variance in logging success vs. failure.
+
+
 Putting it all together
 -----------------------
 
@@ -307,6 +332,7 @@ Run ``mutatest --help`` to see command line arguments and supported operations:
     usage: Mutatest [-h] [-b [STR [STR ...]]] [-e PATH] [-m {f,s,d,sd}] [-n INT]
                     [-o PATH] [-r INT] [-s PATH] [-t STR_CMDS]
                     [-w [STR [STR ...]]] [-x INT] [--debug] [--nocov]
+                    [--timeout_factor FLOAT > 1]
 
     Python mutation testing. Mutatest will manipulate local __pycache__ files.
 
@@ -332,6 +358,10 @@ Run ``mutatest --help`` to see command line arguments and supported operations:
                             Count of survivors to raise Mutation Exception for system exit.
       --debug               Turn on DEBUG level logging output.
       --nocov               Ignore coverage files for optimization.
+      --timeout_factor FLOAT > 1
+                            If a mutation trial running time is beyond this factor multiplied by the first
+                            clean trial running time then that mutation trial is aborted and logged as a timeout.
+
 
 Using an INI config file
 ------------------------
