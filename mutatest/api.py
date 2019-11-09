@@ -504,7 +504,7 @@ class GenomeGroup(MutableMapping):  # type: ignore
             if (fn.stem.startswith("test_") or fn.stem.endswith("_test")) and ignore_test_files:
                 continue
             else:
-                if fn not in exclude_files:
+                if fn.resolve() not in exclude_files:
                     self.add_file(fn)
 
     def set_filter(self, filter_codes: Iterable[str]) -> None:
