@@ -11,6 +11,7 @@ Beta Releases
       There are cases where a mutation could cause an infinite loop, such as changing the comparator in
       a ``while`` statement e.g., ``while x < 5`` becomes ``while x >= 5``. A new ``--timeout_factor``
       argument is added to set a cap on the maximum trial time as a multiplier of the clean-trial run.
+    - Bugfix on using ``exclude`` where files were logged but still becoming part of the sample.
 
 1.1.1
 ~~~~~
