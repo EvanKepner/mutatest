@@ -37,7 +37,9 @@ class Config:
     break_on_detected: bool = False
     break_on_error: bool = False
     break_on_unknown: bool = False
+    break_on_timeout: bool = False
     ignore_coverage: bool = False
+    max_runtime: float = 10
 
 
 class MutantTrialResult(NamedTuple):
@@ -49,7 +51,7 @@ class MutantTrialResult(NamedTuple):
     @property
     def status(self) -> str:
         """Based on pytest return codes"""
-        trial_status = {0: "SURVIVED", 1: "DETECTED", 2: "ERROR"}
+        trial_status = {0: "SURVIVED", 1: "DETECTED", 2: "ERROR", 3: "TIMEOUT"}
         return trial_status.get(self.return_code, "UNKNOWN")
 
 
@@ -281,91 +283,56 @@ def trial_output_check_break(
     Returns:
         Bool flag for whether or not to break the outer operations loop.
     """
-    if trial_results.status == "SURVIVED":
-        LOGGER.info(
-            "%s",
-            colorize_output(
-                (
-                    f"Surviving mutation at "
-                    f"{sample_src}: ({sample_idx.lineno}, {sample_idx.col_offset})"
-                ),
-                "red",
-            ),
-        )
-        if config.break_on_survival:
-            LOGGER.info(
-                "%s",
-                colorize_output(
-                    "Break on survival: stopping further mutations at location.", "red"
-                ),
-            )
-            return True
 
-    if trial_results.status == "DETECTED":
-        LOGGER.info(
-            "%s",
-            colorize_output(
-                (
-                    f"Detected mutation at "
-                    f"{sample_src}: ({sample_idx.lineno}, {sample_idx.col_offset})"
-                ),
-                "green",
-            ),
-        )
-        if config.break_on_detected:
-            LOGGER.info(
-                "%s",
-                colorize_output(
-                    "Break on detected: stopping further mutations at location.", "green"
-                ),
-            )
-            return True
+    @dataclass
+    class SwitchDatum:
+        status: str
+        break_config_attr: str
+        color: str
 
-    if trial_results.status == "ERROR":
-        LOGGER.info(
-            "%s",
-            colorize_output(
-                (
-                    f"Error with mutation at "
-                    f"{sample_src}: ({sample_idx.lineno}, {sample_idx.col_offset})"
-                ),
-                "yellow",
-            ),
-        )
-        if config.break_on_error:
-            LOGGER.info(
-                "%s",
-                colorize_output(
-                    "Break on error: stopping further mutations at location.", "yellow"
-                ),
-            )
-            return True
+        @property
+        def break_desc(self) -> str:
+            return self.break_config_attr.replace("_", " ").capitalize()
 
-    if trial_results.status == "UNKNOWN":
-        LOGGER.info(
-            "%s",
-            colorize_output(
-                (
-                    f"Unknown mutation result at "
-                    f"{sample_src}: ({sample_idx.lineno}, {sample_idx.col_offset})"
-                ),
-                "yellow",
-            ),
-        )
-        if config.break_on_unknown:
+        @property
+        def output_desc(self) -> str:
+            return f"Result: {self.status.capitalize()} at "
+
+    switch_data = [
+        SwitchDatum(status="SURVIVED", break_config_attr="break_on_survival", color="red",),
+        SwitchDatum(status="DETECTED", break_config_attr="break_on_detected", color="green",),
+        SwitchDatum(status="ERROR", break_config_attr="break_on_error", color="yellow",),
+        SwitchDatum(status="TIMEOUT", break_config_attr="break_on_timeout", color="yellow",),
+        SwitchDatum(status="UNKNOWN", break_config_attr="break_on_unknown", color="yellow",),
+    ]
+
+    for switch_type in switch_data:
+        if trial_results.status == switch_type.status:
             LOGGER.info(
                 "%s",
                 colorize_output(
-                    "Break on unknown: stopping further mutations at location.", "yellow"
+                    (
+                        f"{switch_type.output_desc}"
+                        f"{sample_src}: ({sample_idx.lineno}, {sample_idx.col_offset})"
+                    ),
+                    switch_type.color,
                 ),
             )
-            return True
+            if getattr(config, switch_type.break_config_attr, False):
+                LOGGER.info(
+                    "%s",
+                    colorize_output(
+                        f"{switch_type.break_desc}: stopping further mutations at location.",
+                        switch_type.color,
+                    ),
+                )
+                return True
 
     return False
 
 
 def create_mutation_run_trial(
-    genome: Genome, target_idx: LocIndex, mutation_op: Any, test_cmds: List[str]
+    genome: Genome, target_idx: LocIndex, mutation_op: Any, test_cmds: List[str], max_runtime: float
 ) -> MutantTrialResult:
     """Run a single mutation trial by creating a new mutated cache file, running the
     test commands, and then removing the mutated cache file.
@@ -382,12 +349,19 @@ def create_mutation_run_trial(
 
     LOGGER.debug("Running trial for %s", mutation_op)
     mutant = genome.mutate(target_idx, mutation_op, write_cache=True)
-    mutant_trial = subprocess.run(
-        test_cmds, capture_output=capture_output(LOGGER.getEffectiveLevel())
-    )
-    cache.remove_existing_cache_files(mutant.src_file)
 
-    return MutantTrialResult(mutant=mutant, return_code=mutant_trial.returncode)
+    return_code = None
+    try:
+        mutant_trial = subprocess.run(
+            test_cmds,
+            capture_output=capture_output(LOGGER.getEffectiveLevel()),
+            timeout=max_runtime,
+        )
+    except subprocess.TimeoutExpired:
+        return_code = 3
+
+    cache.remove_existing_cache_files(mutant.src_file)
+    return MutantTrialResult(mutant=mutant, return_code=(return_code or mutant_trial.returncode))
 
 
 def run_mutation_trials(src_loc: Path, test_cmds: List[str], config: Config) -> ResultsSummary:
@@ -447,6 +421,7 @@ def run_mutation_trials(src_loc: Path, test_cmds: List[str], config: Config) -> 
                 target_idx=sample_idx,
                 mutation_op=current_mutation,
                 test_cmds=test_cmds,
+                max_runtime=config.max_runtime,
             )
 
             results.append(trial_results)

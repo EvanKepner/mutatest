@@ -17,7 +17,7 @@ import sys
 from datetime import timedelta
 from pathlib import Path
 from textwrap import dedent
-from typing import Any, Dict, List, NamedTuple, Optional, Sequence
+from typing import Any, Dict, List, NamedTuple, Optional, Sequence, Type
 
 from setuptools import find_packages  # type:ignore
 
@@ -56,6 +56,11 @@ class RunMode(NamedTuple):
         # Set to TRUE for the cli as a default, may add CLI control options later
         return True
 
+    @property
+    def break_on_timeout(self) -> bool:
+        # Set to TRUE for the cli as a default, may add CLI control options later
+        return True
+
 
 class TrialTimes(NamedTuple):
     """Container for trial run times used in summary report."""
@@ -73,6 +78,23 @@ class PositiveIntegerAction(argparse.Action):
             parser.error("{0} must be a non-zero positive integer.".format(option_string))
 
         setattr(namespace, self.dest, values)
+
+
+def get_constrained_float_action(
+    min_val: Optional[float] = None, max_val: Optional[float] = None
+) -> Type[argparse.Action]:
+    class ConstrainedFloatAction(argparse.Action):
+        """Custom action for ensuring floats arguments meet these."""
+
+        def __call__(self, parser, namespace, values, option_string=None):  # type: ignore
+            if min_val is not None and values < min_val:
+                parser.error("{0} must be no smaller than {1}.".format(option_string, min_val))
+            if max_val is not None and values > max_val:
+                parser.error("{0} must be no greater than {1}.".format(option_string, max_val))
+
+            setattr(namespace, self.dest, values)
+
+    return ConstrainedFloatAction
 
 
 class ValidCategoryAction(argparse.Action):
@@ -221,6 +243,15 @@ def cli_parser() -> argparse.ArgumentParser:
     parser.add_argument("--debug", action="store_true", help="Turn on DEBUG level logging output.")
     parser.add_argument(
         "--nocov", action="store_true", help="Ignore coverage files for optimization."
+    )
+    parser.add_argument(
+        "--timeout_factor",
+        help="If a mutation trial running time is beyond this factor multiplied by the "
+        "first clean trial running time then that mutation trial is aborted and "
+        "logged as a timeout.",
+        default=5,
+        type=float,
+        action=get_constrained_float_action(min_val=1, max_val=None),
     )
 
     return parser
@@ -691,7 +722,9 @@ def main(args: argparse.Namespace) -> None:
         break_on_survival=run_mode.break_on_survival,
         break_on_error=run_mode.break_on_error,
         break_on_unknown=run_mode.break_on_unknown,
+        break_on_timeout=run_mode.break_on_timeout,
         ignore_coverage=args.nocov,
+        max_runtime=args.timeout_factor * clean_runtime_1.seconds,
     )
 
     results_summary = run.run_mutation_trials(
@@ -721,6 +754,7 @@ def main(args: argparse.Namespace) -> None:
     LOGGER.info("CLI Report:\n\n%s", cli_report)
     LOGGER.info("Trial Summary Report:\n\n%s\n", display_results.summary)
     LOGGER.info("Detected mutations:%s\n", display_results.detected)
+    LOGGER.info("Timedout mutations:%s\n", display_results.timedout)
     LOGGER.info("Surviving mutations:%s\n", display_results.survived)
 
     if args.output:

@@ -35,6 +35,7 @@ class MockArgs(NamedTuple):
     exception: Optional[int]
     debug: Optional[bool]
     nocov: Optional[bool]
+    timeout_factor: Optional[int]
 
 
 @pytest.fixture
@@ -53,6 +54,7 @@ def mock_args(tmp_path, binop_file):
         exception=None,
         debug=False,
         nocov=True,
+        timeout_factor=2,
     )
 
 
@@ -224,8 +226,9 @@ def test_main(monkeypatch, mock_args, mock_results_summary):
          - SURVIVED: 1
          - DETECTED: 1
          - ERROR: 1
+         - TIMEOUT: 1
          - UNKNOWN: 1
-         - TOTAL RUNS: 4
+         - TOTAL RUNS: 5
          - RUN DATETIME: 2019-01-01 00:00:00
 
 
@@ -235,6 +238,11 @@ def test_main(monkeypatch, mock_args, mock_results_summary):
 
         SURVIVED
         --------
+         - src.py: (l: 1, c: 2) - mutation from <class '_ast.Add'> to <class '_ast.Mult'>
+
+
+        TIMEOUT
+        -------
          - src.py: (l: 1, c: 2) - mutation from <class '_ast.Add'> to <class '_ast.Mult'>
 
 
