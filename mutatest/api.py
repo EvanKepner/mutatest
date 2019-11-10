@@ -495,7 +495,7 @@ class GenomeGroup(MutableMapping):  # type: ignore
             TypeError: if ``source_folder`` is not a folder.
         """
         source_folder = Path(source_folder)
-        exclude_files = [Path(e) for e in exclude_files] if exclude_files else set()
+        exclude_files = [Path(e).resolve() for e in exclude_files] if exclude_files else set()
 
         if not source_folder.is_dir():
             raise TypeError(f"{source_folder} is not a directory.")

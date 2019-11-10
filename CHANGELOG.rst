@@ -4,6 +4,12 @@ Changelog
 Beta Releases
 -------------
 
+1.2.1
+~~~~~
+
+    - Bugfix to ensure ``exclude`` path processing in ``GenomeGroup.add_folder`` always uses full
+      resolved paths for files.
+
 1.2.0
 ~~~~~
 
