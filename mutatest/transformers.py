@@ -18,6 +18,13 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, NamedTuple, Optional, Set, Union
 
+try:
+    # Python 3.8
+    from typing import Protocol
+except ImportError:
+    # Python 3.7
+    from typing_extensions import Protocol  # type: ignore
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -39,12 +46,22 @@ CATEGORIES = {
 
 
 class LocIndex(NamedTuple):
-    """Location index within AST to mark mutation targets."""
+    """Location index within AST to mark mutation targets.
+
+    The ``end_lineno`` and ``end_col_offset`` properties are set to -1 by default as they
+    are only used distinctly in Python 3.8.
+    """
 
     ast_class: str
     lineno: int
     col_offset: int
     op_type: Any  # varies based on the visit_Node definition in MutateAST
+
+    # New in Python 3.8 AST: https://docs.python.org/3/whatsnew/3.8.html#improved-modules
+    # These values are always set to -1 if running Python 3.7.
+    # The NodeSpan class is used to manage setting the values
+    end_lineno: int = -1
+    end_col_offset: int = -1
 
 
 class MutationOpSet(NamedTuple):
@@ -54,6 +71,41 @@ class MutationOpSet(NamedTuple):
     desc: str
     operations: Set[Any]
     category: str
+
+
+class LocIndexNode(Protocol):
+    """Type protocol for AST Nodes that include lineno and col_offset properties."""
+
+    lineno: int
+    col_offset: int
+
+
+class NodeSpan(NamedTuple):
+    """Node span to support Py3.7 and 3.8 compatibility for locations.
+    This is used to generate the set the values in the LocIndex as a general class.
+    """
+
+    node: LocIndexNode
+
+    @property
+    def lineno(self) -> int:
+        return self.node.lineno
+
+    @property
+    def col_offset(self) -> int:
+        return self.node.col_offset
+
+    @property
+    def end_lineno(self) -> int:
+        """Python 3.8 will have this defined, in Python 3.7 it will always be -1"""
+        eline: int = getattr(self.node, "end_lineno", -1)
+        return eline
+
+    @property
+    def end_col_offset(self) -> int:
+        """Python 3.8 will have this defined, in Python 3.7 it will always be -1"""
+        ecol: int = getattr(self.node, "end_col_offest", -1)
+        return ecol
 
 
 class MutateAST(ast.NodeTransformer):
@@ -142,7 +194,15 @@ class MutateAST(ast.NodeTransformer):
             )
             return node
 
-        idx = LocIndex("AugAssign", node.lineno, node.col_offset, idx_op)
+        node_span = NodeSpan(node)
+        idx = LocIndex(
+            ast_class="AugAssign",
+            lineno=node_span.lineno,
+            col_offset=node_span.col_offset,
+            op_type=idx_op,
+            end_lineno=node_span.end_lineno,
+            end_col_offset=node_span.end_col_offset,
+        )
 
         self.locs.add(idx)
 
@@ -165,7 +225,15 @@ class MutateAST(ast.NodeTransformer):
         self.generic_visit(node)
         log_header = f"visit_BinOp: {self.src_file}:"
 
-        idx = LocIndex("BinOp", node.lineno, node.col_offset, type(node.op))
+        node_span = NodeSpan(node)
+        idx = LocIndex(
+            ast_class="BinOp",
+            lineno=node_span.lineno,
+            col_offset=node_span.col_offset,
+            op_type=type(node.op),
+            end_lineno=node_span.end_lineno,
+            end_col_offset=node_span.end_col_offset,
+        )
 
         self.locs.add(idx)
 
@@ -183,7 +251,15 @@ class MutateAST(ast.NodeTransformer):
         self.generic_visit(node)
         log_header = f"visit_BoolOp: {self.src_file}:"
 
-        idx = LocIndex("BoolOp", node.lineno, node.col_offset, type(node.op))
+        node_span = NodeSpan(node)
+        idx = LocIndex(
+            ast_class="BoolOp",
+            lineno=node_span.lineno,
+            col_offset=node_span.col_offset,
+            op_type=type(node.op),
+            end_lineno=node_span.end_lineno,
+            end_col_offset=node_span.end_col_offset,
+        )
         self.locs.add(idx)
 
         if idx == self.target_idx and self.mutation and not self.readonly:
@@ -206,13 +282,21 @@ class MutateAST(ast.NodeTransformer):
         cmpop_is_types: Set[type] = {ast.Is, ast.IsNot}
         cmpop_in_types: Set[type] = {ast.In, ast.NotIn}
         op_type = type(node.ops[0])
+        node_span = NodeSpan(node)
+
+        locidx_kwargs = {
+            "lineno": node_span.lineno,
+            "col_offset": node_span.col_offset,
+            "end_lineno": node_span.end_lineno,
+            "end_col_offset": node_span.end_col_offset,
+        }
 
         if op_type in cmpop_is_types:
-            idx = LocIndex("CompareIs", node.lineno, node.col_offset, op_type)
+            idx = LocIndex(ast_class="CompareIs", op_type=op_type, **locidx_kwargs)
         elif op_type in cmpop_in_types:
-            idx = LocIndex("CompareIn", node.lineno, node.col_offset, op_type)
+            idx = LocIndex(ast_class="CompareIn", op_type=op_type, **locidx_kwargs)
         else:
-            idx = LocIndex("Compare", node.lineno, node.col_offset, op_type)
+            idx = LocIndex(ast_class="Compare", op_type=op_type, **locidx_kwargs)
 
         self.locs.add(idx)
 
@@ -260,9 +344,17 @@ class MutateAST(ast.NodeTransformer):
         }
 
         if type(node.test) == ast.NameConstant:
-            if_type = f"If_{bool(node.test.value)}"  # type: ignore
+            if_type: str = f"If_{bool(node.test.value)}"  # type: ignore
 
-        idx = LocIndex("If", node.lineno, node.col_offset, if_type)
+        node_span = NodeSpan(node)
+        idx = LocIndex(
+            ast_class="If",
+            lineno=node_span.lineno,
+            col_offset=node_span.col_offset,
+            op_type=if_type,
+            end_lineno=node_span.end_lineno,
+            end_col_offset=node_span.end_col_offset,
+        )
         self.locs.add(idx)
 
         if idx == self.target_idx and self.mutation and not self.readonly:
@@ -293,21 +385,29 @@ class MutateAST(ast.NodeTransformer):
             "Index_NumNeg": ast.UnaryOp(op=ast.USub(), operand=ast.Num(n=1)),
         }
 
+        node_span = NodeSpan(n_value)
+        locidx_kwargs = {
+            "lineno": node_span.lineno,
+            "col_offset": node_span.col_offset,
+            "end_lineno": node_span.end_lineno,
+            "end_col_offset": node_span.end_col_offset,
+        }
+
         # index is a non-negative number e.g. i[0], i[1]
         if isinstance(n_value, ast.Num):
             # positive integer case
             if n_value.n != 0:
-                idx = LocIndex("Index", n_value.lineno, n_value.col_offset, "Index_NumPos")
+                idx = LocIndex(ast_class="Index", op_type="Index_NumPos", **locidx_kwargs)
                 self.locs.add(idx)
 
             # zero value case
             else:
-                idx = LocIndex("Index", n_value.lineno, n_value.col_offset, "Index_NumZero")
+                idx = LocIndex(ast_class="Index", op_type="Index_NumZero", **locidx_kwargs)
                 self.locs.add(idx)
 
         # index is a negative number e.g. i[-1]
         if isinstance(n_value, ast.UnaryOp):
-            idx = LocIndex("Index", n_value.lineno, n_value.col_offset, "Index_NumNeg")
+            idx = LocIndex(ast_class="Index", op_type="Index_NumNeg", **locidx_kwargs)
             self.locs.add(idx)
 
         if idx == self.target_idx and self.mutation and not self.readonly:
@@ -328,7 +428,15 @@ class MutateAST(ast.NodeTransformer):
         self.generic_visit(node)
         log_header = f"visit_NameConstant: {self.src_file}:"
 
-        idx = LocIndex("NameConstant", node.lineno, node.col_offset, node.value)
+        node_span = NodeSpan(node)
+        idx = LocIndex(
+            ast_class="NameConstant",
+            lineno=node_span.lineno,
+            col_offset=node_span.col_offset,
+            op_type=node.value,
+            end_lineno=node_span.end_lineno,
+            end_col_offset=node_span.end_col_offset,
+        )
         self.locs.add(idx)
 
         if idx == self.target_idx and not self.readonly:
@@ -359,15 +467,23 @@ class MutateAST(ast.NodeTransformer):
             "Slice_Unbounded": ast.Slice(lower=None, upper=None, step=slice.step),
         }
 
+        node_span = NodeSpan(node)
+        locidx_kwargs = {
+            "lineno": node_span.lineno,
+            "col_offset": node_span.col_offset,
+            "end_lineno": node_span.end_lineno,
+            "end_col_offset": node_span.end_col_offset,
+        }
+
         # Unbounded Swap Operation
         # upper slice range e.g. x[:2] will become x[2:]
         if slice.lower is None and slice.upper is not None:
-            idx = LocIndex("SliceUS", node.lineno, node.col_offset, "Slice_UnboundLower")
+            idx = LocIndex(ast_class="SliceUS", op_type="Slice_UnboundLower", **locidx_kwargs)
             self.locs.add(idx)
 
         # lower slice range e.g. x[1:] will become x[:1]
         if slice.upper is None and slice.lower is not None:
-            idx = LocIndex("SliceUS", node.lineno, node.col_offset, "Slice_UnboundUpper")
+            idx = LocIndex(ast_class="SliceUS", op_type="Slice_UnboundUpper", **locidx_kwargs)
             self.locs.add(idx)
 
         # Range Change Operation
@@ -376,7 +492,7 @@ class MutateAST(ast.NodeTransformer):
         # More likely to generate useful mutants in the positive case.
         if slice.lower is not None and slice.upper is not None:
             if isinstance(slice.upper, ast.Num):
-                idx = LocIndex("SliceRC", node.lineno, node.col_offset, "Slice_UPosToZero")
+                idx = LocIndex(ast_class="SliceRC", op_type="Slice_UPosToZero", **locidx_kwargs)
                 slice_mutations["Slice_UPosToZero"] = ast.Slice(
                     lower=slice.lower, upper=ast.Num(n=slice.upper.n - 1), step=slice.step
                 )
@@ -386,7 +502,7 @@ class MutateAST(ast.NodeTransformer):
                 self.locs.add(idx)
 
             if isinstance(slice.upper, ast.UnaryOp):
-                idx = LocIndex("SliceRC", node.lineno, node.col_offset, "Slice_UNegToZero")
+                idx = LocIndex(ast_class="SliceRC", op_type="Slice_UNegToZero", **locidx_kwargs)
 
                 slice_mutations["Slice_UNegToZero"] = ast.Slice(
                     lower=slice.lower,
