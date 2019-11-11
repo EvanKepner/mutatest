@@ -9,7 +9,7 @@ from io import StringIO
 from operator import attrgetter
 from pathlib import Path
 from textwrap import dedent
-from typing import NamedTuple, Set
+from typing import Dict, NamedTuple, Set
 
 import pytest
 
@@ -638,11 +638,49 @@ def index_file(tmp_path_factory):
 @pytest.fixture(scope="session")
 def index_expected_locs():
     """The index expected location based on the fixture"""
+    # Python 3.7
+    if sys.version_info < (3, 8):
+        return [
+            LocIndex(ast_class="Index", lineno=2, col_offset=20, op_type="Index_NumNeg"),
+            LocIndex(ast_class="Index", lineno=3, col_offset=20, op_type="Index_NumZero"),
+            LocIndex(ast_class="Index", lineno=4, col_offset=20, op_type="Index_NumPos"),
+            LocIndex(ast_class="Index", lineno=4, col_offset=23, op_type="Index_NumPos"),
+        ]
+
+    # Python 3.8
     return [
-        LocIndex(ast_class="Index", lineno=2, col_offset=20, op_type="Index_NumNeg"),
-        LocIndex(ast_class="Index", lineno=3, col_offset=20, op_type="Index_NumZero"),
-        LocIndex(ast_class="Index", lineno=4, col_offset=20, op_type="Index_NumPos"),
-        LocIndex(ast_class="Index", lineno=4, col_offset=23, op_type="Index_NumPos"),
+        LocIndex(
+            ast_class="Index",
+            lineno=2,
+            col_offset=20,
+            op_type="Index_NumNeg",
+            end_lineno=2,
+            end_col_offset=22,
+        ),
+        LocIndex(
+            ast_class="Index",
+            lineno=3,
+            col_offset=20,
+            op_type="Index_NumZero",
+            end_lineno=3,
+            end_col_offset=21,
+        ),
+        LocIndex(
+            ast_class="Index",
+            lineno=4,
+            col_offset=20,
+            op_type="Index_NumPos",
+            end_lineno=4,
+            end_col_offset=21,
+        ),
+        LocIndex(
+            ast_class="Index",
+            lineno=4,
+            col_offset=23,
+            op_type="Index_NumPos",
+            end_lineno=4,
+            end_col_offset=24,
+        ),
     ]
 
 
@@ -679,11 +717,49 @@ def nameconst_file(tmp_path_factory):
 @pytest.fixture(scope="session")
 def nameconst_expected_locs():
     """The nameconst expected location based on the fixture"""
+    # Python 3.7
+    if sys.version_info < (3, 8):
+        return [
+            LocIndex(ast_class="NameConstant", lineno=1, col_offset=14, op_type=True),
+            LocIndex(ast_class="NameConstant", lineno=4, col_offset=25, op_type=False),
+            LocIndex(ast_class="NameConstant", lineno=6, col_offset=22, op_type=False),
+            LocIndex(ast_class="NameConstant", lineno=7, col_offset=22, op_type=None),
+        ]
+
+    # Python 3.8
     return [
-        LocIndex(ast_class="NameConstant", lineno=1, col_offset=14, op_type=True),
-        LocIndex(ast_class="NameConstant", lineno=4, col_offset=25, op_type=False),
-        LocIndex(ast_class="NameConstant", lineno=6, col_offset=22, op_type=False),
-        LocIndex(ast_class="NameConstant", lineno=7, col_offset=22, op_type=None),
+        LocIndex(
+            ast_class="NameConstant",
+            lineno=1,
+            col_offset=14,
+            op_type=True,
+            end_lineno=1,
+            end_col_offset=18,
+        ),
+        LocIndex(
+            ast_class="NameConstant",
+            lineno=4,
+            col_offset=25,
+            op_type=False,
+            end_lineno=4,
+            end_col_offset=30,
+        ),
+        LocIndex(
+            ast_class="NameConstant",
+            lineno=6,
+            col_offset=22,
+            op_type=False,
+            end_lineno=6,
+            end_col_offset=27,
+        ),
+        LocIndex(
+            ast_class="NameConstant",
+            lineno=7,
+            col_offset=22,
+            op_type=None,
+            end_lineno=7,
+            end_col_offset=26,
+        ),
     ]
 
 
