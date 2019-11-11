@@ -14,6 +14,7 @@ and optionally create the mutation at that node. These are implemented in the ``
 """
 import ast
 import logging
+import sys
 
 from pathlib import Path
 from typing import Any, Dict, List, NamedTuple, Optional, Set, Union
@@ -44,11 +45,15 @@ CATEGORIES = {
     "SliceRC": "sr",
 }
 
+####################################################################################################
+# CORE TYPES
+####################################################################################################
+
 
 class LocIndex(NamedTuple):
     """Location index within AST to mark mutation targets.
 
-    The ``end_lineno`` and ``end_col_offset`` properties are set to -1 by default as they
+    The ``end_lineno`` and ``end_col_offset`` properties are set to ``None`` by default as they
     are only used distinctly in Python 3.8.
     """
 
@@ -58,10 +63,10 @@ class LocIndex(NamedTuple):
     op_type: Any  # varies based on the visit_Node definition in MutateAST
 
     # New in Python 3.8 AST: https://docs.python.org/3/whatsnew/3.8.html#improved-modules
-    # These values are always set to -1 if running Python 3.7.
+    # These values are always set to None if running Python 3.7.
     # The NodeSpan class is used to manage setting the values
-    end_lineno: int = -1
-    end_col_offset: int = -1
+    end_lineno: Optional[int] = None
+    end_col_offset: Optional[int] = None
 
 
 class MutationOpSet(NamedTuple):
@@ -96,16 +101,21 @@ class NodeSpan(NamedTuple):
         return self.node.col_offset
 
     @property
-    def end_lineno(self) -> int:
-        """Python 3.8 will have this defined, in Python 3.7 it will always be -1"""
-        eline: int = getattr(self.node, "end_lineno", -1)
+    def end_lineno(self) -> Optional[int]:
+        """Python 3.8 will have this defined, in Python 3.7 it will always be None."""
+        eline: Optional[int] = getattr(self.node, "end_lineno", None)
         return eline
 
     @property
-    def end_col_offset(self) -> int:
-        """Python 3.8 will have this defined, in Python 3.7 it will always be -1"""
-        ecol: int = getattr(self.node, "end_col_offest", -1)
+    def end_col_offset(self) -> Optional[int]:
+        """Python 3.8 will have this defined, in Python 3.7 it will always be None."""
+        ecol: Optional[int] = getattr(self.node, "end_col_offset", None)
         return ecol
+
+
+####################################################################################################
+# AST TRANSFORMERS
+####################################################################################################
 
 
 class MutateAST(ast.NodeTransformer):
@@ -287,16 +297,17 @@ class MutateAST(ast.NodeTransformer):
         locidx_kwargs = {
             "lineno": node_span.lineno,
             "col_offset": node_span.col_offset,
+            "op_type": op_type,
             "end_lineno": node_span.end_lineno,
             "end_col_offset": node_span.end_col_offset,
         }
 
         if op_type in cmpop_is_types:
-            idx = LocIndex(ast_class="CompareIs", op_type=op_type, **locidx_kwargs)
+            idx = LocIndex(ast_class="CompareIs", **locidx_kwargs)  # type: ignore
         elif op_type in cmpop_in_types:
-            idx = LocIndex(ast_class="CompareIn", op_type=op_type, **locidx_kwargs)
+            idx = LocIndex(ast_class="CompareIn", **locidx_kwargs)  # type: ignore
         else:
-            idx = LocIndex(ast_class="Compare", op_type=op_type, **locidx_kwargs)
+            idx = LocIndex(ast_class="Compare", **locidx_kwargs)  # type: ignore
 
         self.locs.add(idx)
 
@@ -338,12 +349,13 @@ class MutateAST(ast.NodeTransformer):
 
         if_type = "If_Statement"
 
+        # Py 3.7 vs 3.8 - 3.7 uses NameConstant, 3.8 uses Constant
+        constant_type = ast.NameConstant if sys.version_info < (3, 8) else ast.Constant
         if_mutations = {
-            "If_True": ast.NameConstant(value=True),
-            "If_False": ast.NameConstant(value=False),
+            "If_True": constant_type(value=True),
+            "If_False": constant_type(value=False),
         }
-
-        if type(node.test) == ast.NameConstant:
+        if type(node.test) == constant_type:
             if_type: str = f"If_{bool(node.test.value)}"  # type: ignore
 
         node_span = NodeSpan(node)
@@ -387,6 +399,7 @@ class MutateAST(ast.NodeTransformer):
 
         node_span = NodeSpan(n_value)
         locidx_kwargs = {
+            "ast_class": "Index",
             "lineno": node_span.lineno,
             "col_offset": node_span.col_offset,
             "end_lineno": node_span.end_lineno,
@@ -397,17 +410,17 @@ class MutateAST(ast.NodeTransformer):
         if isinstance(n_value, ast.Num):
             # positive integer case
             if n_value.n != 0:
-                idx = LocIndex(ast_class="Index", op_type="Index_NumPos", **locidx_kwargs)
+                idx = LocIndex(op_type="Index_NumPos", **locidx_kwargs)  # type: ignore
                 self.locs.add(idx)
 
             # zero value case
             else:
-                idx = LocIndex(ast_class="Index", op_type="Index_NumZero", **locidx_kwargs)
+                idx = LocIndex(op_type="Index_NumZero", **locidx_kwargs)  # type: ignore
                 self.locs.add(idx)
 
         # index is a negative number e.g. i[-1]
         if isinstance(n_value, ast.UnaryOp):
-            idx = LocIndex(ast_class="Index", op_type="Index_NumNeg", **locidx_kwargs)
+            idx = LocIndex(op_type="Index_NumNeg", **locidx_kwargs)  # type: ignore
             self.locs.add(idx)
 
         if idx == self.target_idx and self.mutation and not self.readonly:
@@ -478,12 +491,16 @@ class MutateAST(ast.NodeTransformer):
         # Unbounded Swap Operation
         # upper slice range e.g. x[:2] will become x[2:]
         if slice.lower is None and slice.upper is not None:
-            idx = LocIndex(ast_class="SliceUS", op_type="Slice_UnboundLower", **locidx_kwargs)
+            idx = LocIndex(
+                ast_class="SliceUS", op_type="Slice_UnboundLower", **locidx_kwargs
+            )  # type: ignore
             self.locs.add(idx)
 
         # lower slice range e.g. x[1:] will become x[:1]
         if slice.upper is None and slice.lower is not None:
-            idx = LocIndex(ast_class="SliceUS", op_type="Slice_UnboundUpper", **locidx_kwargs)
+            idx = LocIndex(
+                ast_class="SliceUS", op_type="Slice_UnboundUpper", **locidx_kwargs
+            )  # type: ignore
             self.locs.add(idx)
 
         # Range Change Operation
@@ -492,7 +509,9 @@ class MutateAST(ast.NodeTransformer):
         # More likely to generate useful mutants in the positive case.
         if slice.lower is not None and slice.upper is not None:
             if isinstance(slice.upper, ast.Num):
-                idx = LocIndex(ast_class="SliceRC", op_type="Slice_UPosToZero", **locidx_kwargs)
+                idx = LocIndex(
+                    ast_class="SliceRC", op_type="Slice_UPosToZero", **locidx_kwargs
+                )  # type: ignore
                 slice_mutations["Slice_UPosToZero"] = ast.Slice(
                     lower=slice.lower, upper=ast.Num(n=slice.upper.n - 1), step=slice.step
                 )
@@ -502,7 +521,9 @@ class MutateAST(ast.NodeTransformer):
                 self.locs.add(idx)
 
             if isinstance(slice.upper, ast.UnaryOp):
-                idx = LocIndex(ast_class="SliceRC", op_type="Slice_UNegToZero", **locidx_kwargs)
+                idx = LocIndex(
+                    ast_class="SliceRC", op_type="Slice_UNegToZero", **locidx_kwargs
+                )  # type: ignore
 
                 slice_mutations["Slice_UNegToZero"] = ast.Slice(
                     lower=slice.lower,
@@ -531,6 +552,11 @@ class MutateAST(ast.NodeTransformer):
 
         LOGGER.debug("%s (%s, %s): no mutations applied.", log_header, node.lineno, node.col_offset)
         return node
+
+
+####################################################################################################
+# TRANSFORMER FUNCTIONS
+####################################################################################################
 
 
 def get_compatible_operation_sets() -> List[MutationOpSet]:

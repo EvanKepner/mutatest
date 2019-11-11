@@ -237,12 +237,50 @@ def mock_binop_coverage_file(binop_file, tmp_path_factory):
 
 @pytest.fixture(scope="session")
 def binop_expected_locs():
-    """Expected target locations for the binop_file fixture."""
+    """Expected target locations for the binop_file fixture in Python 3.7."""
+    # Python 3.7
+    if sys.version_info < (3, 8):
+        return {
+            LocIndex(ast_class="BinOp", lineno=6, col_offset=11, op_type=ast.Add),
+            LocIndex(ast_class="BinOp", lineno=6, col_offset=18, op_type=ast.Sub),
+            LocIndex(ast_class="BinOp", lineno=10, col_offset=11, op_type=ast.Add),
+            LocIndex(ast_class="BinOp", lineno=15, col_offset=11, op_type=ast.Div),
+        }
+
+    # Python 3.8
     return {
-        LocIndex(ast_class="BinOp", lineno=6, col_offset=11, op_type=ast.Add),
-        LocIndex(ast_class="BinOp", lineno=6, col_offset=18, op_type=ast.Sub),
-        LocIndex(ast_class="BinOp", lineno=10, col_offset=11, op_type=ast.Add),
-        LocIndex(ast_class="BinOp", lineno=15, col_offset=11, op_type=ast.Div),
+        LocIndex(
+            ast_class="BinOp",
+            lineno=15,
+            col_offset=11,
+            op_type=ast.Div,
+            end_lineno=15,
+            end_col_offset=16,
+        ),
+        LocIndex(
+            ast_class="BinOp",
+            lineno=6,
+            col_offset=11,
+            op_type=ast.Add,
+            end_lineno=6,
+            end_col_offset=17,
+        ),
+        LocIndex(
+            ast_class="BinOp",
+            lineno=10,
+            col_offset=11,
+            op_type=ast.Add,
+            end_lineno=10,
+            end_col_offset=16,
+        ),
+        LocIndex(
+            ast_class="BinOp",
+            lineno=6,
+            col_offset=11,
+            op_type=ast.Sub,
+            end_lineno=6,
+            end_col_offset=21,
+        ),
     }
 
 
@@ -291,7 +329,17 @@ def boolop_file(tmp_path_factory):
 @pytest.fixture(scope="session")
 def boolop_expected_loc():
     """Expected location index of the boolop fixture"""
-    return LocIndex(ast_class="BoolOp", lineno=2, col_offset=11, op_type=ast.And)
+    # Py 3.7 vs 3.8
+    end_lineno = None if sys.version_info < (3, 8) else 2
+    end_col_offset = None if sys.version_info < (3, 8) else 18
+    return LocIndex(
+        ast_class="BoolOp",
+        lineno=2,
+        col_offset=11,
+        op_type=ast.And,
+        end_lineno=end_lineno,
+        end_col_offset=end_col_offset,
+    )
 
 
 @pytest.fixture(scope="session")
@@ -438,10 +486,39 @@ def compare_file(tmp_path_factory):
 @pytest.fixture(scope="session")
 def compare_expected_locs():
     """The compare expected locations based on the fixture"""
+    # Py 3.7
+    if sys.version_info < (3, 8):
+        return [
+            LocIndex(ast_class="Compare", lineno=2, col_offset=11, op_type=ast.Eq),
+            LocIndex(ast_class="CompareIs", lineno=5, col_offset=11, op_type=ast.Is),
+            LocIndex(ast_class="CompareIn", lineno=8, col_offset=11, op_type=ast.In),
+        ]
+    # Py 3.8
     return [
-        LocIndex(ast_class="Compare", lineno=2, col_offset=11, op_type=ast.Eq),
-        LocIndex(ast_class="CompareIs", lineno=5, col_offset=11, op_type=ast.Is),
-        LocIndex(ast_class="CompareIn", lineno=8, col_offset=11, op_type=ast.In),
+        LocIndex(
+            ast_class="Compare",
+            lineno=2,
+            col_offset=11,
+            op_type=ast.Eq,
+            end_lineno=2,
+            end_col_offset=17,
+        ),
+        LocIndex(
+            ast_class="CompareIs",
+            lineno=5,
+            col_offset=11,
+            op_type=ast.Is,
+            end_lineno=5,
+            end_col_offset=17,
+        ),
+        LocIndex(
+            ast_class="CompareIn",
+            lineno=8,
+            col_offset=11,
+            op_type=ast.In,
+            end_lineno=8,
+            end_col_offset=17,
+        ),
     ]
 
 
@@ -485,11 +562,49 @@ def if_file(tmp_path_factory):
 @pytest.fixture(scope="session")
 def if_expected_locs():
     """Expected locations in the if_statement."""
+    # Py 3.7
+    if sys.version_info < (3, 8):
+        return [
+            LocIndex(ast_class="If", lineno=2, col_offset=4, op_type="If_Statement"),
+            LocIndex(ast_class="If", lineno=4, col_offset=9, op_type="If_Statement"),
+            LocIndex(ast_class="If", lineno=10, col_offset=4, op_type="If_True"),
+            LocIndex(ast_class="If", lineno=13, col_offset=4, op_type="If_False"),
+        ]
+
+    # Py 3.8
     return [
-        LocIndex(ast_class="If", lineno=2, col_offset=4, op_type="If_Statement"),
-        LocIndex(ast_class="If", lineno=4, col_offset=9, op_type="If_Statement"),
-        LocIndex(ast_class="If", lineno=10, col_offset=4, op_type="If_True"),
-        LocIndex(ast_class="If", lineno=13, col_offset=4, op_type="If_False"),
+        LocIndex(
+            ast_class="If",
+            lineno=2,
+            col_offset=4,
+            op_type="If_Statement",
+            end_lineno=7,
+            end_col_offset=22,
+        ),
+        LocIndex(
+            ast_class="If",
+            lineno=4,
+            col_offset=9,
+            op_type="If_Statement",
+            end_lineno=7,
+            end_col_offset=22,
+        ),
+        LocIndex(
+            ast_class="If",
+            lineno=10,
+            col_offset=4,
+            op_type="If_True",
+            end_lineno=11,
+            end_col_offset=21,
+        ),
+        LocIndex(
+            ast_class="If",
+            lineno=13,
+            col_offset=4,
+            op_type="If_False",
+            end_lineno=14,
+            end_col_offset=22,
+        ),
     ]
 
 
