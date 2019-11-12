@@ -413,16 +413,17 @@ def single_binop_file_with_bad_test(tmp_path_factory):
 
 
 @pytest.fixture(scope="session")
-def while_loop_with_timeout(tmp_path_factory):
-    """A while loop where mutants will timeout."""
+def sleep_timeout(tmp_path_factory):
+    """A block of code with sleep timeout."""
     contents = dedent(
         """\
+    import time
     def odd_loop(x):
         a = True
-        while True:
-            if a:
-                break
-        return x
+        b = False
+        if a:
+            time.sleep(3)
+        return a
 
     print(odd_loop(5))
     """
@@ -447,8 +448,8 @@ def while_loop_with_timeout(tmp_path_factory):
 
     yield FileAndTest(fn, bad_test_fn)
 
-    fn.unlink()
-    bad_test_fn.unlink()
+    # fn.unlink()
+    # bad_test_fn.unlink()
 
 
 ####################################################################################################

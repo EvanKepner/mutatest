@@ -151,7 +151,7 @@ class MutateBase(ast.NodeTransformer):
         All ``visit_`` methods take the ``node`` as an argument and rely on the class properties.
 
         This MutateBase class is designed to be implemented with the appropriate Mixin Class
-        for supporting either Python 3.7 or Python 3.8 ASTs If the base class is used
+        for supporting either Python 3.7 or Python 3.8 ASTs. If the base class is used
         directly certain operations - like ``visit_If`` and ``visit_NameConstant`` will not
         work as intended..
 
@@ -368,11 +368,9 @@ class MutateBase(ast.NodeTransformer):
 
         # default for a comparison is "If_Statement" which will be changed to True/False
         # If_Statement is not set as a mutation target, controlled in get_mutations function
-
         if_type = "If_Statement"
 
         # Py 3.7 vs 3.8 - 3.7 uses NameConstant, 3.8 uses Constant
-        # constant_type = ast.NameConstant if sys.version_info < (3, 8) else ast.Constant
         if_mutations = {
             "If_True": self.constant_type(value=True),
             "If_False": self.constant_type(value=False),

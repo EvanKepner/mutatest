@@ -27,7 +27,17 @@ def test_create_mutant_with_cache(binop_file, stdoutIO):
     genome = Genome(source_file=binop_file)
 
     # this target is the add_five() function, changing add to mult
-    target_idx = LocIndex(ast_class="BinOp", lineno=10, col_offset=11, op_type=ast.Add)
+    end_lineno = None if sys.version_info < (3, 8) else 10
+    end_col_offset = None if sys.version_info < (3, 8) else 16
+
+    target_idx = LocIndex(
+        ast_class="BinOp",
+        lineno=10,
+        col_offset=11,
+        op_type=ast.Add,
+        end_lineno=end_lineno,
+        end_col_offset=end_col_offset,
+    )
     mutation_op = ast.Mult
 
     mutant = genome.mutate(target_idx, mutation_op, write_cache=True)

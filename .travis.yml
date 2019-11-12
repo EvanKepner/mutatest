@@ -1,32 +1,32 @@
 dist: xenial
 language: python
 python:
-  - "3.7"
+  - "3.8"
 
 matrix:
   fast_finish: true
 
   include:
     # run pytest
-    - python: "3.7"
-      env: TOXENV=py37
+    - python: "3.8"
+      env: TOXENV=py38
     # run pre-commit hooks checks
-    - python: "3.7"
+    - python: "3.8"
       env: TOXENV=lint
     # Ensure manifest is valid
-    - python: "3.7"
+    - python: "3.8"
       env: TOXENV=manifest
     # Run mypy static type-checking script
-    - python: "3.7"
+    - python: "3.8"
       env: TOXENV=typing
     # Ensure help produces valid output
-    - python: "3.7"
+    - python: "3.8"
       env: TOXENV=help
     # Check the pypi description
-    - python: "3.7"
+    - python: "3.8"
       env: TOXENV=pypi-description
     # Check the sphinx docs
-    - python: "3.7"
+    - python: "3.8"
       env: TOXENV=docs
 
    # Prevent breakage by new releases
