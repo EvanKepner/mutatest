@@ -1,18 +1,63 @@
 dist: xenial
 language: python
 python:
-  - "3.7"
   - "3.8"
 
 matrix:
   fast_finish: true
 
   include:
-    # run pre-commit hooks checks
+    # run pytest
+    - python: "3.7"
+      name: "Python 3.7 core tests"
+      env: TOXENV=py37
+
     - python: "3.8"
-      before_install: pyenv global system 3.8
-      name: "Precommit all-files"
+      name: "Python 3.8 core tests"
+      env: TOXENV=py38
+
+    # run pre-commit hooks checks
+    - python: "3.7"
+      name: "Precommit all-files (3.7)"
       env: TOXENV=lint
+
+    # Ensure manifest is valid
+    - python: "3.8"
+      name: "Check manifest"
+      env: TOXENV=manifest
+
+    # Run mypy static type-checking script
+    - python: "3.8"
+      name: "Mypy strict type checks"
+      env: TOXENV=typing
+
+    # Ensure help produces valid output
+    - python: "3.8"
+      name: "Help output"
+      env: TOXENV=help
+
+    # Check the pypi description
+    - python: "3.8"
+      name: "PyPI valid description"
+      env: TOXENV=pypi-description
+
+    # Check the sphinx docs
+    - python: "3.8"
+      name: "RTD tests for build sphinx documentation"
+      env: TOXENV=docs
+
+   # Prevent breakage by new releases
+    - python: "3.7-dev"
+      name: "3.7-dev release test check"
+      env: TOXENV=py37
+
+    - python: "3.8-dev"
+      name: "3.8-dev release test check"
+      env: TOXENV=py38
+
+  allow_failures:
+    - python: "3.7-dev"
+    - python: "3.8-dev"
 
 before_install:
   - pip install --upgrade pip
@@ -23,3 +68,6 @@ install:
 
 script:
   - tox
+
+after_success:
+  - codecov
