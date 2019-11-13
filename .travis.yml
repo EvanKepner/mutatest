@@ -10,7 +10,7 @@ matrix:
   include:
     # run pre-commit hooks checks
     - python: "3.8"
-      before_install: pyenv global 3.8.0
+      before_install: pyenv global system 3.8
       name: "Precommit all-files"
       env: TOXENV=lint
 
