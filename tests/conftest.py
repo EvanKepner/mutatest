@@ -287,7 +287,7 @@ def binop_expected_locs():
 @pytest.fixture(scope="session")
 def sorted_binop_expected_locs(binop_expected_locs):
     """Sorted expected locs when used in tests for sample generation."""
-    sort_by = attrgetter("lineno", "col_offset")
+    sort_by = attrgetter("lineno", "col_offset", "end_lineno", "end_col_offset")
     return sorted(binop_expected_locs, key=sort_by)
 
 
