@@ -175,7 +175,13 @@ def get_sample(ggrp: GenomeGroup, ignore_coverage: bool) -> List[GenomeGroupTarg
         sample = ggrp.targets
 
     # sorted list used for repeat trials using random seed instead of set
-    sort_by_keys = attrgetter("source_path", "loc_idx.lineno", "loc_idx.col_offset")
+    sort_by_keys = attrgetter(
+        "source_path",
+        "loc_idx.lineno",
+        "loc_idx.col_offset",
+        "loc_idx.end_lineno",
+        "loc_idx.end_col_offset",
+    )
     return sorted(sample, key=sort_by_keys)
 
 

@@ -9,7 +9,7 @@ from io import StringIO
 from operator import attrgetter
 from pathlib import Path
 from textwrap import dedent
-from typing import NamedTuple, Set
+from typing import Dict, NamedTuple, Set
 
 import pytest
 
@@ -237,19 +237,57 @@ def mock_binop_coverage_file(binop_file, tmp_path_factory):
 
 @pytest.fixture(scope="session")
 def binop_expected_locs():
-    """Expected target locations for the binop_file fixture."""
+    """Expected target locations for the binop_file fixture in Python 3.7."""
+    # Python 3.7
+    if sys.version_info < (3, 8):
+        return {
+            LocIndex(ast_class="BinOp", lineno=6, col_offset=11, op_type=ast.Add),
+            LocIndex(ast_class="BinOp", lineno=6, col_offset=18, op_type=ast.Sub),
+            LocIndex(ast_class="BinOp", lineno=10, col_offset=11, op_type=ast.Add),
+            LocIndex(ast_class="BinOp", lineno=15, col_offset=11, op_type=ast.Div),
+        }
+
+    # Python 3.8
     return {
-        LocIndex(ast_class="BinOp", lineno=6, col_offset=11, op_type=ast.Add),
-        LocIndex(ast_class="BinOp", lineno=6, col_offset=18, op_type=ast.Sub),
-        LocIndex(ast_class="BinOp", lineno=10, col_offset=11, op_type=ast.Add),
-        LocIndex(ast_class="BinOp", lineno=15, col_offset=11, op_type=ast.Div),
+        LocIndex(
+            ast_class="BinOp",
+            lineno=15,
+            col_offset=11,
+            op_type=ast.Div,
+            end_lineno=15,
+            end_col_offset=16,
+        ),
+        LocIndex(
+            ast_class="BinOp",
+            lineno=6,
+            col_offset=11,
+            op_type=ast.Add,
+            end_lineno=6,
+            end_col_offset=17,
+        ),
+        LocIndex(
+            ast_class="BinOp",
+            lineno=10,
+            col_offset=11,
+            op_type=ast.Add,
+            end_lineno=10,
+            end_col_offset=16,
+        ),
+        LocIndex(
+            ast_class="BinOp",
+            lineno=6,
+            col_offset=11,
+            op_type=ast.Sub,
+            end_lineno=6,
+            end_col_offset=21,
+        ),
     }
 
 
 @pytest.fixture(scope="session")
 def sorted_binop_expected_locs(binop_expected_locs):
     """Sorted expected locs when used in tests for sample generation."""
-    sort_by = attrgetter("lineno", "col_offset")
+    sort_by = attrgetter("lineno", "col_offset", "end_lineno", "end_col_offset")
     return sorted(binop_expected_locs, key=sort_by)
 
 
@@ -291,7 +329,17 @@ def boolop_file(tmp_path_factory):
 @pytest.fixture(scope="session")
 def boolop_expected_loc():
     """Expected location index of the boolop fixture"""
-    return LocIndex(ast_class="BoolOp", lineno=2, col_offset=11, op_type=ast.And)
+    # Py 3.7 vs 3.8
+    end_lineno = None if sys.version_info < (3, 8) else 2
+    end_col_offset = None if sys.version_info < (3, 8) else 18
+    return LocIndex(
+        ast_class="BoolOp",
+        lineno=2,
+        col_offset=11,
+        op_type=ast.And,
+        end_lineno=end_lineno,
+        end_col_offset=end_col_offset,
+    )
 
 
 @pytest.fixture(scope="session")
@@ -365,16 +413,17 @@ def single_binop_file_with_bad_test(tmp_path_factory):
 
 
 @pytest.fixture(scope="session")
-def while_loop_with_timeout(tmp_path_factory):
-    """A while loop where mutants will timeout."""
+def sleep_timeout(tmp_path_factory):
+    """A block of code with sleep timeout."""
     contents = dedent(
         """\
+    import time
     def odd_loop(x):
         a = True
-        while True:
-            if a:
-                break
-        return x
+        b = False
+        if a:
+            time.sleep(3)
+        return a
 
     print(odd_loop(5))
     """
@@ -399,8 +448,8 @@ def while_loop_with_timeout(tmp_path_factory):
 
     yield FileAndTest(fn, bad_test_fn)
 
-    fn.unlink()
-    bad_test_fn.unlink()
+    # fn.unlink()
+    # bad_test_fn.unlink()
 
 
 ####################################################################################################
@@ -438,10 +487,39 @@ def compare_file(tmp_path_factory):
 @pytest.fixture(scope="session")
 def compare_expected_locs():
     """The compare expected locations based on the fixture"""
+    # Py 3.7
+    if sys.version_info < (3, 8):
+        return [
+            LocIndex(ast_class="Compare", lineno=2, col_offset=11, op_type=ast.Eq),
+            LocIndex(ast_class="CompareIs", lineno=5, col_offset=11, op_type=ast.Is),
+            LocIndex(ast_class="CompareIn", lineno=8, col_offset=11, op_type=ast.In),
+        ]
+    # Py 3.8
     return [
-        LocIndex(ast_class="Compare", lineno=2, col_offset=11, op_type=ast.Eq),
-        LocIndex(ast_class="CompareIs", lineno=5, col_offset=11, op_type=ast.Is),
-        LocIndex(ast_class="CompareIn", lineno=8, col_offset=11, op_type=ast.In),
+        LocIndex(
+            ast_class="Compare",
+            lineno=2,
+            col_offset=11,
+            op_type=ast.Eq,
+            end_lineno=2,
+            end_col_offset=17,
+        ),
+        LocIndex(
+            ast_class="CompareIs",
+            lineno=5,
+            col_offset=11,
+            op_type=ast.Is,
+            end_lineno=5,
+            end_col_offset=17,
+        ),
+        LocIndex(
+            ast_class="CompareIn",
+            lineno=8,
+            col_offset=11,
+            op_type=ast.In,
+            end_lineno=8,
+            end_col_offset=17,
+        ),
     ]
 
 
@@ -485,11 +563,49 @@ def if_file(tmp_path_factory):
 @pytest.fixture(scope="session")
 def if_expected_locs():
     """Expected locations in the if_statement."""
+    # Py 3.7
+    if sys.version_info < (3, 8):
+        return [
+            LocIndex(ast_class="If", lineno=2, col_offset=4, op_type="If_Statement"),
+            LocIndex(ast_class="If", lineno=4, col_offset=9, op_type="If_Statement"),
+            LocIndex(ast_class="If", lineno=10, col_offset=4, op_type="If_True"),
+            LocIndex(ast_class="If", lineno=13, col_offset=4, op_type="If_False"),
+        ]
+
+    # Py 3.8
     return [
-        LocIndex(ast_class="If", lineno=2, col_offset=4, op_type="If_Statement"),
-        LocIndex(ast_class="If", lineno=4, col_offset=9, op_type="If_Statement"),
-        LocIndex(ast_class="If", lineno=10, col_offset=4, op_type="If_True"),
-        LocIndex(ast_class="If", lineno=13, col_offset=4, op_type="If_False"),
+        LocIndex(
+            ast_class="If",
+            lineno=2,
+            col_offset=4,
+            op_type="If_Statement",
+            end_lineno=7,
+            end_col_offset=22,
+        ),
+        LocIndex(
+            ast_class="If",
+            lineno=4,
+            col_offset=9,
+            op_type="If_Statement",
+            end_lineno=7,
+            end_col_offset=22,
+        ),
+        LocIndex(
+            ast_class="If",
+            lineno=10,
+            col_offset=4,
+            op_type="If_True",
+            end_lineno=11,
+            end_col_offset=21,
+        ),
+        LocIndex(
+            ast_class="If",
+            lineno=13,
+            col_offset=4,
+            op_type="If_False",
+            end_lineno=14,
+            end_col_offset=22,
+        ),
     ]
 
 
@@ -523,11 +639,49 @@ def index_file(tmp_path_factory):
 @pytest.fixture(scope="session")
 def index_expected_locs():
     """The index expected location based on the fixture"""
+    # Python 3.7
+    if sys.version_info < (3, 8):
+        return [
+            LocIndex(ast_class="Index", lineno=2, col_offset=20, op_type="Index_NumNeg"),
+            LocIndex(ast_class="Index", lineno=3, col_offset=20, op_type="Index_NumZero"),
+            LocIndex(ast_class="Index", lineno=4, col_offset=20, op_type="Index_NumPos"),
+            LocIndex(ast_class="Index", lineno=4, col_offset=23, op_type="Index_NumPos"),
+        ]
+
+    # Python 3.8
     return [
-        LocIndex(ast_class="Index", lineno=2, col_offset=20, op_type="Index_NumNeg"),
-        LocIndex(ast_class="Index", lineno=3, col_offset=20, op_type="Index_NumZero"),
-        LocIndex(ast_class="Index", lineno=4, col_offset=20, op_type="Index_NumPos"),
-        LocIndex(ast_class="Index", lineno=4, col_offset=23, op_type="Index_NumPos"),
+        LocIndex(
+            ast_class="Index",
+            lineno=2,
+            col_offset=20,
+            op_type="Index_NumNeg",
+            end_lineno=2,
+            end_col_offset=22,
+        ),
+        LocIndex(
+            ast_class="Index",
+            lineno=3,
+            col_offset=20,
+            op_type="Index_NumZero",
+            end_lineno=3,
+            end_col_offset=21,
+        ),
+        LocIndex(
+            ast_class="Index",
+            lineno=4,
+            col_offset=20,
+            op_type="Index_NumPos",
+            end_lineno=4,
+            end_col_offset=21,
+        ),
+        LocIndex(
+            ast_class="Index",
+            lineno=4,
+            col_offset=23,
+            op_type="Index_NumPos",
+            end_lineno=4,
+            end_col_offset=24,
+        ),
     ]
 
 
@@ -564,11 +718,49 @@ def nameconst_file(tmp_path_factory):
 @pytest.fixture(scope="session")
 def nameconst_expected_locs():
     """The nameconst expected location based on the fixture"""
+    # Python 3.7
+    if sys.version_info < (3, 8):
+        return [
+            LocIndex(ast_class="NameConstant", lineno=1, col_offset=14, op_type=True),
+            LocIndex(ast_class="NameConstant", lineno=4, col_offset=25, op_type=False),
+            LocIndex(ast_class="NameConstant", lineno=6, col_offset=22, op_type=False),
+            LocIndex(ast_class="NameConstant", lineno=7, col_offset=22, op_type=None),
+        ]
+
+    # Python 3.8
     return [
-        LocIndex(ast_class="NameConstant", lineno=1, col_offset=14, op_type=True),
-        LocIndex(ast_class="NameConstant", lineno=4, col_offset=25, op_type=False),
-        LocIndex(ast_class="NameConstant", lineno=6, col_offset=22, op_type=False),
-        LocIndex(ast_class="NameConstant", lineno=7, col_offset=22, op_type=None),
+        LocIndex(
+            ast_class="NameConstant",
+            lineno=1,
+            col_offset=14,
+            op_type=True,
+            end_lineno=1,
+            end_col_offset=18,
+        ),
+        LocIndex(
+            ast_class="NameConstant",
+            lineno=4,
+            col_offset=25,
+            op_type=False,
+            end_lineno=4,
+            end_col_offset=30,
+        ),
+        LocIndex(
+            ast_class="NameConstant",
+            lineno=6,
+            col_offset=22,
+            op_type=False,
+            end_lineno=6,
+            end_col_offset=27,
+        ),
+        LocIndex(
+            ast_class="NameConstant",
+            lineno=7,
+            col_offset=22,
+            op_type=None,
+            end_lineno=7,
+            end_col_offset=26,
+        ),
     ]
 
 

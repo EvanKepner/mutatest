@@ -29,15 +29,27 @@ RETURN_CODE_MAPPINGS = [
 
 
 @pytest.fixture
-def add_five_to_mult_mutant(binop_file, stdoutIO):
+def binop_Add_LocIdx():
+    """Binop Add LocIdx as a target for mutations."""
+    end_lineno = None if sys.version_info < (3, 8) else 10
+    end_col_offset = None if sys.version_info < (3, 8) else 16
+    return LocIndex(
+        ast_class="BinOp",
+        lineno=10,
+        col_offset=11,
+        op_type=ast.Add,
+        end_lineno=end_lineno,
+        end_col_offset=end_col_offset,
+    )
+
+
+@pytest.fixture
+def add_five_to_mult_mutant(binop_file, stdoutIO, binop_Add_LocIdx):
     """Mutant that takes add_five op ADD to MULT. Fails if mutation code does not work."""
     genome = Genome(source_file=binop_file)
 
-    # this target is the add_five() function, changing add to mult
-    target_idx = LocIndex(ast_class="BinOp", lineno=10, col_offset=11, op_type=ast.Add)
     mutation_op = ast.Mult
-
-    mutant = genome.mutate(target_idx, mutation_op, write_cache=True)
+    mutant = genome.mutate(binop_Add_LocIdx, mutation_op, write_cache=True)
 
     # uses the redirection for stdout to capture the value from the final output of binop_file
     with stdoutIO() as s:
@@ -62,12 +74,12 @@ def test_MutantTrialResult(returncode, expected_status, add_five_to_mult_mutant)
 
 
 @pytest.mark.parametrize("returncode, expected_status", RETURN_CODE_MAPPINGS)
-def test_create_mutation_and_run_trial(returncode, expected_status, monkeypatch, binop_file):
+def test_create_mutation_and_run_trial(
+    returncode, expected_status, monkeypatch, binop_file, binop_Add_LocIdx
+):
     """Mocked trial to ensure mutated cache files are removed after running."""
     genome = Genome(source_file=binop_file)
 
-    # this target is the add_five() function, changing add to mult
-    target_idx = LocIndex(ast_class="BinOp", lineno=10, col_offset=11, op_type=ast.Add)
     mutation_op = ast.Mult
 
     tag = sys.implementation.cache_tag
@@ -80,7 +92,7 @@ def test_create_mutation_and_run_trial(returncode, expected_status, monkeypatch,
 
     trial = run.create_mutation_run_trial(
         genome=genome,
-        target_idx=target_idx,
+        target_idx=binop_Add_LocIdx,
         mutation_op=mutation_op,
         test_cmds=["pytest"],
         max_runtime=10,
@@ -320,23 +332,20 @@ def test_run_mutation_trials_bad_binop(bos, bod, exp_trials, single_binop_file_w
 
 @pytest.mark.slow
 @pytest.mark.parametrize("bot, exp_timeout_trials", [(False, 3), (True, 2)])
-def test_run_mutation_trials_timeout(bot, exp_timeout_trials, while_loop_with_timeout):
+def test_run_mutation_trials_timeout(bot, exp_timeout_trials, sleep_timeout):
     """Slow test to run detection trials on a simple mutation on a binop.
 
-    Based on fixture, there is one IfStatement operation, with 2 substitutions e.g.
-    True, False, of these, one is expected to prevent breaking the infinite loop,
-    resulting in a Timeout. There are also two NameConstant operations (on the
-    while and if statements) with 2 substitutions each; changing the NameConstant on the
-    if statement will result in a timeout;
-    In total there are 6 total mutations, 3 of which will timeout.
+    Based on fixture, there are 2 substitutions e.g. and one if statement:
+    one of these changes will cause the sleep function to be executed
+    resulting in a Timeout. In total there are 6 total mutations, 3 of which will timeout.
 
     Args:
         bot: break on timeout
         exp_trials: number of expected trials
-        while_loop_with_timeout: fixture for single op with a timeout test
+        sleep_timeout: fixture for single op with a timeout test
     """
 
-    test_cmds = f"pytest {while_loop_with_timeout.test_file.resolve()}".split()
+    test_cmds = f"pytest {sleep_timeout.test_file.resolve()}".split()
     max_runtime = 1  # manually set to keep the timeout time reasonable
 
     config = Config(
@@ -348,7 +357,7 @@ def test_run_mutation_trials_timeout(bot, exp_timeout_trials, while_loop_with_ti
     )
 
     results_summary = run.run_mutation_trials(
-        while_loop_with_timeout.src_file.resolve(), test_cmds=test_cmds, config=config
+        sleep_timeout.src_file.resolve(), test_cmds=test_cmds, config=config
     )
 
     # in all trials the status should be survivors or timeouts

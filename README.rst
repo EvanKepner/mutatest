@@ -2,7 +2,7 @@
 ==========================================
 
 
-.. image:: https://img.shields.io/badge/Python_version-3.7-green.svg
+.. image:: https://img.shields.io/pypi/pyversions/mutatest?color=green
     :target: https://www.python.org/
 .. image:: https://travis-ci.org/EvanKepner/mutatest.svg?branch=master
     :target: https://travis-ci.org/EvanKepner/mutatest

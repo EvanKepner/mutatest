@@ -3,6 +3,7 @@
 These tests rely heavily on fixtures defined in conftest.py.
 """
 import ast
+import sys
 
 from copy import deepcopy
 
@@ -83,11 +84,22 @@ def test_MutateAST_visit_augassign(augassign_file, augassign_expected_locs):
             assert l.op_type == "AugAssign_Mult"
 
 
-def test_MutateAST_visit_binop(binop_file):
+def test_MutateAST_visit_binop_37(binop_file):
     """Read only test to ensure locations are aggregated."""
     tree = Genome(binop_file).ast
 
-    test_idx = LocIndex(ast_class="BinOp", lineno=6, col_offset=11, op_type=ast.Add)
+    # Py 3.7 vs. Py 3.8
+    end_lineno = None if sys.version_info < (3, 8) else 6
+    end_col_offset = None if sys.version_info < (3, 8) else 17
+
+    test_idx = LocIndex(
+        ast_class="BinOp",
+        lineno=6,
+        col_offset=11,
+        op_type=ast.Add,
+        end_lineno=end_lineno,
+        end_col_offset=end_col_offset,
+    )
     test_mutation = ast.Pow
 
     # apply the mutation to the original tree copy
@@ -103,7 +115,12 @@ def test_MutateAST_visit_binop(binop_file):
 
     # locs is an unordered set, cycle through to thd target and check the mutation
     for l in mast.locs:
-        if l.lineno == 6 and l.col_offset == 11:
+        if (
+            l.lineno == 6
+            and l.col_offset == 11
+            and l.end_lineno == end_lineno
+            and l.end_col_offset == end_col_offset
+        ):
             assert l.op_type == test_mutation
 
 
