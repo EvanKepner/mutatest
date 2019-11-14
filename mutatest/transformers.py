@@ -11,6 +11,9 @@ valid category codes that are valid filters. The primary classes are:
 The ``LocIndex`` is a location index within a given Abstract Syntax Tree (AST) that can be mutated.
 The ``MutateAST`` class walks the AST of a given source file to identify all of the locations,
 and optionally create the mutation at that node. These are implemented in the ``Genome`` object.
+
+``MutateAST`` is constructed from ``MutateBase`` and the appropriate mixin class - either
+``ConstantMixin`` for Python 3.8, or ``NameConstantMixin`` for Python 3.7.
 """
 import ast
 import logging
@@ -614,7 +617,7 @@ class ConstantMixin:
 if sys.version_info < (3, 8):
 
     class MutateAST(NameConstantMixin, MutateBase):
-        """Python 3.7 AST implementation of the MutateAST class."""
+        """Implementation of the MutateAST class based on running environment."""
 
         pass
 
@@ -623,7 +626,7 @@ if sys.version_info < (3, 8):
 else:
 
     class MutateAST(ConstantMixin, MutateBase):
-        """Python 3.8 AST implementation of the MutateAST class."""
+        """Implementation of the MutateAST class based on running environment."""
 
         pass
 

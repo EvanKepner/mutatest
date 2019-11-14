@@ -1,7 +1,7 @@
 ``mutatest``: Python mutation testing
 =====================================
 
-.. image:: https://img.shields.io/badge/Python_version-3.7-green.svg
+.. image:: https://img.shields.io/pypi/pyversions/mutatest?color=green
     :target: https://www.python.org/
 .. image:: https://travis-ci.org/EvanKepner/mutatest.svg?branch=master
     :target: https://travis-ci.org/EvanKepner/mutatest
@@ -37,7 +37,7 @@ Features:
 Quick Start
 -----------
 
-``mutatest`` requires Python 3.7. You can install with ``pip``:
+``mutatest`` requires Python 3.7 or 3.8. You can install with ``pip``:
 
 .. code-block:: bash
 

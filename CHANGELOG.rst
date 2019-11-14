@@ -4,6 +4,17 @@ Changelog
 Beta Releases
 -------------
 
+2.0.0
+~~~~~
+
+    - Python 3.8 support! There are breaking changes with the ``LocIndex`` and other components
+      of the ``transformers`` from prior versions of ``mutatest``. Python 3.8 introduces a new
+      AST structure - including additional node attributes ``end_lineno`` and ``end_col_offset``
+      that have to be accounted for. ``transformers.MutateAST`` is now build from a base class
+      and a mixin class depending on the Python version (3.7 vs. 3.8) for the appropriate AST
+      treatment. There are no changes in the CLI usage.
+
+
 1.2.1
 ~~~~~
 

@@ -107,6 +107,21 @@ out of 20 with specific pieces of your source code.
 ``Mutatest`` is most useful as a diagnostic tool to determine weak spots in your overall test structure.
 
 
+Are there differences in running with Python 3.7 vs. Python 3.8?
+----------------------------------------------------------------
+
+.. versionadded:: 2.0
+    Support for Python 3.8
+
+Yes, though they do not impact the command line interface experience.
+In Python 3.8, the ``NamedConstant`` node type was deprecated in favor of ``Constant``, and new
+location attributes were added to individual nodes: ``end_lineno`` and ``end_col_offset``.
+These changes are accounted for in the ``transformers`` module.
+Running with Python 3.7 the ``LocIndex.end_lineno`` and ``LocIndex.end_col_offset`` will always
+be set to ``None``, and in Python 3.8 these values are populated based on the AST.
+Additional information is on `Python 3.8 What's New Improved Modules`_.
+
+
 Known limitations
 -----------------
 
@@ -137,3 +152,4 @@ return codes into mutation trial statuses.
 
 .. target-notes::
 .. _Pytest Test Layout: https://docs.pytest.org/en/latest/goodpractices.html#choosing-a-test-layout-import-rules
+.. _Python 3.8 What's New Improved Modules: https://docs.python.org/3/whatsnew/3.8.html#ast
