@@ -3,7 +3,7 @@
 Installation
 ============
 
-``mutatest`` requires Python 3.7. You can install with ``pip``:
+``mutatest`` requires Python 3.7 or Python 3.8. You can install with ``pip``:
 
 .. code-block:: bash
 
