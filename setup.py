@@ -26,8 +26,11 @@ CLASSIFIERS = [
     "Framework :: Pytest",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Topic :: Utilities",
+    "Topic :: Software Development:: Libraries",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Software Development :: Quality Assurance",
     "Topic :: Software Development :: Testing",
@@ -49,9 +52,15 @@ EXTRAS_REQUIRE = {
         "hypothesis",
     ],
     "qa": ["mypy", "black", "pre-commit", "isort"],
+    "build": ["twine", "wheel"],
 }
 
-EXTRAS_REQUIRE["dev"] = EXTRAS_REQUIRE["tests"] + EXTRAS_REQUIRE["docs"] + EXTRAS_REQUIRE["qa"]
+EXTRAS_REQUIRE["dev"] = (
+    EXTRAS_REQUIRE["tests"]
+    + EXTRAS_REQUIRE["docs"]
+    + EXTRAS_REQUIRE["qa"]
+    + EXTRAS_REQUIRE["build"]
+)
 
 
 HERE = os.path.abspath(os.path.dirname(__file__))

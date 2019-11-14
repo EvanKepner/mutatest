@@ -17,6 +17,7 @@ matrix:
       env: TOXENV=py38
 
     # run pre-commit hooks checks
+    # TODO: Python 3.8, pyenv global system 3.8 doesn't appear to work
     - python: "3.7"
       name: "Precommit all-files (3.7)"
       env: TOXENV=lint
@@ -47,6 +48,7 @@ matrix:
       env: TOXENV=docs
 
    # Prevent breakage by new releases
+   # Watch for when pre-commit Py3.8 support on Travis works as intended
     - python: "3.7-dev"
       name: "3.7-dev release test check"
       env: TOXENV=py37
@@ -54,6 +56,10 @@ matrix:
     - python: "3.8-dev"
       name: "3.8-dev release test check"
       env: TOXENV=py38
+
+    - python: "3.8-dev"
+      name: "Precommit all-files (3.8)"
+      env: TOXENV=lint
 
   allow_failures:
     - python: "3.7-dev"
