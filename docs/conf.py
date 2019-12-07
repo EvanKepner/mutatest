@@ -11,14 +11,6 @@ import os
 import re
 import sys
 
-# Needed for auto-doc API
-try:
-    # Python 3.8
-    from typing import Protocol
-except ImportError:
-    # Python 3.7
-    from typing_extensions import Protocol  # type: ignore
-
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.

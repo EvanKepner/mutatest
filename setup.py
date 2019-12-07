@@ -38,7 +38,7 @@ CLASSIFIERS = [
 ]
 
 # Built to run with pytest, but not an installation requirement for the API
-INSTALL_REQUIRES = ["coverage>=4.4"]
+INSTALL_REQUIRES = ["coverage>=4.4", "typing-extensions"]
 EXTRAS_REQUIRE = {
     "docs": ["coverage", "ipython", "sphinx"],  # kept in docs/requirements.txt for RTD
     "tests": [

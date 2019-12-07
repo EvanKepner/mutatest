@@ -4,6 +4,12 @@ Changelog
 Beta Releases
 -------------
 
+2.0.1
+-----
+
+    - Explicit including of ``typing-extensions`` in ``setup.py`` requirements to fix breaking
+      documentation builds on Python version 3.7 vs. 3.8.
+
 2.0.0
 ~~~~~
 
