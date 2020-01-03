@@ -110,8 +110,18 @@ class CoverageFilter(Filter):
             )
 
         if self._coverage_data is None:
-            self._coverage_data = CoverageData()
-            self._coverage_data.read_file(self.coverage_file)
+
+            try:
+                # Coverage v 4.5.4
+                # https://coverage.readthedocs.io/en/coverage-4.5.4/api_coveragedata.html#coverage.CoverageData.read_file
+                self._coverage_data = CoverageData()
+                self._coverage_data.read_file(self.coverage_file)
+            except AttributeError:
+                # Coverage v 5.0.0
+                # https://coverage.readthedocs.io/en/coverage-5.0/api_coveragedata.html#coverage.CoverageData.read
+                self._coverage_data = CoverageData(basename=str(self.coverage_file.resolve()))
+                self._coverage_data.read()
+
         return self._coverage_data
 
     def filter(  # type: ignore
