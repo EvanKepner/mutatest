@@ -1,20 +1,32 @@
 ``mutatest``: Python mutation testing
 ==========================================
 
-
 .. image:: https://img.shields.io/pypi/pyversions/mutatest?color=green
     :target: https://www.python.org/
+.. image:: https://badge.fury.io/py/mutatest.svg
+    :target: https://pypi.org/project/mutatest/
+    :alt: PyPI status
+.. image:: https://img.shields.io/pypi/format/mutatest.svg
+    :target: https://pypi.org/project/mutatest/
+    :alt: Format
+.. image:: https://img.shields.io/pypi/l/mutatest.svg
+    :target: https://pypi.org/project/mutatest/
+    :alt: License
 .. image:: https://travis-ci.org/EvanKepner/mutatest.svg?branch=master
     :target: https://travis-ci.org/EvanKepner/mutatest
+    :alt: TravisCI
 .. image:: https://readthedocs.org/projects/mutatest/badge/?version=latest
     :target: https://mutatest.readthedocs.io/en/latest/?badge=latest
+    :alt: RTD status
 .. image:: https://codecov.io/gh/EvanKepner/mutatest/branch/master/graph/badge.svg
-  :target: https://codecov.io/gh/EvanKepner/mutatest
+    :target: https://codecov.io/gh/EvanKepner/mutatest
+    :alt: CodeCov
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
-    :target: https://github.com/ambv/black
+    :target: https://github.com/psf/black
+    :alt: Black
 .. image:: https://pepy.tech/badge/mutatest
     :target: https://pepy.tech/project/mutatest
-
+    :alt: Downloads
 
 
 Are you confident in your tests? Try out ``mutatest`` and see if your tests will detect small
@@ -140,6 +152,5 @@ License
 
 Copyright Evan Kepner 2018-2020.
 
-Distributed under the terms of the `MIT`_ license, ``mutatest`` is free and open source software.
-
-.. _`MIT`: https://github.com/pytest-dev/pytest/blob/master/LICENSE
+Distributed under the terms of the `MIT <https://github.com/pytest-dev/pytest/blob/master/LICENSE>`_
+license, ``mutatest`` is free and open source software.

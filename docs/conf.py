@@ -20,6 +20,9 @@ sys.path.insert(0, os.path.abspath(".."))
 META_PATH = os.path.join("..", "mutatest", "__init__.py")
 HERE = os.path.abspath(os.path.dirname(__file__))
 
+# determine if on readthedocs.org
+ON_RTD = os.getenv("READTHEDOCS") == True
+
 
 def read(*parts):
     """
@@ -73,23 +76,21 @@ templates_path = ["_templates"]
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3/", None),
+}
+
+pygments_style = "sphinx"
 
 # -- Options for HTML output -------------------------------------------------
+# for local builds, not needed on RTD platform
+if not ON_RTD:
+    import sphinx_rtd_theme
 
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
-#
-html_theme = "alabaster"
+    html_theme = "sphinx_rtd_theme"
+    html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
-html_theme_options = {
-    "show_related": False,
-    "description": "“Test your tests!”",
-    "github_button": True,
-    "github_user": "EvanKepner",
-    "github_repo": "mutatest",
-    "github_type": "star",
-    "fixed_sidebar": True,
-}
+
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".

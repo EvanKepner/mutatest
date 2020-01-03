@@ -1,18 +1,32 @@
-``mutatest``: Python mutation testing
-=====================================
+Mutatest: Python mutation testing
+=================================
 
 .. image:: https://img.shields.io/pypi/pyversions/mutatest?color=green
     :target: https://www.python.org/
+.. image:: https://badge.fury.io/py/mutatest.svg
+    :target: https://pypi.org/project/mutatest/
+    :alt: PyPI status
+.. image:: https://img.shields.io/pypi/format/mutatest.svg
+    :target: https://pypi.org/project/mutatest/
+    :alt: Format
+.. image:: https://img.shields.io/pypi/l/mutatest.svg
+    :target: https://pypi.org/project/mutatest/
+    :alt: License
 .. image:: https://travis-ci.org/EvanKepner/mutatest.svg?branch=master
     :target: https://travis-ci.org/EvanKepner/mutatest
+    :alt: TravisCI
 .. image:: https://readthedocs.org/projects/mutatest/badge/?version=latest
     :target: https://mutatest.readthedocs.io/en/latest/?badge=latest
+    :alt: RTD status
 .. image:: https://codecov.io/gh/EvanKepner/mutatest/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/EvanKepner/mutatest
+    :alt: CodeCov
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
-    :target: https://github.com/ambv/black
+    :target: https://github.com/psf/black
+    :alt: Black
 .. image:: https://pepy.tech/badge/mutatest
     :target: https://pepy.tech/project/mutatest
+    :alt: Downloads
 
 Are you confident in your tests? Try out ``mutatest`` and see if your tests will detect small
 modifications (mutations) in the code. Surviving mutations represent subtle changes that are
@@ -44,7 +58,8 @@ Quick Start
     $ pip install mutatest
 
 
-Alternatively, clone the repo from `GitHub`_ and install from the source code:
+Alternatively, clone the repo from `GitHub <https://github.com/EvanKepner/mutatest>`_ and install
+from the source code:
 
 
 .. code-block:: bash
@@ -54,7 +69,9 @@ Alternatively, clone the repo from `GitHub`_ and install from the source code:
 
 
 ``mutatest`` is designed to work when your test files are separated from your source directory
-and are prefixed with ``test_``. See `Pytest Test Layout`_ for more details.
+and are prefixed with ``test_``.
+See `Pytest Test Layout <https://docs.pytest.org/en/latest/goodpractices.html#choosing-a-test-layout-import-rules>`_
+for more details.
 
 
 ``mutatest`` is a diagnostic command line tool for your test coverage assessment.
@@ -210,9 +227,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
-
-
-.. target-notes::
-.. _GitHub: https://github.com/EvanKepner/mutatest
-.. _Pytest Test Layout: https://docs.pytest.org/en/latest/goodpractices.html#choosing-a-test-layout-import-rules
