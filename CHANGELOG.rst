@@ -5,14 +5,14 @@ Beta Releases
 -------------
 
 2.1.0
------
+~~~~~
 
     - ``Coverage`` version 5.0 has moved to a SQLite database instead of a flat file. To support
       both 4x and 5x versions of ``Coverage`` the ``filters`` source code has been updated.
       The test suite includes mocked coverage data parsing tests of 4x only for now.
 
 2.0.1
------
+~~~~~
 
     - Explicit including of ``typing-extensions`` in ``setup.py`` requirements to fix breaking
       documentation builds on Python version 3.7 vs. 3.8.
