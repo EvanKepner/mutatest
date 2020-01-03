@@ -138,7 +138,7 @@ and enhancements of each version.
 License
 -------
 
-Copyright Evan Kepner 2018-2019.
+Copyright Evan Kepner 2018-2020.
 
 Distributed under the terms of the `MIT`_ license, ``mutatest`` is free and open source software.
 
