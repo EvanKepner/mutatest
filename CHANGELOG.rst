@@ -4,6 +4,13 @@ Changelog
 Beta Releases
 -------------
 
+2.1.0
+-----
+
+    - ``Coverage`` version 5.0 has moved to a SQLite database instead of a flat file. To support
+      both 4x and 5x versions of ``Coverage`` the ``filters`` source code has been updated.
+      The test suite includes parsing tests of 4x only for now.
+
 2.0.1
 -----
 

@@ -1,6 +1,6 @@
 """Mutation initialization.
 """
-__version__ = "2.0.1"
+__version__ = "2.1.0"
 
 __title__ = "mutatest"
 __description__ = "Python mutation testing: test your tests!"
@@ -14,4 +14,4 @@ __author__ = "Evan Kepner"
 __email__ = "EvanKepner@users.noreply.github.com"
 
 __license__ = "MIT"
-__copyright__ = "Copyright (c) 2018-2019 Evan Kepner"
+__copyright__ = "Copyright (c) 2018-2020 Evan Kepner"
