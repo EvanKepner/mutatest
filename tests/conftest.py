@@ -9,8 +9,9 @@ from io import StringIO
 from operator import attrgetter
 from pathlib import Path
 from textwrap import dedent
-from typing import Dict, NamedTuple, Set
+from typing import Dict, List, NamedTuple, Set
 
+import coverage
 import pytest
 
 from mutatest.api import Mutant
@@ -84,6 +85,32 @@ def mock_results_summary(mock_trial_results):
     )
 
 
+def write_cov_file(line_data: Dict[str, List[int]], fname: str) -> None:
+    """Write a coverage file supporting both Coverage v4 and v5.
+
+    Args:
+        line_data: Dictionary of line data for the coverage file.
+        fname: string filename for output location (absolute path)
+
+    Returns:
+        None
+
+    Raises:
+        EnvironmentError: if Coverage version is not 4 or 5
+    """
+    if coverage.version_info[0] == 4:
+        covdata = coverage.CoverageData()
+        covdata.add_lines(line_data)
+        covdata.write_file(fname)
+
+    if coverage.version_info[0] == 5:
+        covdata = coverage.CoverageData(basename=fname)
+        covdata.add_lines(line_data)
+        covdata.write()
+
+    raise EnvironmentError(f"Coverage version is not supported: {coverage.version_info}")
+
+
 ####################################################################################################
 # FILTERS: MOCK COVERAGE FILE FIXTURES
 ####################################################################################################
@@ -92,18 +119,19 @@ def mock_results_summary(mock_trial_results):
 @pytest.fixture(scope="session")
 def mock_coverage_file(tmp_path_factory):
     """Mock .coverage file to read into the CoverageOptimizer."""
-    mock_contents = (
-        """!coverage.py: This is a private format, don't read it directly!"""
-        """{"lines":{"/simple_isnot/isnot/__init__.py":[1],"""
-        """"/simple_isnot/isnot/test_isnot.py":[1,3,4],"""
-        """"/simple_isnot/isnot/run.py":[1,4,2]}}"""
-    )
 
     folder = tmp_path_factory.mktemp("cov")
-    mock_cov_file = folder / ".coverage"
 
-    with open(mock_cov_file, "w") as ostream:
-        ostream.write(mock_contents)
+    # aligned to fixture mock_source_and_targets
+    mock_contents = {
+        "/simple_isnot/isnot/__init__.py": [1],
+        "/simple_isnot/isnot/test_isnot.py": [1, 3, 4],
+        "/simple_isnot/isnot/run.py": [1, 4, 2],
+    }
+
+    mock_cov_file = folder / ".coverage"
+    str_cov_file = str(mock_cov_file.resolve())
+    write_cov_file(mock_contents, str_cov_file)
 
     yield mock_cov_file
 
@@ -219,16 +247,13 @@ def binop_file(tmp_path_factory):
 @pytest.fixture(scope="session")
 def mock_binop_coverage_file(binop_file, tmp_path_factory):
     """Mock .coverage file based on the binop_file fixture."""
-    mock_contents = (
-        """!coverage.py: This is a private format, don't read it directly!"""
-        """{"lines":{"%s":[6,10]}}""" % binop_file.resolve()
-    )
+    fname = str(binop_file.resolve())
+    mock_contents = {fname: [6, 10]}
 
     folder = tmp_path_factory.mktemp("binop_cov")
     mock_cov_file = folder / ".coverage"
-
-    with open(mock_cov_file, "w") as ostream:
-        ostream.write(mock_contents)
+    str_cov_file = str(mock_cov_file.resolve())
+    write_cov_file(mock_contents, str_cov_file)
 
     yield mock_cov_file
 

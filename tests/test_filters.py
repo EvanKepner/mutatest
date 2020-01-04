@@ -34,7 +34,6 @@ def test_unset_coverage_file(fn):
         _ = ccf.coverage_data
 
 
-@pytest.mark.skipif(coverage.version_info[0] > 4, reason="Coverage version > 4.x")
 @pytest.mark.parametrize(
     "invert, expected",
     [(False, [1, 2, 4]), (True, [3, 5])],
