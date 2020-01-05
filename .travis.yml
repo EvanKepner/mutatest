@@ -16,6 +16,11 @@ matrix:
       name: "Python 3.8 core tests"
       env: TOXENV=py38
 
+    # specific checks for coverage v4 support, coverage v5 is used by default elsewhere
+    - python: "3.8"
+      name: "Python 3.8 coverage v4 tests"
+      env: TOXENV=cov4
+
     # run pre-commit hooks checks
     # TODO: Python 3.8, pyenv global system 3.8 doesn't appear to work
     - python: "3.7"

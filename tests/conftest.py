@@ -94,21 +94,17 @@ def write_cov_file(line_data: Dict[str, List[int]], fname: str) -> None:
 
     Returns:
         None
-
-    Raises:
-        EnvironmentError: if Coverage version is not 4 or 5
     """
     if coverage.version_info[0] == 4:
         covdata = coverage.CoverageData()
         covdata.add_lines(line_data)
         covdata.write_file(fname)
 
-    if coverage.version_info[0] == 5:
+    else:
+        # assume coverage v 5
         covdata = coverage.CoverageData(basename=fname)
         covdata.add_lines(line_data)
         covdata.write()
-
-    raise EnvironmentError(f"Coverage version is not supported: {coverage.version_info}")
 
 
 ####################################################################################################

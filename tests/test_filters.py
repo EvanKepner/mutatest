@@ -34,6 +34,7 @@ def test_unset_coverage_file(fn):
         _ = ccf.coverage_data
 
 
+@pytest.mark.coverage
 @pytest.mark.parametrize(
     "invert, expected",
     [(False, [1, 2, 4]), (True, [3, 5])],

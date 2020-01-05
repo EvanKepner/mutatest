@@ -106,7 +106,7 @@ def test_mutate_ValueError_target(binop_file, mock_LocIdx):
         _ = genome.mutate(target_idx=mock_LocIdx, mutation_op=ast.Div, write_cache=False)
 
 
-@pytest.mark.skipif(coverage.version_info[0] > 4, reason="Coverage version > 4.x")
+@pytest.mark.coverage
 @pytest.mark.parametrize("filter_codes", [set(), ("bn",)], ids=["Filter Empty Set", "Filter BinOp"])
 def test_covered_targets(filter_codes, binop_file, mock_binop_coverage_file):
     """Mock coverage file sets lines 6 and 10 (not 15) to be covered."""
@@ -253,7 +253,7 @@ def test_GenomeGroup_add_folder_with_exclusions(tmp_path):
     assert list(ggrp.keys())[0].name == expected
 
 
-@pytest.mark.skipif(coverage.version_info[0] > 4, reason="Coverage version > 4.x")
+@pytest.mark.coverage
 @pytest.mark.parametrize("filter_codes", [set(), ("bn",)], ids=["Filter Empty Set", "Filter BinOp"])
 def test_GenomeGroup_covered_targets(filter_codes, binop_file, mock_binop_coverage_file):
     """Mock coverage file sets lines 6 and 10 (not 15) to be covered."""
