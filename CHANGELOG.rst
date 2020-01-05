@@ -4,6 +4,14 @@ Changelog
 Beta Releases
 -------------
 
+2.1.1
+~~~~~
+
+    - Includes specific test environments for ``coverage`` versions 4 and 5 with appropriate mocked
+      ``.coverage`` data outputs (JSON or SQL based on version).
+    - A new ``tox`` test environment called ``cov4`` is added, with a new ``pytest`` marker
+      ``pytest.mark.coverage`` for test selection.
+
 2.1.0
 ~~~~~
 

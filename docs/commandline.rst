@@ -109,6 +109,8 @@ beginning of the trials if coverage is ignored.
 
     ... continued output...
 
+.. versionadded:: 2.1.0
+    Support for ``coverage`` version 4.x and 5.x.
 
 Auto-detected package structures
 --------------------------------
