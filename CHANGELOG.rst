@@ -4,6 +4,14 @@ Changelog
 Beta Releases
 -------------
 
+2.1.2
+~~~~~
+
+    - Moved the ``tests`` directory to be within the package of ``mutatest``.
+      This enabled the installation to be tested with ``pytest --pyargs mutatest`` as well
+      as ``pytest`` from local source files.
+      Test dependencies are still installed with ``pip install .[tests]``.
+
 2.1.1
 ~~~~~
 
