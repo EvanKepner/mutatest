@@ -118,11 +118,11 @@ def mock_coverage_file(tmp_path_factory):
 
     folder = tmp_path_factory.mktemp("cov")
 
-    # aligned to fixture mock_source_and_targets
+    # aligned to fixture mock_source_and_targets for file3.py used in positive filter.
     mock_contents = {
-        "/simple_isnot/isnot/__init__.py": [1],
-        "/simple_isnot/isnot/test_isnot.py": [1, 3, 4],
-        "/simple_isnot/isnot/run.py": [1, 4, 2],
+        "file1.py": [1],
+        "file2.py": [1, 3, 4],
+        "file3.py": [1, 2, 4],
     }
 
     mock_cov_file = folder / ".coverage"
@@ -147,7 +147,8 @@ def mock_source_and_targets():
 
     Covered lines include: 1, 2, 4
     """
-    source_file = Path("/simple_isnot/isnot/run.py")
+    # see mock_coverage_file fixture
+    source_file = Path("file3.py")
     targets = {
         LocIndex(ast_class="AugAssign", lineno=1, col_offset=1, op_type="o"),
         LocIndex(ast_class="AugAssign", lineno=2, col_offset=1, op_type="o"),

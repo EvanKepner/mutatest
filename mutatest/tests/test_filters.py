@@ -17,6 +17,7 @@ from mutatest.transformers import CATEGORIES
 @pytest.fixture(scope="module")
 def mock_CoverageFilter(mock_coverage_file):
     """Mock CoverageFilter on the mock_coverage_file defined in conftest."""
+    print(mock_coverage_file)
     return CoverageFilter(coverage_file=mock_coverage_file)
 
 
@@ -42,8 +43,12 @@ def test_unset_coverage_file(fn):
 )
 def test_filter(mock_CoverageFilter, mock_source_and_targets, invert, expected):
     """Coverage filter inverted and not inverted set filtering."""
+    # use resolve_source=False for the mocks of relative file names.
     results = mock_CoverageFilter.filter(
-        mock_source_and_targets.targets, mock_source_and_targets.source_file, invert=invert
+        mock_source_and_targets.targets,
+        mock_source_and_targets.source_file,
+        invert=invert,
+        resolve_source=False,
     )
     result_ln = sorted([r.lineno for r in results])
     assert result_ln == expected

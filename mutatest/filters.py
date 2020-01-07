@@ -125,7 +125,11 @@ class CoverageFilter(Filter):
         return self._coverage_data
 
     def filter(  # type: ignore
-        self, loc_idxs: Set[LocIndex], source_file: Union[str, Path], invert: bool = False
+        self,
+        loc_idxs: Set[LocIndex],
+        source_file: Union[str, Path],
+        invert: bool = False,
+        resolve_source: bool = True,
     ) -> Set[LocIndex]:
         """Filter based on coverage measured file.
 
@@ -138,11 +142,15 @@ class CoverageFilter(Filter):
             loc_idxs: location index set of targets
             source_file: source file that is measured by the coverage file
             invert: flag for inverted filter using NOT
+            resolve_source: flag for using resolved source_file vs. direct str, default True.
+                This exists mostly for testing purposes to access mocked entries in the
+                fake coverage files.
 
         Returns:
             Filtered set of location index set
         """
-        measured_file = str(Path(source_file).resolve())
+        measured_file = str(Path(source_file).resolve()) if resolve_source else str(source_file)
+
         covered_lines = self.coverage_data.lines(measured_file) or list()
 
         if invert:
