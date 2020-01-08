@@ -4,6 +4,12 @@ Changelog
 Beta Releases
 -------------
 
+2.1.3
+~~~~~
+
+    - Addressing test issues on Windows platform in the coverage tests by adding a
+      ``resolve_source`` flag to the ``CoverageFilter.filter`` method.
+
 2.1.2
 ~~~~~
 
