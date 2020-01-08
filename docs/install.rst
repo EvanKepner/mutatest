@@ -3,15 +3,23 @@
 Installation
 ============
 
-``mutatest`` requires Python 3.7 or Python 3.8. You can install with ``pip``:
+``mutatest`` requires Python 3.7 or Python 3.8.
+
+
+Install from `PyPI <https://pypi.org/project/mutatest/>`_:
 
 .. code-block:: bash
 
     $ pip install mutatest
 
+Install from `conda-forge <https://anaconda.org/conda-forge/mutatest>`_:
+
+.. code-block:: bash
+
+    $ conda install -c conda-forge mutatest
+
 
 Alternatively, clone this repo and install locally:
-
 
 .. code-block:: bash
 

@@ -124,7 +124,7 @@ Some style enforcing is relaxed on the test files:
     - Run ``black`` for formatting all Python files.
     - Use "Google Style" doc-string formatting for functions, though single-line descriptions can be
       appropriate for unit test descriptions.
-    - Test files are all in the ``tests/`` directory.
+    - Test files are all in the ``mutatest/tests/`` directory so tests are distributed with the package.
     - Tests do not require type-hints for the core test function or fixtures. Use as appropriate to
       add clarity with custom classes or mocking.
     - Prefer to use ``pytest`` fixtures such as ``tmp_path`` and ``monkeypatch``.

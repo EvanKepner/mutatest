@@ -1,32 +1,9 @@
 ``mutatest``: Python mutation testing
 ==========================================
 
-.. image:: https://img.shields.io/pypi/pyversions/mutatest?color=green
-    :target: https://www.python.org/
-.. image:: https://badge.fury.io/py/mutatest.svg
-    :target: https://pypi.org/project/mutatest/
-    :alt: PyPI status
-.. image:: https://img.shields.io/pypi/format/mutatest.svg
-    :target: https://pypi.org/project/mutatest/
-    :alt: Format
-.. image:: https://img.shields.io/pypi/l/mutatest.svg
-    :target: https://pypi.org/project/mutatest/
-    :alt: License
-.. image:: https://travis-ci.org/EvanKepner/mutatest.svg?branch=master
-    :target: https://travis-ci.org/EvanKepner/mutatest
-    :alt: TravisCI
-.. image:: https://readthedocs.org/projects/mutatest/badge/?version=latest
-    :target: https://mutatest.readthedocs.io/en/latest/?badge=latest
-    :alt: RTD status
-.. image:: https://codecov.io/gh/EvanKepner/mutatest/branch/master/graph/badge.svg
-    :target: https://codecov.io/gh/EvanKepner/mutatest
-    :alt: CodeCov
-.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
-    :target: https://github.com/psf/black
-    :alt: Black
-.. image:: https://pepy.tech/badge/mutatest
-    :target: https://pepy.tech/project/mutatest
-    :alt: Downloads
+|  |py-versions| |license| |ci-travis| |docs| |coverage| |black|
+|  |pypi-version| |pypi-status| |pypi-format| |pypi-downloads|
+|  |conda-version| |conda-recipe| |conda-platform| |conda-azure| |conda-downloads|
 
 
 Are you confident in your tests? Try out ``mutatest`` and see if your tests will detect small
@@ -48,6 +25,21 @@ Features
     - Flexible enough to run on a `whole package <https://mutatest.readthedocs.io/en/latest/commandline.html#auto-detected-package-structures>`_
       or a `single file <https://mutatest.readthedocs.io/en/latest/commandline.html#specifying-source-files-and-test-commands>`_.
     - Includes an `API for custom mutation controls <https://mutatest.readthedocs.io/en/latest/modules.html>`_.
+
+Install
+-------
+
+Install from `PyPI <https://pypi.org/project/mutatest/>`_:
+
+.. code-block:: bash
+
+    $ pip install mutatest
+
+Install from `conda-forge <https://anaconda.org/conda-forge/mutatest>`_:
+
+.. code-block:: bash
+
+    $ conda install -c conda-forge mutatest
 
 
 Example Output
@@ -154,3 +146,49 @@ Copyright Evan Kepner 2018-2020.
 
 Distributed under the terms of the `MIT <https://github.com/pytest-dev/pytest/blob/master/LICENSE>`_
 license, ``mutatest`` is free and open source software.
+
+.. |py-versions| image:: https://img.shields.io/pypi/pyversions/mutatest?color=green
+    :target: https://pypi.org/project/mutatest/
+    :alt: Python versions
+.. |license| image:: https://img.shields.io/pypi/l/mutatest.svg
+    :target: https://pypi.org/project/mutatest/
+    :alt: License
+.. |pypi-version| image:: https://badge.fury.io/py/mutatest.svg
+    :target: https://pypi.org/project/mutatest/
+    :alt: PyPI version
+.. |pypi-status| image:: https://img.shields.io/pypi/status/mutatest.svg
+    :target: https://pypi.org/project/mutatest/
+    :alt: PyPI status
+.. |pypi-format| image:: https://img.shields.io/pypi/format/mutatest.svg
+    :target: https://pypi.org/project/mutatest/
+    :alt: PyPI Format
+.. |pypi-downloads| image:: https://pepy.tech/badge/mutatest
+    :target: https://pepy.tech/project/mutatest
+    :alt: PyPI Downloads
+.. |ci-travis| image:: https://travis-ci.org/EvanKepner/mutatest.svg?branch=master
+    :target: https://travis-ci.org/EvanKepner/mutatest
+    :alt: TravisCI
+.. |docs| image:: https://readthedocs.org/projects/mutatest/badge/?version=latest
+    :target: https://mutatest.readthedocs.io/en/latest/?badge=latest
+    :alt: RTD status
+.. |coverage| image:: https://codecov.io/gh/EvanKepner/mutatest/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/EvanKepner/mutatest
+    :alt: CodeCov
+.. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
+    :target: https://github.com/psf/black
+    :alt: Black
+.. |conda-recipe| image:: https://img.shields.io/badge/recipe-mutatest-green.svg
+    :target: https://anaconda.org/conda-forge/mutatest
+    :alt: Conda recipe
+.. |conda-version| image:: https://img.shields.io/conda/vn/conda-forge/mutatest.svg
+    :target: https://anaconda.org/conda-forge/mutatest
+    :alt: Conda version
+.. |conda-platform| image:: https://img.shields.io/conda/pn/conda-forge/mutatest.svg
+    :target: https://anaconda.org/conda-forge/mutatest
+    :alt: Conda platforms
+.. |conda-azure| image:: https://dev.azure.com/conda-forge/feedstock-builds/_apis/build/status/mutatest-feedstock?branchName=master
+    :target: https://anaconda.org/conda-forge/mutatest
+    :alt: Conda azure status
+.. |conda-downloads| image:: https://img.shields.io/conda/dn/conda-forge/mutatest.svg
+    :target: https://anaconda.org/conda-forge/mutatest
+    :alt: Conda downloads
