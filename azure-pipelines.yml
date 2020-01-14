@@ -1,5 +1,8 @@
 # Azure pipelines used for testing Linux/MacOS/Windows platforms in prep for conda builds
 # See the TravisCI output for all tox environment checks (static typing, linting, doc builds, etc.)
+trigger:
+  - master
+  - dev
 
 jobs:
 - template: azure-pipelines-vms.yml
