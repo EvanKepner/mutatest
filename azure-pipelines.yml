@@ -21,3 +21,13 @@ jobs:
         python.version: '3.7'
       Python38:
         python.version: '3.8'
+
+- template: azure/azure-windows.yml
+  parameters:
+    name: Windows
+    vmImage: windows-latest
+    matrix:
+      Python37:
+        python.version: '3.7'
+      Python38:
+        python.version: '3.8'
