@@ -1,3 +1,4 @@
+# Controlled by the azure-pipelines.yml for different running environments.
 parameters:
   name: ''
   vmImage: ''
@@ -25,4 +26,10 @@ jobs:
     - script: |
         pip install pytest-azurepipelines
         pytest
-      displayName: 'pytest'
+      displayName: 'pytest --junitxml=test-results.xml'
+
+    - task: PublishTestResults@2
+      condition: succeededOrFailed()
+      inputs:
+        testResultsFiles: 'test-results.xml'
+        testRunTitle: 'Publish test results for Python $(python.version)'

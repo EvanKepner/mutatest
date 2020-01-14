@@ -1,8 +1,9 @@
-trigger:
-- master
+# Azure pipelines used for testing Linux/MacOS/Windows platforms in prep for conda builds
+# See the TravisCI output for all tox environment checks (static typing, linting, doc builds, etc.)
+# Azure pipeline config adapted from https://github.com/numba/numba/blob/master/azure-pipelines.yml
 
 jobs:
-- template: azure/azure-linux-macos.yml
+- template: azure-pipelines-vms.yml
   parameters:
     name: macOS
     vmImage: macOS-latest
@@ -12,7 +13,7 @@ jobs:
       Python38:
         python.version: '3.8'
 
-- template: azure/azure-linux-macos.yml
+- template: azure-pipelines-vms.yml
   parameters:
     name: Linux
     vmImage: ubuntu-latest
@@ -22,7 +23,7 @@ jobs:
       Python38:
         python.version: '3.8'
 
-- template: azure/azure-windows.yml
+- template: azure-pipelines-vms.yml
   parameters:
     name: Windows
     vmImage: windows-latest
