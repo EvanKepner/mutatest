@@ -1,39 +1,23 @@
 trigger:
 - master
 
-pool:
-  vmImage: 'ubuntu-latest'
-strategy:
-  matrix:
-    Python37:
-      python.version: '3.7'
-    Python38:
-      python.version: '3.8'
+jobs:
+- template: azure/azure-linux-macos.yml
+  parameters:
+    name: macOS
+    vmImage: macOS-latest
+    matrix:
+      Python37:
+        python.version: '3.7'
+      Python38:
+        python.version: '3.8'
 
-steps:
-- task: UsePythonVersion@0
-  inputs:
-    versionSpec: '$(python.version)'
-  displayName: 'Use Python $(python.version)'
-
-- script: |
-    python -m pip install --upgrade pip
-    pip install .[tests]
-  displayName: 'Install package and test dependencies'
-
-- script: |
-    pip install pytest-azurepipelines
-    pytest --junitxml=junit/test-results.xml --cov-report=xml --cov-report=html
-  displayName: 'pytest'
-
-- task: PublishTestResults@2
-  condition: succeededOrFailed()
-  inputs:
-    testResultsFiles: '**/test-*.xml'
-    testRunTitle: 'Publish test results for Python $(python.version)'
-
-- task: PublishCodeCoverageResults@1
-  inputs:
-    codeCoverageTool: Cobertura
-    summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
-    reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
+- template: azure/azure-linux-macos.yml
+  parameters:
+    name: Linux
+    vmImage: ubuntu-latest
+    matrix:
+      Python37:
+        python.version: '3.7'
+      Python38:
+        python.version: '3.8'

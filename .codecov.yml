@@ -18,4 +18,4 @@ coverage:
         threshold: 2%
     changes: False
 
-comment: off
+comment: false
