@@ -372,5 +372,7 @@ def test_run_mutation_trials_timeout(bot, exp_timeout_trials, sleep_timeout):
         mutant_trial for mutant_trial in results_summary.results if mutant_trial.status == "TIMEOUT"
     ]
 
-    # It's possible the timeout will exceed by IO variance in CI, rare but seen on Windows
+    # It's possible the timeout will exceed in CI, rare but seen on Windows
+    # Assumed to be an IO thing or shared fixture problem in multiple environments
+    # Generally, these are expected to be equal
     assert len(timeout_results) >= exp_timeout_trials
