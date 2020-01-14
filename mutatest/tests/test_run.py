@@ -212,7 +212,7 @@ def test_get_genome_group_folder_and_file(tmp_path):
         (3, Config(break_on_timeout=True)),
         (4, Config(break_on_unknown=True)),
     ],
-    ids=["survival", "detected", "error", "timeout", "unknown"],
+    ids=["survival", "detected", "err", "timeout", "unknown"],  # err, not error, for pytest output
 )
 def test_break_on_check(return_code, config, mock_Mutant, mock_LocIdx):
     # positive case
@@ -371,4 +371,6 @@ def test_run_mutation_trials_timeout(bot, exp_timeout_trials, sleep_timeout):
     timeout_results = [
         mutant_trial for mutant_trial in results_summary.results if mutant_trial.status == "TIMEOUT"
     ]
-    assert len(timeout_results) == exp_timeout_trials
+
+    # It's possible the timeout will exceed by IO variance in CI, rare but seen on Windows
+    assert len(timeout_results) >= exp_timeout_trials
