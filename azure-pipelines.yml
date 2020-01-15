@@ -53,9 +53,9 @@ jobs:
     vmImage: 'ubuntu-latest'
   strategy:
     matrix:
-      Python38:
+      # pre-commit config is based on 3.7, local runs using 3.8 should still pass
+      Python37:
         python.version: '3.7'
-        # pre-commit config is based on 3.7, local runs using 3.8 should still pass
 
   steps:
   - task: UsePythonVersion@0
@@ -72,6 +72,12 @@ jobs:
 
   - script: tox -e lint
     displayName: 'Tox: pre-commit lint'
+
+  # This is a pre-commit hook, running directly on files because already committed
+  - script: |
+      pip install flake8
+      flake8 mutatest/
+    displayName: 'Flake8 linting'
 
   - script: tox -e typing
     displayName: 'Tox: static typing'

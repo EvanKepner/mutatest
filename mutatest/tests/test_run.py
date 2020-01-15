@@ -61,9 +61,9 @@ def add_five_to_mult_mutant(binop_file, stdoutIO, binop_Add_LocIdx):
 
 def test_capture_output():
     """Quick utility test on capturing output for DEBUG log level 10."""
-    assert run.capture_output(10) == False
-    assert run.capture_output(20) == True
-    assert run.capture_output(30) == True
+    assert run.capture_output(10) is False
+    assert run.capture_output(20) is True
+    assert run.capture_output(30) is True
 
 
 @pytest.mark.parametrize("returncode, expected_status", RETURN_CODE_MAPPINGS)
