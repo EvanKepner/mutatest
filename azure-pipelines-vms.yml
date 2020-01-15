@@ -29,7 +29,10 @@ jobs:
       displayName: 'pytest'
 
     - script: tox -e cov4
-      displayName: 'Coverage v4 test'
+      displayName: 'Tox: Coverage v4 test'
+
+    - script: tox -e help
+      displayName: 'Tox: help output'
 
     - task: PublishTestResults@2
       condition: succeededOrFailed()

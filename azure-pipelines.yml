@@ -67,11 +67,8 @@ jobs:
       pip install .[dev]
     displayName: 'Install all development dependencies'
 
-  - script: tox -e help
-    displayName: 'Tox: help output'
-
   - script: tox -e lint
-    displayName: 'Tox: pre-commit lint'
+    displayName: 'Tox: pre-commit linting'
 
   # This is a pre-commit hook, running directly on files because already committed
   - script: |
