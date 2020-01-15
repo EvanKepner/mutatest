@@ -45,7 +45,7 @@ jobs:
 
 ####################################################################################################
 # CODE QUALITY
-# Run tox code quality checks on latest Python version on Linux only
+# Run tox code quality checks
 ####################################################################################################
 
 - job: 'CodeQuality'
@@ -54,7 +54,8 @@ jobs:
   strategy:
     matrix:
       Python38:
-        python.version: '3.8'
+        python.version: '3.7'
+        # pre-commit config is based on 3.7, local runs using 3.8 should still pass
 
   steps:
   - task: UsePythonVersion@0
