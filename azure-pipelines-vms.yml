@@ -25,7 +25,7 @@ jobs:
 
     - script: |
         pip install pytest-azurepipelines
-        pytest --junitxml=test-results.xml
+        pytest --junitxml=test-results.xml --cov-report=xml
       displayName: 'pytest'
 
     - script: tox -e cov4
