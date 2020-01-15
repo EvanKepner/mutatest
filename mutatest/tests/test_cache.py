@@ -9,7 +9,7 @@ from py_compile import PycInvalidationMode  # type: ignore
 import hypothesis.strategies as st
 import pytest
 
-from hypothesis import assume, example, given
+from hypothesis import example, given
 
 from mutatest.cache import (
     check_cache_invalidation_mode,

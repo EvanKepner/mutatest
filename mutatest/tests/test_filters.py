@@ -2,7 +2,6 @@
 """
 from pathlib import Path
 
-import coverage
 import pytest
 
 from mutatest.filters import CategoryCodeFilter, CoverageFilter

@@ -4,7 +4,6 @@
 import ast
 import sys
 
-import coverage
 import pytest
 
 from mutatest.api import Genome, GenomeGroup, MutationException

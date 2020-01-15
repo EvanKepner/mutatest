@@ -1,0 +1,92 @@
+####################################################################################################
+# AZURE PIPELINES
+# These run pytest in the supported Python versions on Linux, MacOS, and Windows
+# Separate code quality checks are run only on Linux with the latest Python version
+####################################################################################################
+trigger:
+  - master
+  - dev
+
+####################################################################################################
+# PLATFORM AND VERSION TESTS
+# Run pytest on different platforms and Python versions using the vms template file
+####################################################################################################
+
+jobs:
+- template: azure-pipelines-vms.yml
+  parameters:
+    name: macOS
+    vmImage: macOS-latest
+    matrix:
+      Python37:
+        python.version: '3.7'
+      Python38:
+        python.version: '3.8'
+
+- template: azure-pipelines-vms.yml
+  parameters:
+    name: Linux
+    vmImage: ubuntu-latest
+    matrix:
+      Python37:
+        python.version: '3.7'
+      Python38:
+        python.version: '3.8'
+
+- template: azure-pipelines-vms.yml
+  parameters:
+    name: Windows
+    vmImage: windows-latest
+    matrix:
+      Python37:
+        python.version: '3.7'
+      Python38:
+        python.version: '3.8'
+
+####################################################################################################
+# CODE QUALITY
+# Run tox code quality checks
+####################################################################################################
+
+- job: 'CodeQuality'
+  pool:
+    vmImage: 'ubuntu-latest'
+  strategy:
+    matrix:
+      # pre-commit config is based on 3.7, local runs using 3.8 should still pass
+      Python37:
+        python.version: '3.7'
+
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+
+  - script: |
+      python -m pip install --upgrade pip setuptools wheel
+      pip install .[dev]
+    displayName: 'Install all development dependencies'
+
+  - script: tox -e help
+    displayName: 'Tox: help output'
+
+  - script: tox -e lint
+    displayName: 'Tox: pre-commit lint'
+
+  # This is a pre-commit hook, running directly on files because already committed
+  - script: |
+      pip install flake8
+      flake8 mutatest/
+    displayName: 'Flake8 linting'
+
+  - script: tox -e typing
+    displayName: 'Tox: static typing'
+
+  - script: tox -e docs
+    displayName: 'Tox: documentation build'
+
+  - script: tox -e pypi-description
+    displayName: 'Tox: PyPI description'
+
+  - script: tox -e manifest
+    displayName: 'Tox: check manifest'
