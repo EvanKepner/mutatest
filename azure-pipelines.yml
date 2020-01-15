@@ -90,6 +90,3 @@ jobs:
 
   - script: tox -e manifest
     displayName: 'Tox: check manifest'
-
-  - script: tox -e cov4
-    displayName: 'Tox: coverage v4 tests'

@@ -19,14 +19,17 @@ jobs:
       displayName: 'Use Python $(python.version)'
 
     - script: |
-        python -m pip install --upgrade pip
+        python -m pip install --upgrade pip setuptools wheel
         pip install .[tests]
       displayName: 'Install package and test dependencies'
 
     - script: |
         pip install pytest-azurepipelines
-        pytest
-      displayName: 'pytest --junitxml=test-results.xml'
+        pytest --junitxml=test-results.xml
+      displayName: 'pytest'
+
+    - script: tox -e cov4
+      displayName: 'Coverage v4 test'
 
     - task: PublishTestResults@2
       condition: succeededOrFailed()
