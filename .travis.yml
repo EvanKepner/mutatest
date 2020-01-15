@@ -1,3 +1,4 @@
+# See azure-pipelines.yml for multi-platform tests
 dist: xenial
 language: python
 python:
