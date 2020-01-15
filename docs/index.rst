@@ -1,9 +1,9 @@
 Mutatest: Python mutation testing
 =================================
 
-|  |py-versions| |license| |ci-travis| |docs| |coverage| |black|
+|  |py-versions| |license| |ci-azure| |ci-travis| |docs| |coverage| |black|
 |  |pypi-version| |pypi-status| |pypi-format| |pypi-downloads|
-|  |conda-version| |conda-recipe| |conda-platform| |conda-azure| |conda-downloads|
+|  |conda-version| |conda-recipe| |conda-platform| |conda-downloads|
 
 
 Are you confident in your tests? Try out ``mutatest`` and see if your tests will detect small
@@ -24,6 +24,8 @@ Features:
     - Flexible enough to run on a `whole package <https://mutatest.readthedocs.io/en/latest/commandline.html#auto-detected-package-structures>`_
       or a `single file <https://mutatest.readthedocs.io/en/latest/commandline.html#specifying-source-files-and-test-commands>`_.
     - Includes an `API for custom mutation controls <https://mutatest.readthedocs.io/en/latest/modules.html>`_.
+    - Tested on Linux, Windows, and MacOS with `Azure pipelines <https://dev.azure.com/evankepner/mutatest/_build/latest?definitionId=1&branchName=master>`_.
+    - Full strict static type annotations throughout the source code and the API.
 
 
 Quick Start
@@ -235,6 +237,9 @@ Indices and tables
 .. |ci-travis| image:: https://travis-ci.org/EvanKepner/mutatest.svg?branch=master
     :target: https://travis-ci.org/EvanKepner/mutatest
     :alt: TravisCI
+.. |ci-azure| image:: https://dev.azure.com/evankepner/mutatest/_apis/build/status/EvanKepner.mutatest?branchName=master
+    :target: https://dev.azure.com/evankepner/mutatest/_build/latest?definitionId=1&branchName=master
+    :alt: Azure Pipelines
 .. |docs| image:: https://readthedocs.org/projects/mutatest/badge/?version=latest
     :target: https://mutatest.readthedocs.io/en/latest/?badge=latest
     :alt: RTD status
