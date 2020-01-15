@@ -48,7 +48,7 @@ jobs:
 # Run tox code quality checks on latest Python version on Linux only
 ####################################################################################################
 
-- job: 'Code Quality'
+- job: 'CodeQuality'
   pool:
     vmImage: 'ubuntu-latest'
   strategy:
