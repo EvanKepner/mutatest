@@ -4,6 +4,12 @@ Changelog
 Beta Releases
 -------------
 
+2.2.0
+~~~~~
+
+    - Added support for specifying settings in ``setup.cfg`` using either ``[mutatest]`` or
+      ``[tool:mutatest]`` sections in addition to the ``mutatest.ini`` file.
+
 2.1.3
 ~~~~~
 

@@ -32,6 +32,21 @@ FORMAT = "%(asctime)s: %(message)s"
 DEBUG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
 
+class SettingsFile(NamedTuple):
+    """Container for settings file in ini or cfg parsing format.
+    """
+
+    path: Path
+    sections: List[str]  # hierarchy of keys to search
+
+
+# SETTINGS_FILES is the search hierarchy for configuration files
+SETTINGS_FILES = [
+    SettingsFile(Path("mutatest.ini"), ["mutatest"]),
+    SettingsFile(Path("setup.cfg"), ["mutatest", "tool:mutatest"]),
+]
+
+
 class RunMode(NamedTuple):
     """Running mode choices. This translate the ``-m`` argument into valid ``Config`` options.
     """
@@ -363,7 +378,7 @@ def cli_epilog() -> str:
 
 
 ####################################################################################################
-#  INI FILE CONFIGURATION AND OVERRIDES FROM CLI
+# INI FILE CONFIGURATION AND OVERRIDES FROM CLI
 ####################################################################################################
 
 
@@ -425,23 +440,37 @@ def get_parser_actions(parser: argparse.ArgumentParser) -> ParserActionMap:
     return ParserActionMap(actions=actions, action_types=action_types)
 
 
-def read_ini_config(config_path: Path, section: str = "mutatest") -> configparser.SectionProxy:
+def read_ini_config(
+    config_path: Path, sections: Optional[List[str]] = None
+) -> configparser.SectionProxy:
     """Read a config_path using ConfigParser
 
     Args:
         config_path: path to the INI config file
-        section: section of config file to return, default to 'mutatest'
+        sections: sections of config file to return, default to ['mutatest'] if None
 
     Returns:
         config section proxy
+
+    Raises:
+        KeyError if ``section`` not in ``config_path``.
     """
 
+    sections = sections or ["mutatest"]
     config = configparser.ConfigParser()
     # ensures [  mutatest  ] is valid like [mutatest] in a section key
     config.SECTCRE = re.compile(r"\[ *(?P<header>[^]]+?) *\]")  # type: ignore
 
     config.read(config_path)
-    return config[section]
+
+    # Attempt sections in the list, if none are matched raise a KeyError
+    for section in sections:
+        try:
+            return config[section]
+        except KeyError:
+            continue
+
+    raise KeyError
 
 
 def parse_ini_config_with_cli(
@@ -494,7 +523,7 @@ def parse_ini_config_with_cli(
 
 
 ####################################################################################################
-# CLI REPORTING OUTPUTS:w
+# CLI REPORTING OUTPUTS
 ####################################################################################################
 
 
@@ -652,9 +681,7 @@ def exception_processing(n_survivors: int, trial_results: List[MutantTrialResult
 ####################################################################################################
 
 
-def cli_args(
-    args: Sequence[str], ini_config_file: Path = Path("mutatest.ini")
-) -> argparse.Namespace:
+def cli_args(args: Sequence[str], search_config_files: bool = True) -> argparse.Namespace:
     """Command line arguments as parsed args.
 
     If a INI configuration file is set it is used to set additional default arguments, but
@@ -662,17 +689,25 @@ def cli_args(
 
     Args:
         args: the argument sequence from the command line
-        ini_config_file: the ini config file for the default settings
+        search_config_files: flag for looking through ``SETTINGS_FILES`` for settings
 
     Returns:
         Parsed args from ArgumentParser
     """
     parser = cli_parser()
 
-    if ini_config_file.exists():
-        ini_config = read_ini_config(ini_config_file)
-        ini_cli_args = parse_ini_config_with_cli(parser, ini_config, args)
-        return parser.parse_args(ini_cli_args)
+    if search_config_files:
+        for ini_config_file in SETTINGS_FILES:
+
+            if ini_config_file.path.exists():
+                try:
+                    ini_config = read_ini_config(ini_config_file.path, ini_config_file.sections)
+                    ini_cli_args = parse_ini_config_with_cli(parser, ini_config, args)
+                    return parser.parse_args(ini_cli_args)
+
+                except KeyError:
+                    # read_ini_config will raise KeyError if the section is not valid
+                    continue
 
     return parser.parse_args(args)
 

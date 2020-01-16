@@ -374,8 +374,17 @@ Use the full argument names and either spaces or newlines to separate multiple v
 argument.
 The flag commands (``--debug`` and ``--nocov``) are given boolean flags that can be interpreted by
 the Python ``ConfigParser``.
-If you have a configuration file any command line arguments passed to ``mutatest`` will override
-the values in the ``ini`` file.
+Command line arguments passed to ``mutatest`` will override the values in the ``ini`` file.
+Any command line arguments that are not in the ``ini`` file will be added to the execution
+parameters along with the config file values.
+
+Alternatively, you may use ``setup.cfg`` with either a ``[mutatest]`` or ``[tool:mutatest]`` entry.
+The ``mutatest.ini`` file will be used first if it is present, skipping ``setup.cfg``.
+``setup.cfg`` will honor the ``[mutatest]`` and ``[tool:mutatest]`` in that order.
+Entries are not combined if both are present.
+
+.. versionadded:: 2.2.0
+    Support for ``setup.cfg`` as an optional settings file.
 
 Example INI file
 ~~~~~~~~~~~~~~~~

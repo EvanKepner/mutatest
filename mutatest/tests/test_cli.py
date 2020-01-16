@@ -381,6 +381,55 @@ def mock_ini_file(tmp_path):
     return MockINI(ini_file, default_args)
 
 
+def test_read_config_key_error(mock_ini_file):
+    """Ensure KeyError is raised if missing section from config file."""
+    with pytest.raises(KeyError):
+        _ = cli.read_ini_config(mock_ini_file.ini_file, sections=["missing"])
+
+
+@pytest.mark.parametrize("section", ["mutatest", "tool:mutatest"])
+def test_read_setup_cfg_missing_mutatest_ini(tmp_path, section, monkeypatch):
+    """Setup.cfg will support both [mutatest] and [tool:mutatest] sections."""
+    ini_contents = dedent(
+        f"""\
+    [{section}]
+    whitelist = nc su sr"""
+    )
+
+    expected = ["nc", "su", "sr"]
+
+    with open(tmp_path / "setup.cfg", "w") as fstream:
+        fstream.write(ini_contents)
+
+    monkeypatch.chdir(tmp_path)
+    result = cli.cli_args([])
+    print(result.__dict__)
+
+    assert len(result.whitelist) == 3
+    for r, e in zip(result.whitelist, expected):
+        assert r == e
+
+
+@pytest.mark.parametrize("section", ["mutatest", "tool:mutatest"])
+def test_search_file_order_bad_key_mutatest_ini(tmp_path, section, monkeypatch):
+    """Ensuring the search hierarchy works, if the mutatest.ini is configured without the
+    required [mutatest] key, the setup.cfg is searched next for each key type.
+    """
+    f1 = "[mypy]\nmval=123"
+    f2 = f"[isort]\nival=456\n\n[{section}]\nmode=sd"
+
+    write_order = ["mutatest.ini", "setup.cfg"]
+
+    for fp, contents in zip(write_order, [f1, f2]):
+        with open(tmp_path / fp, "w") as fstream:
+            fstream.write(contents)
+
+    monkeypatch.chdir(tmp_path)
+    result = cli.cli_args([])
+
+    assert result.mode == "sd"
+
+
 def test_read_ini_config_keys(mock_ini_file):
     """Ensure the keys align to the mock from reading the file."""
     section = cli.read_ini_config(mock_ini_file.ini_file)
