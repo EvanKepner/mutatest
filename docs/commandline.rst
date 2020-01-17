@@ -368,6 +368,9 @@ Run ``mutatest --help`` to see command line arguments and supported operations:
 Using a config file
 -------------------
 
+.. versionadded:: 2.2.0
+    Support for ``setup.cfg`` as an optional settings file.
+
 Arguments for ``mutatest`` can be stored in a ``mutatest.ini`` config file in the directory where
 you run the command.
 Use the full argument names and either spaces or newlines to separate multiple values for a given
@@ -383,8 +386,6 @@ The ``mutatest.ini`` file will be used first if it is present, skipping ``setup.
 ``setup.cfg`` will honor the ``[mutatest]`` and ``[tool:mutatest]`` in that order.
 Entries are not combined if both are present.
 
-.. versionadded:: 2.2.0
-    Support for ``setup.cfg`` as an optional settings file.
 
 Example config file
 ~~~~~~~~~~~~~~~~~~~
