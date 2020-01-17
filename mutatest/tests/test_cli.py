@@ -474,8 +474,6 @@ def test_parse_ini_config_with_cli_overrides(mock_ini_file):
 # PROPERTY TESTS
 ####################################################################################################
 
-TEXT_STRATEGY = st.text(alphabet=st.characters(blacklist_categories=("Cs", "Cc", "Po")), min_size=1)
-
 
 # no arguments, so no given assumption
 def test_cli_epilog_invariant():
@@ -487,15 +485,19 @@ def test_cli_epilog_invariant():
     assert len(result) > 1
 
 
-@given(TEXT_STRATEGY.map(lambda x: Path(x)), st.integers(), st.integers())
-def test_cli_summary_report_invariant(mock_args, mock_TrialTimes, s, lm, li):
+@given(st.integers(), st.integers())
+def test_cli_summary_report_invariant(mock_args, mock_TrialTimes, lm, li):
     """Property:
         1. cli_summary report returns a valid string without errors given any set of integers for
         locs_mutated and locs_identified.
     """
 
     results = cli.cli_summary_report(
-        src_loc=s, args=mock_args, locs_mutated=lm, locs_identified=li, runtimes=mock_TrialTimes
+        src_loc=Path("file.py"),
+        args=mock_args,
+        locs_mutated=lm,
+        locs_identified=li,
+        runtimes=mock_TrialTimes,
     )
 
     assert isinstance(results, str)
