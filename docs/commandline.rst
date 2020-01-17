@@ -365,8 +365,8 @@ Run ``mutatest --help`` to see command line arguments and supported operations:
                             clean trial running time then that mutation trial is aborted and logged as a timeout.
 
 
-Using an INI config file
-------------------------
+Using a config file
+-------------------
 
 Arguments for ``mutatest`` can be stored in a ``mutatest.ini`` config file in the directory where
 you run the command.
@@ -386,10 +386,10 @@ Entries are not combined if both are present.
 .. versionadded:: 2.2.0
     Support for ``setup.cfg`` as an optional settings file.
 
-Example INI file
-~~~~~~~~~~~~~~~~
+Example config file
+~~~~~~~~~~~~~~~~~~~
 
-The contents of an example ``mutatest.ini``:
+The contents of an example ``mutatest.ini`` or entry in ``setup.cfg``:
 
 .. code-block:: ini
 
