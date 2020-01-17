@@ -4,6 +4,12 @@ Changelog
 Beta Releases
 -------------
 
+2.2.1
+~~~~~
+
+    - Bug fix in ``mutatest.cache.create_cache_dirs()`` where the cache directory did not
+      include "parents" in case of packages with nested directories.
+
 2.2.0
 ~~~~~
 

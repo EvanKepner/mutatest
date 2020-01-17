@@ -90,7 +90,7 @@ def create_cache_dirs(cache_file: Path) -> None:
     """
     if not cache_file.parent.exists():
         # exists_ok shouldn't be needed with exists() check, suppressing FileExistsErrors
-        Path.mkdir(cache_file.parent, exist_ok=True)
+        Path.mkdir(cache_file.parent, parents=True, exist_ok=True)
 
 
 def remove_existing_cache_files(src_loc: Path) -> None:
