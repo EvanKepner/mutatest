@@ -396,7 +396,7 @@ The contents of an example ``mutatest.ini`` or entry in ``setup.cfg``:
 
    [mutatest]
 
-   blacklist = nc su sr
+   blacklist = nc su ix
    exclude =
        mutatest/__init__.py
        mutatest/_devtools.py
