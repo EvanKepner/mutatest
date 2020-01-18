@@ -50,7 +50,6 @@ CATEGORIES = {
     "Index": "ix",
     "NameConstant": "nc",
     "SliceUS": "su",
-    "SliceRC": "sr",
 }
 
 ####################################################################################################
@@ -530,44 +529,10 @@ class MutateBase(ast.NodeTransformer):
             )
             self.locs.add(idx)
 
-        # Range Change Operation
-        # range upper bound move towards zero from absolute value e.g. x[2,4] becomes x[2,3]
-        # and x[-4, -3] becomes x[-4, -2].
-        # More likely to generate useful mutants in the positive case.
-        if slice.lower is not None and slice.upper is not None:
-            if isinstance(slice.upper, ast.Num):
-                idx = LocIndex(
-                    ast_class="SliceRC", op_type="Slice_UPosToZero", **locidx_kwargs  # type: ignore
-                )
-                slice_mutations["Slice_UPosToZero"] = ast.Slice(
-                    lower=slice.lower, upper=ast.Num(n=slice.upper.n - 1), step=slice.step
-                )
-                LOGGER.debug(
-                    "RangeChange UPosToZero: %s", ast.dump(slice_mutations["Slice_UPosToZero"])
-                )
-                self.locs.add(idx)
-
-            if isinstance(slice.upper, ast.UnaryOp):
-                idx = LocIndex(
-                    ast_class="SliceRC", op_type="Slice_UNegToZero", **locidx_kwargs  # type: ignore
-                )
-
-                slice_mutations["Slice_UNegToZero"] = ast.Slice(
-                    lower=slice.lower,
-                    upper=ast.UnaryOp(
-                        op=ast.USub(), operand=ast.Num(n=slice.upper.operand.n - 1)  # type: ignore
-                    ),
-                    step=slice.step,
-                )
-                LOGGER.debug(
-                    "RangeChange UNegToZero: %s", ast.dump(slice_mutations["Slice_UNegToZero"])
-                )
-
-                self.locs.add(idx)
-
         # Apply Mutation
         if idx == self.target_idx and not self.readonly:
             LOGGER.debug("%s mutating idx: %s with %s", log_header, self.target_idx, self.mutation)
+
             mutation = slice_mutations[str(self.mutation)]
             # uses AST.fix_missing_locations since the values of ast.Num and  ast.UnaryOp also need
             # lineno and col-offset values. This is a recursive fix.
@@ -675,8 +640,6 @@ def get_compatible_operation_sets() -> List[MutationOpSet]:
     # Custom references for subscript substitutions for slice mutations
     slice_bounded_types: Set[str] = {"Slice_UnboundUpper", "Slice_UnboundLower", "Slice_Unbounded"}
 
-    slice_range_types: Set[str] = {"Slice_UPosToZero", "Slice_UNegToZero"}
-
     return [
         MutationOpSet(
             name="AugAssign",
@@ -753,12 +716,6 @@ def get_compatible_operation_sets() -> List[MutationOpSet]:
             operations=slice_bounded_types,
             category=CATEGORIES["SliceUS"],
         ),
-        MutationOpSet(
-            name="Slice Range Change",
-            desc="Slice range changes e.g. x[1:5] to x[1:4].",
-            operations=slice_range_types,
-            category=CATEGORIES["SliceRC"],
-        ),
     ]
 
 
@@ -779,10 +736,6 @@ def get_mutations_for_target(target: LocIndex) -> Set[Any]:
             LOGGER.debug("Potential mutatest operations found for target: %s", target.op_type)
             mutation_ops = potential_ops.copy()
             mutation_ops.remove(target.op_type)
-
-            # Special case where Slice-Ops are self-referential, and are set to self
-            if target.op_type in ["Slice_UPosToZero", "Slice_UNegToZero"]:
-                mutation_ops = {target.op_type}
 
             # Special case for If_Statement since that is a default to transform to True or False
             # but not a validation mutation target by itself

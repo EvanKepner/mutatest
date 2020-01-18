@@ -345,7 +345,7 @@ def mock_ini_file(tmp_path):
     ini_contents = dedent(
         """\
     [mutatest]
-    blacklist = nc su sr
+    blacklist = nc su ix
     exclude =
         mutatest/__init__.py
         mutatest/_devtools.py
@@ -365,7 +365,7 @@ def mock_ini_file(tmp_path):
         "--blacklist",
         "nc",
         "su",
-        "sr",
+        "ix",
         "--exclude",
         "mutatest/__init__.py",
         "--exclude",
@@ -393,10 +393,10 @@ def test_read_setup_cfg_missing_mutatest_ini(tmp_path, section, monkeypatch):
     ini_contents = dedent(
         f"""\
     [{section}]
-    whitelist = nc su sr"""
+    whitelist = nc su ix"""
     )
 
-    expected = ["nc", "su", "sr"]
+    expected = ["nc", "su", "ix"]
 
     with open(tmp_path / "setup.cfg", "w") as fstream:
         fstream.write(ini_contents)

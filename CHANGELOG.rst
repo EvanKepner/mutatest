@@ -8,7 +8,10 @@ Beta Releases
 ~~~~~
 
     - Bug fix in ``mutatest.cache.create_cache_dirs()`` where the cache directory did not
-      include "parents" in case of packages with nested directories.
+      include "parepnts" in case of packages with nested directories.
+    - Deprecation API fix to remove the ``sr`` subcategory of slice mutations.
+      These were rare, and supporting both Python 3.7 and 3.8 required excessive complexity.
+      The ``su`` category remains valid as the primary slice mutation set.
 
 2.2.0
 ~~~~~

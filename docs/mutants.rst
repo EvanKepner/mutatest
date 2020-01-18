@@ -287,31 +287,19 @@ Example:
     X = None
 
 
-Slices - "su" and "sr"
-----------------------
+Slices - "su"
+-------------
 
-Slice mutations to swap lower/upper values, or change range e.g. ``x[2:] to x[:2]`
-or ``x[1:5] to x[1:4]``. This is a unique mutation. If the upper or lower bound is set to
+Slice mutations to swap lower/upper values, or change range e.g. ``x[2:] to x[:2]`.
+This is a unique mutation. If the upper or lower bound is set to
 ``None`` then the bound values are swapped. This is represented by the operations of
 ``Slice_UnboundedUpper`` for swap None to the "upper" value  from "lower". The category code
 for this type of mutation is "su".
-
-The "ToZero" operations
-change the list by moving the upper bound by one unit towards zero from the absolute value and
-then applying the original sign e.g. ``x[0:2]`` would become ``x[0:1]`, and
-``x[-4:-1]`` would become ``x[-4:0]``. In the positive case, which is assumed to be the
-more common pattern, this results in shrinking the index slice by 1. Note that these "ToZero"
-operations appear self-referential in the report output. This is because an operation identified
-as a ``Slice_UPosToZero`` remains as a ``Slice_UPosToZero`` but with updated values.
-The category code for this type of mutation is "sr".
-
 
 Members:
     - ``Slice_Unbounded``
     - ``Slice_UnboundedLower``
     - ``Slice_UnboundedUpper``
-    - ``Slice_UNegToZero``
-    - ``Slice_UPosToZero``
 
 
 Example:
@@ -321,41 +309,18 @@ Example:
     # source code
     w = a[:2]
     x = a[4:]
-    y = a[1:5]
-    z = a[-5:-1]
 
     # mutation
     w = a[2:]  # Slice_UnboundedUpper, upper is now unbounded and lower has a value
     x = a[4:]
-    y = a[1:5]
-    z = a[-5:-1]
 
     # mutation
     w = a[:2]
     x = a[:4]  # Slice_UnboundedLower, lower is now unbounded and upper has a value
-    y = a[1:5]
-    z = a[-5:-1]
 
     # mutation
     w = a[:2]
     x = a[:]  # Slice_Unbounded, both upper and lower are unbounded
-    y = a[1:5]
-    z = a[-5:-1]
-
-
-    # mutation
-    w = a[:2]
-    x = a[4:]
-    y = a[1:4]  # Slice_UPosToZero, upper bound moves towards zero bound by 1 when positive
-    z = a[-5:-1]
-
-    # mutation
-    w = a[:2]
-    x = a[4:]
-    y = a[1:5]
-    z = a[-5:0]  # Slice_UNegToZero, upper bound moves by 1 from absolute value when negative
-
-
 
 
 .. target-notes::

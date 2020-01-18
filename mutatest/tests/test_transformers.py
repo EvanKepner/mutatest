@@ -28,16 +28,6 @@ def test_get_mutations_for_target(test_op):
     assert result == expected
 
 
-def test_get_mutations_for_target_slice():
-    """Slice is a special case where the op type is returned as the mutation."""
-    expected = "Slice_UPosToZero"
-    mock_loc_idx = LocIndex(ast_class=expected, lineno=10, col_offset=11, op_type=expected)
-    result = get_mutations_for_target(mock_loc_idx)
-
-    # there should only be one option in result
-    assert result.pop() == expected
-
-
 def test_MutateAST_visit_read_only(binop_file):
     """Read only test to ensure locations are aggregated."""
     tree = Genome(binop_file).ast
@@ -297,8 +287,7 @@ def test_MutateAST_visit_subscript(slice_file, slice_expected_locs):
 
     test_mutation = "Slice_UNegToZero"
 
-    # loc index 3 is the Slice_NegShrink operation in the fixture
-    mutated_tree = MutateAST(target_idx=slice_expected_locs[3], mutation=test_mutation).visit(tree)
+    mutated_tree = MutateAST(target_idx=slice_expected_locs[2], mutation=test_mutation).visit(tree)
 
     mast.visit(mutated_tree)
     assert len(mast.locs) == len(slice_expected_locs)

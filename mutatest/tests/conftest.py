@@ -823,12 +823,6 @@ def slice_expected_locs():
     """The slice expected locations based on the fixture."""
     return [
         LocIndex(ast_class="Slice_Swap", lineno=2, col_offset=13, op_type="Slice_UnboundLower"),
-        LocIndex(
-            ast_class="Slice_RangeChange", lineno=3, col_offset=13, op_type="Slice_UPosToZero"
-        ),
         LocIndex(ast_class="Slice_Swap", lineno=4, col_offset=14, op_type="Slice_UnboundUpper"),
-        LocIndex(
-            ast_class="Slice_RangeChange", lineno=5, col_offset=15, op_type="Slice_UNegToZero"
-        ),
         LocIndex(ast_class="Slice_Swap", lineno=6, col_offset=14, op_type="Slice_UnboundUpper"),
     ]
