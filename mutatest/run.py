@@ -574,8 +574,8 @@ def run_mutation_trials(src_loc: Path, test_cmds: List[str], config: Config) -> 
             # this unpacks to to be a flat list [1, 2, 3]
             results = [i for j in mp_results.get() for i in j]
 
-    print("RESULTS LISTS")
-    print(*results, sep="\n")
+        # TODO: Remove .mutatest dir entirely here, make it a global variable
+
     end = datetime.now()
 
     return ResultsSummary(
