@@ -444,9 +444,8 @@ def create_mutation_run_parallelcache_trial(
         mutant.mutant_code, mutant.source_stats["mtime"], mutant.source_stats["size"]
     )
 
-    cache.create_cache_dirs(parallel_cfile)
-
     LOGGER.debug("Writing parallel mutant cache file: %s", parallel_cfile)
+    cache.create_cache_dirs(parallel_cfile)
     importlib._bootstrap_external._write_atomic(  # type: ignore
         parallel_cfile, bytecode, mutant.mode,
     )
@@ -477,7 +476,7 @@ def create_mutation_run_parallelcache_trial(
 
 
 ####################################################################################################
-# DISPATCH
+# DISPATCH AND TRIAL CONTROLS
 ####################################################################################################
 
 
@@ -588,10 +587,10 @@ def run_mutation_trials(src_loc: Path, test_cmds: List[str], config: Config) -> 
                 mutation_sample_dispatch,
                 itertools.product(
                     mutation_sample,  # map each mutation_sample item as a tuple with other args
-                    [ggrp],  # ggrp=
-                    [test_cmds],  # test_cmds =
-                    [config],  # config =
-                    [create_mutation_run_parallelcache_trial],  # trial_runner =
+                    [ggrp],
+                    [test_cmds],
+                    [config],
+                    [create_mutation_run_parallelcache_trial],
                 ),
             )
             # mp_results.get() will be list of single item lists e.g., [[1], [2], [3]]
@@ -616,8 +615,12 @@ def run_mutation_trials(src_loc: Path, test_cmds: List[str], config: Config) -> 
     end = datetime.now()
 
     if PARALLEL_PYCACHE_DIR.exists():
-        LOGGER.info("Cleaning up parallel cache dir %s", PARALLEL_PYCACHE_DIR)
-        PARALLEL_PYCACHE_DIR.rmdir()
+        # The subfolders should be deleted as trials proceed making this directory empty
+        LOGGER.info("Cleaning up parallel cache dir %s.", str(PARALLEL_PYCACHE_DIR))
+        try:
+            PARALLEL_PYCACHE_DIR.rmdir()
+        except OSError:
+            LOGGER.info("%s is not empty and cannot be removed.", str(PARALLEL_PYCACHE_DIR))
 
     return ResultsSummary(
         results=results,

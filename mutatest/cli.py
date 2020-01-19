@@ -346,6 +346,7 @@ def cli_epilog() -> str:
        trials in subprocess execution. Parallel pycache is managed by setting the environment
        variable PYTHONPYCACHEPREFIX to a subdirectory in '.mutatest_cache/' for each trial.
        These cache files, and the '.mutatest_cache/' directory, are removed after running.
+       This command only has an effect if you are running Python 3.8.
     """
     )
 

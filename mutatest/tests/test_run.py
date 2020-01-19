@@ -262,11 +262,20 @@ def test_colorize_output_invariant_valid(color, o):
 ####################################################################################################
 
 
+@pytest.fixture
+def change_to_tmp(monkeypatch, tmp_path):
+    """Change to temp directory for writing parallel cache files if needed."""
+    monkeypatch.chdir(tmp_path)
+
+
 @pytest.mark.slow
 @pytest.mark.parametrize(
     "bos, bod, exp_trials", [(False, False, 6), (True, True, 1), (False, True, 1)]
 )
-def test_run_mutation_trials_good_binop(bos, bod, exp_trials, single_binop_file_with_good_test):
+@pytest.mark.parametrize("parallel", [False, True])
+def test_run_mutation_trials_good_binop(
+    bos, bod, exp_trials, parallel, single_binop_file_with_good_test, change_to_tmp
+):
     """Slow test to run detection trials on a simple mutation on a binop.
 
     Based on fixture, there is one Add operation, with 6 substitutions e.g.
@@ -279,10 +288,14 @@ def test_run_mutation_trials_good_binop(bos, bod, exp_trials, single_binop_file_
         exp_trials: number of expected trials
         single_binop_file_with_good_test: fixture for single op with a good test
     """
+    if sys.version_info < (3, 8) and parallel:
+        pytest.skip("Under version 3.8 will not run parallel tests.")
 
     test_cmds = f"pytest {single_binop_file_with_good_test.test_file.resolve()}".split()
 
-    config = Config(n_locations=100, break_on_survival=bos, break_on_detected=bod)
+    config = Config(
+        n_locations=100, break_on_survival=bos, break_on_detected=bod, multi_processing=parallel
+    )
 
     results_summary = run.run_mutation_trials(
         single_binop_file_with_good_test.src_file.resolve(), test_cmds=test_cmds, config=config
@@ -300,7 +313,10 @@ def test_run_mutation_trials_good_binop(bos, bod, exp_trials, single_binop_file_
 @pytest.mark.parametrize(
     "bos, bod, exp_trials", [(False, False, 6), (True, True, 1), (True, False, 1)]
 )
-def test_run_mutation_trials_bad_binop(bos, bod, exp_trials, single_binop_file_with_bad_test):
+@pytest.mark.parametrize("parallel", [False, True])
+def test_run_mutation_trials_bad_binop(
+    bos, bod, exp_trials, parallel, single_binop_file_with_bad_test, change_to_tmp
+):
     """Slow test to run detection trials on a simple mutation on a binop.
 
     Based on fixture, there is one Add operation, with 6 substitutions e.g.
@@ -313,10 +329,14 @@ def test_run_mutation_trials_bad_binop(bos, bod, exp_trials, single_binop_file_w
         exp_trials: number of expected trials
         single_binop_file_with_good_test: fixture for single op with a good test
     """
+    if sys.version_info < (3, 8) and parallel:
+        pytest.skip("Under version 3.8 will not run parallel tests.")
 
     test_cmds = f"pytest {single_binop_file_with_bad_test.test_file.resolve()}".split()
 
-    config = Config(n_locations=100, break_on_survival=bos, break_on_detected=bod)
+    config = Config(
+        n_locations=100, break_on_survival=bos, break_on_detected=bod, multi_processing=parallel
+    )
 
     results_summary = run.run_mutation_trials(
         single_binop_file_with_bad_test.src_file.resolve(), test_cmds=test_cmds, config=config

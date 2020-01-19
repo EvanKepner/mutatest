@@ -35,6 +35,7 @@ class MockArgs(NamedTuple):
     exception: Optional[int]
     debug: Optional[bool]
     nocov: Optional[bool]
+    parallel: Optional[bool]
     timeout_factor: Optional[int]
 
 
@@ -54,6 +55,7 @@ def mock_args(tmp_path, binop_file):
         exception=None,
         debug=False,
         nocov=True,
+        parallel=False,
         timeout_factor=2,
     )
 
