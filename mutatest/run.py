@@ -437,7 +437,7 @@ def create_mutation_run_parallelcache_trial(
 
     # set up parallel cache structure
     parallel_cache = Path.cwd() / PARALLEL_PYCACHE_DIR / uuid.uuid4().hex
-    resolved_source_parts = genome.source_file.resolve().parent.parts[1:]
+    resolved_source_parts = genome.source_file.resolve().parent.parts[1:]  # type: ignore
     parallel_cfile = parallel_cache.joinpath(*resolved_source_parts) / mutant.cfile.name
 
     bytecode = importlib._bootstrap_external._code_to_timestamp_pyc(  # type: ignore
@@ -447,10 +447,8 @@ def create_mutation_run_parallelcache_trial(
     cache.create_cache_dirs(parallel_cfile)
 
     LOGGER.debug("Writing parallel mutant cache file: %s", parallel_cfile)
-    importlib._bootstrap_external._write_atomic(
-        parallel_cfile,
-        bytecode,  # type: ignore
-        mutant.mode,
+    importlib._bootstrap_external._write_atomic(  # type: ignore
+        parallel_cfile, bytecode, mutant.mode,
     )
 
     copy_env = os.environ.copy()
@@ -528,11 +526,11 @@ def mutation_sample_dispatch(
         mutant_operations.remove(current_mutation)
 
         trial_results = trial_runner(
-            genome=ggrp[ggrp_target.source_path],
-            target_idx=ggrp_target.loc_idx,
-            mutation_op=current_mutation,
-            test_cmds=test_cmds,
-            max_runtime=config.max_runtime,
+            ggrp[ggrp_target.source_path],
+            ggrp_target.loc_idx,
+            current_mutation,
+            test_cmds,
+            config.max_runtime,
         )
 
         results.append(trial_results)
