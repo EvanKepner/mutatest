@@ -9,7 +9,7 @@ parameters for the full trial suite. Sampling functions are defined here as well
 import importlib
 import itertools
 import logging
-import multiprocessing  # noqa: F401
+import multiprocessing
 import os
 import random
 import subprocess
@@ -21,7 +21,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from operator import attrgetter
 from pathlib import Path
-from typing import Any, List, NamedTuple, Optional
+from typing import Any, Callable, List, NamedTuple, Optional
 
 from mutatest import cache
 from mutatest.api import Genome, GenomeGroup, GenomeGroupTarget
@@ -30,6 +30,12 @@ from mutatest.transformers import CATEGORIES, LocIndex
 
 
 LOGGER = logging.getLogger(__name__)
+
+# Additional seconds to add to max_timeout in the multi-processing subprocess
+MULTI_PROC_TIMEOUT_BUFFER = 10  # seconds
+
+# location to hold parallel pycache runs
+PARALLEL_PYCACHE_DIR = Path(".mutatest_cache")
 
 
 @dataclass
@@ -47,6 +53,7 @@ class Config:
     break_on_timeout: bool = False
     ignore_coverage: bool = False
     max_runtime: float = 10
+    multi_processing: bool = False
 
 
 class MutantReport(NamedTuple):
@@ -84,6 +91,9 @@ class BaselineTestException(Exception):
 
     pass
 
+
+# Used to define signature of trial runners for dispatcher
+TRIAL_RUNNER_TYPE = Callable[[Genome, LocIndex, Any, List[str], float], MutantTrialResult]
 
 ####################################################################################################
 # UTILITY FUNCTIONS
@@ -162,7 +172,7 @@ def clean_trial(src_loc: Path, test_cmds: List[str]) -> timedelta:
 
 
 ####################################################################################################
-# MUTATION TRIAL RUNNING FUNCTIONS
+# MUTATION SAMPLE GENERATION
 ####################################################################################################
 
 
@@ -285,6 +295,11 @@ def get_genome_group(src_loc: Path, config: Config) -> GenomeGroup:
         LOGGER.info("%s", colorize_output(f"{e.resolve()} excluded.", "yellow"))
 
     return ggrp
+
+
+####################################################################################################
+# TRIAL RUNNERS
+####################################################################################################
 
 
 def trial_output_check_break(
@@ -417,18 +432,13 @@ def create_mutation_run_parallelcache_trial(
     """
     if sys.version_info < (3, 8):
         raise EnvironmentError("Python 3.8 is required to use PYTHONPYCACHEPREFIX.")
-    # New dot directory to be created for holding the parallel cache files.
-    dot_dir = ".mutatest"
     # create the mutant without writing the cache
     mutant = genome.mutate(target_idx, mutation_op, write_cache=False)
 
     # set up parallel cache structure
-    parallel_cache = Path.cwd() / dot_dir / uuid.uuid4().hex
+    parallel_cache = Path.cwd() / PARALLEL_PYCACHE_DIR / uuid.uuid4().hex
     resolved_source_parts = genome.source_file.resolve().parent.parts[1:]
     parallel_cfile = parallel_cache.joinpath(*resolved_source_parts) / mutant.cfile.name
-
-    # follow the basic structure of the Mutant.write() method
-    cache.check_cache_invalidation_mode()
 
     bytecode = importlib._bootstrap_external._code_to_timestamp_pyc(  # type: ignore
         mutant.mutant_code, mutant.source_stats["mtime"], mutant.source_stats["size"]
@@ -442,23 +452,22 @@ def create_mutation_run_parallelcache_trial(
         bytecode,  # type: ignore
         mutant.mode,
     )
-    # set up subprocess environment
+
     copy_env = os.environ.copy()
     copy_env["PYTHONPYCACHEPREFIX"] = str(parallel_cache)
-
     try:
         mutant_trial = subprocess.run(
             test_cmds,
             env=copy_env,
             capture_output=capture_output(LOGGER.getEffectiveLevel()),
-            timeout=max_runtime,
+            timeout=max_runtime + MULTI_PROC_TIMEOUT_BUFFER,
         )
         return_code = mutant_trial.returncode
 
     except subprocess.TimeoutExpired:
         return_code = 3
 
-    LOGGER.info("Removing parallel cache file: %s", parallel_cache.parts[-1])
+    LOGGER.debug("Removing parallel cache file: %s", parallel_cache.parts[-1])
     shutil.rmtree(parallel_cache)
 
     return MutantTrialResult(
@@ -469,10 +478,37 @@ def create_mutation_run_parallelcache_trial(
     )
 
 
-def mutation_sample_dispatch(
-    ggrp_target: GenomeGroupTarget, ggrp: GenomeGroup, test_cmds: List[str], config: Config
-) -> List[MutantTrialResult]:
+####################################################################################################
+# DISPATCH
+####################################################################################################
 
+
+def mutation_sample_dispatch(
+    ggrp_target: GenomeGroupTarget,
+    ggrp: GenomeGroup,
+    test_cmds: List[str],
+    config: Config,
+    trial_runner: TRIAL_RUNNER_TYPE,
+) -> List[MutantTrialResult]:
+    """Dispatch for the mutant trial.
+
+    This is fed either from a loop across GenomeGroupTargets, or through a multi-processing pool
+    using the starmap_async.
+
+    Args:
+        ggrp_target: The target index and source object
+        ggrp: the GenomeGroup
+        test_cmds: test commands to execute
+        config: running config object
+        trial_runner: function callable either for single or multi-processing execution
+
+    Returns:
+        MutantTrialResult
+    """
+
+    # Select the valid mutations for the ggrp_target.loc_idx (sample)
+    # Then apply the selected mutations in a random order running the test commands
+    # until all mutations are tested or the appropriate break-on action occurs
     results: List[MutantTrialResult] = []
 
     LOGGER.info(
@@ -485,12 +521,6 @@ def mutation_sample_dispatch(
     LOGGER.debug("MUTATION OPS: %s", mutant_operations)
     LOGGER.debug("MUTATION: %s", ggrp_target.loc_idx)
     mutant_operations.remove(ggrp_target.loc_idx.op_type)
-
-    trial_runner = (
-        create_mutation_run_trial
-        if sys.version_info < (3, 8)
-        else create_mutation_run_parallelcache_trial
-    )
 
     while mutant_operations:
         # random.choice doesn't support sets, but sample of 1 produces a list with one element
@@ -548,35 +578,48 @@ def run_mutation_trials(src_loc: Path, test_cmds: List[str], config: Config) -> 
     LOGGER.info("Starting individual mutation trials!")
     results: List[MutantTrialResult] = []
 
-    # For every source/sample-idx pair in the mutation sample
-    # Select the valid mutations for that sample-idx
-    # Then apply the selected mutations in a random order running the test commands
-    # until all mutations are tested or the appropriate break-on action occurs
-    if sys.version_info < (3, 8):
+    if sys.version_info >= (3, 8) and config.multi_processing:
+        # parallel processing uses a separate cache writing mechanism without this check
+        # so run it separately first (included in Mutant.write already)
+        cache.check_cache_invalidation_mode()
+
+        LOGGER.info("Running parallel (multi-processor) dispatch mode. CPUs: %s", os.cpu_count())
+
+        with multiprocessing.Pool() as pool:
+            mp_results = pool.starmap_async(
+                mutation_sample_dispatch,
+                itertools.product(
+                    mutation_sample,  # map each mutation_sample item as a tuple with other args
+                    [ggrp],  # ggrp=
+                    [test_cmds],  # test_cmds =
+                    [config],  # config =
+                    [create_mutation_run_parallelcache_trial],  # trial_runner =
+                ),
+            )
+            # mp_results.get() will be list of single item lists e.g., [[1], [2], [3]]
+            # this unpacks to to be a flat list [1, 2, 3]
+            results = [i for j in mp_results.get() for i in j]
+
+    else:
         LOGGER.info("Running serial (single processor) dispatch mode.")
 
         for ggrp_target in mutation_sample:
 
             results.extend(
                 mutation_sample_dispatch(
-                    ggrp_target=ggrp_target, ggrp=ggrp, test_cmds=test_cmds, config=config
+                    ggrp_target=ggrp_target,
+                    ggrp=ggrp,
+                    test_cmds=test_cmds,
+                    config=config,
+                    trial_runner=create_mutation_run_trial,
                 )
             )
-    else:
-        LOGGER.info("Running parallel (multi-processor) dispatch mode.")
-
-        with multiprocessing.Pool() as pool:
-            mp_results = pool.starmap_async(
-                mutation_sample_dispatch,
-                itertools.product(mutation_sample, [ggrp], [test_cmds], [config]),
-            )
-            # mp_results.get() will be list of single item lists e.g., [[1], [2], [3]]
-            # this unpacks to to be a flat list [1, 2, 3]
-            results = [i for j in mp_results.get() for i in j]
-
-        # TODO: Remove .mutatest dir entirely here, make it a global variable
 
     end = datetime.now()
+
+    if PARALLEL_PYCACHE_DIR.exists():
+        LOGGER.info("Cleaning up parallel cache dir %s", PARALLEL_PYCACHE_DIR)
+        PARALLEL_PYCACHE_DIR.rmdir()
 
     return ResultsSummary(
         results=results,

@@ -259,6 +259,7 @@ def cli_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--nocov", action="store_true", help="Ignore coverage files for optimization."
     )
+    parser.add_argument("--parallel", action="store_true", help="Run with multiprocessing.")
     parser.add_argument(
         "--timeout_factor",
         help="If a mutation trial running time is beyond this factor multiplied by the "
@@ -336,6 +337,15 @@ def cli_epilog() -> str:
        have a continuous integration pipeline stage that runs mutatest over an important section
        of tests (optionally specifying a random seed or categories) and cause a system exit if
        a set number of allowable survivors is exceeded.
+
+    Parallel:
+    ---------
+     - Run tests with multi-processing using all available CPUs detected with os.cpu_count().
+       A buffer of 10s is added to the calculated timeout (based on the clean trial run time and
+       timeout_factor argument) to avoid false timeouts with dispatch scheduling on fast test
+       trials in subprocess execution. Parallel pycache is managed by setting the environment
+       variable PYTHONPYCACHEPREFIX to a subdirectory in '.mutatest_cache/' for each trial.
+       These cache files, and the '.mutatest_cache/' directory, are removed after running.
     """
     )
 
@@ -413,6 +423,7 @@ def get_parser_actions(parser: argparse.ArgumentParser) -> ParserActionMap:
          '-w': '--whitelist',
          '-x': '--exception',
          '--debug': '--debug',
+         '--parallel': '--parallel',
          '--nocov': '--nocov'}
 
     Args:
@@ -762,6 +773,7 @@ def main(args: argparse.Namespace) -> None:
         break_on_timeout=run_mode.break_on_timeout,
         ignore_coverage=args.nocov,
         max_runtime=args.timeout_factor * clean_runtime_1.total_seconds(),
+        multi_processing=args.parallel,
     )
 
     results_summary = run.run_mutation_trials(
