@@ -6,9 +6,15 @@ The run functions are used to run mutation trials from the CLI. These can be use
 for other customized running requirements. The ``Config`` data-class defines the running
 parameters for the full trial suite. Sampling functions are defined here as well.
 """
+import importlib
 import logging
+import multiprocessing  # noqa: F401
+import os
 import random
 import subprocess
+import shutil
+import sys
+import uuid
 
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -348,12 +354,13 @@ def create_mutation_run_trial(
         target_idx: the mutation location
         mutation_op: the mutation operation
         test_cmds: the test commands to execute with the mutated code
+        max_runtime: timeout for the trial
 
     Returns:
         The mutation trial result
     """
-
     LOGGER.debug("Running trial for %s", mutation_op)
+
     mutant = genome.mutate(target_idx, mutation_op, write_cache=True)
 
     try:
@@ -368,7 +375,118 @@ def create_mutation_run_trial(
         return_code = 3
 
     cache.remove_existing_cache_files(mutant.src_file)
+
     return MutantTrialResult(mutant=mutant, return_code=return_code)
+
+
+def create_mutation_run_parallelcache_trial(
+    genome: Genome, target_idx: LocIndex, mutation_op: Any, test_cmds: List[str], max_runtime: float
+) -> MutantTrialResult:
+    """Similar to run.create_mutation_run_trial but using the parallel cache directory settings.
+
+    This function requires Python 3.8 and does not run with Python 3.7.
+
+    Args:
+        genome: the genome to mutate
+        target_idx: the mutation location
+        mutation_op: the mutation operation
+        test_cmds: the test commands to execute with the mutated code
+        max_runtime: timeout for the subprocess trial
+
+    Returns:
+        MutantTrialResult
+
+    Raises:
+        EnvironmentError: if Python version is less than 3.8
+    """
+    if sys.version_info < (3, 8):
+        raise EnvironmentError("Python 3.8 is required to use PYTHONPYCACHEPREFIX.")
+    # New dot directory to be created for holding the parallel cache files.
+    dot_dir = ".mutatest"
+    # create the mutant without writing the cache
+    mutant = genome.mutate(target_idx, mutation_op, write_cache=False)
+
+    # set up parallel cache structure
+    parallel_cache = Path.cwd() / dot_dir / uuid.uuid4().hex
+    resolved_source_parts = genome.source_file.resolve().parent.parts[1:]
+    parallel_cfile = parallel_cache.joinpath(*resolved_source_parts) / mutant.cfile.name
+
+    # follow the basic structure of the Mutant.write() method
+    cache.check_cache_invalidation_mode()
+
+    bytecode = importlib._bootstrap_external._code_to_timestamp_pyc(  # type: ignore
+        mutant.mutant_code, mutant.source_stats["mtime"], mutant.source_stats["size"]
+    )
+
+    cache.create_cache_dirs(parallel_cfile)
+
+    LOGGER.debug("Writing parallel mutant cache file: %s", parallel_cfile)
+    importlib._bootstrap_external._write_atomic(
+        parallel_cfile,
+        bytecode,  # type: ignore
+        mutant.mode,
+    )
+    # set up subprocess environment
+    copy_env = os.environ.copy()
+    copy_env["PYTHONPYCACHEPREFIX"] = str(parallel_cache)
+
+    try:
+        mutant_trial = subprocess.run(
+            test_cmds,
+            env=copy_env,
+            capture_output=capture_output(LOGGER.getEffectiveLevel()),
+            timeout=max_runtime,
+        )
+        return_code = mutant_trial.returncode
+
+    except subprocess.TimeoutExpired:
+        return_code = 3
+
+    LOGGER.info("Removing parallel cache file: %s", parallel_cache.parts[-1])
+    shutil.rmtree(parallel_cache)
+
+    return MutantTrialResult(mutant=mutant, return_code=return_code)
+
+
+def mutation_sample_dispatch(
+    ggrp_target: GenomeGroupTarget, ggrp: GenomeGroup, test_cmds: List[str], config: Config
+) -> List[MutantTrialResult]:
+
+    results: List[MutantTrialResult] = []
+
+    LOGGER.info(
+        "Current target location: %s, %s", ggrp_target.source_path.name, ggrp_target.loc_idx
+    )
+
+    op_code = CATEGORIES[ggrp_target.loc_idx.ast_class]
+    mutant_operations = CategoryCodeFilter(codes=(op_code,)).valid_mutations
+
+    LOGGER.debug("MUTATION OPS: %s", mutant_operations)
+    LOGGER.debug("MUTATION: %s", ggrp_target.loc_idx)
+    mutant_operations.remove(ggrp_target.loc_idx.op_type)
+
+    while mutant_operations:
+        # random.choice doesn't support sets, but sample of 1 produces a list with one element
+        current_mutation = random.sample(mutant_operations, k=1)[0]
+        mutant_operations.remove(current_mutation)
+
+        trial_results = create_mutation_run_trial(
+            genome=ggrp[ggrp_target.source_path],
+            target_idx=ggrp_target.loc_idx,
+            mutation_op=current_mutation,
+            test_cmds=test_cmds,
+            max_runtime=config.max_runtime,
+        )
+
+        results.append(trial_results)
+
+        # will log output results to console, and flag to break while loop of operations
+        if trial_output_check_break(
+            trial_results, config, ggrp_target.source_path, ggrp_target.loc_idx
+        ):
+            break
+
+    return results
 
 
 def run_mutation_trials(src_loc: Path, test_cmds: List[str], config: Config) -> ResultsSummary:
@@ -407,35 +525,13 @@ def run_mutation_trials(src_loc: Path, test_cmds: List[str], config: Config) -> 
     # Select the valid mutations for that sample-idx
     # Then apply the selected mutations in a random order running the test commands
     # until all mutations are tested or the appropriate break-on action occurs
-    for sample_src, sample_idx in mutation_sample:
+    for ggrp_target in mutation_sample:
 
-        LOGGER.info("Current target location: %s, %s", sample_src.name, sample_idx)
-
-        op_code = CATEGORIES[sample_idx.ast_class]
-        mutant_operations = CategoryCodeFilter(codes=(op_code,)).valid_mutations
-
-        LOGGER.debug("MUTATION OPS: %s", mutant_operations)
-        LOGGER.debug("MUTATION: %s", sample_idx)
-        mutant_operations.remove(sample_idx.op_type)
-
-        while mutant_operations:
-            # random.choice doesn't support sets, but sample of 1 produces a list with one element
-            current_mutation = random.sample(mutant_operations, k=1)[0]
-            mutant_operations.remove(current_mutation)
-
-            trial_results = create_mutation_run_trial(
-                genome=ggrp[sample_src],
-                target_idx=sample_idx,
-                mutation_op=current_mutation,
-                test_cmds=test_cmds,
-                max_runtime=config.max_runtime,
+        results.extend(
+            mutation_sample_dispatch(
+                ggrp_target=ggrp_target, ggrp=ggrp, test_cmds=test_cmds, config=config
             )
-
-            results.append(trial_results)
-
-            # will log output results to console, and flag to break while loop of operations
-            if trial_output_check_break(trial_results, config, sample_src, sample_idx):
-                break
+        )
 
     end = datetime.now()
 
