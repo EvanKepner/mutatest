@@ -159,7 +159,7 @@ mutation trials as a way to reset the ``__pycache__``.
 
 .. parsed-literal::
 
-    datetime.timedelta(microseconds=500006)
+    datetime.timedelta(microseconds=411150)
 
 
 
@@ -254,8 +254,8 @@ have lines covered by the set ``coverage_file`` property.
 
 .. parsed-literal::
 
-    {LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>),
-     LocIndex(ast_class='Compare', lineno=10, col_offset=11, op_type=<class '_ast.Gt'>)}
+    {LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>, end_lineno=6, end_col_offset=16),
+     LocIndex(ast_class='Compare', lineno=10, col_offset=11, op_type=<class '_ast.Gt'>, end_lineno=10, end_col_offset=16)}
 
 
 
@@ -268,7 +268,7 @@ have lines covered by the set ``coverage_file`` property.
 
 .. parsed-literal::
 
-    {LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>)}
+    {LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>, end_lineno=6, end_col_offset=16)}
 
 
 
@@ -281,7 +281,7 @@ have lines covered by the set ``coverage_file`` property.
 
 .. parsed-literal::
 
-    {LocIndex(ast_class='Compare', lineno=10, col_offset=11, op_type=<class '_ast.Gt'>)}
+    {LocIndex(ast_class='Compare', lineno=10, col_offset=11, op_type=<class '_ast.Gt'>, end_lineno=10, end_col_offset=16)}
 
 
 
@@ -302,7 +302,7 @@ encapsulted in the ``Genome``.
 
 .. parsed-literal::
 
-    <_ast.Module at 0x7f0d6bd88da0>
+    <_ast.Module at 0x7f68a4014bb0>
 
 
 
@@ -315,10 +315,10 @@ encapsulted in the ``Genome``.
 
 .. parsed-literal::
 
-    [<_ast.Expr at 0x7f0d6bd88dd8>,
-     <_ast.FunctionDef at 0x7f0d6bd88e48>,
-     <_ast.FunctionDef at 0x7f0d6bd88fd0>,
-     <_ast.Expr at 0x7f0d6bd911d0>]
+    [<_ast.Expr at 0x7f68a4014ca0>,
+     <_ast.FunctionDef at 0x7f68a4014ac0>,
+     <_ast.FunctionDef at 0x7f68a4014eb0>,
+     <_ast.Expr at 0x7f68a402c040>]
 
 
 
@@ -332,12 +332,15 @@ encapsulted in the ``Genome``.
 .. parsed-literal::
 
     {'name': 'add_five',
-     'args': <_ast.arguments at 0x7f0d6bd88e80>,
-     'body': [<_ast.Return at 0x7f0d6bd88ef0>],
+     'args': <_ast.arguments at 0x7f68a4014d30>,
+     'body': [<_ast.Return at 0x7f68a4014dc0>],
      'decorator_list': [],
      'returns': None,
+     'type_comment': None,
      'lineno': 5,
-     'col_offset': 0}
+     'col_offset': 0,
+     'end_lineno': 6,
+     'end_col_offset': 16}
 
 
 
@@ -372,7 +375,6 @@ covered targets to only ``BinOp`` class operations.
     Category:Index, Code: ix
     Category:NameConstant, Code: nc
     Category:SliceUS, Code: su
-    Category:SliceRC, Code: sr
 
 
 .. code:: ipython3
@@ -390,7 +392,7 @@ covered targets to only ``BinOp`` class operations.
 .. parsed-literal::
 
     Invalid category codes: {'asdf'}.
-    Valid codes: {'AugAssign': 'aa', 'BinOp': 'bn', 'BinOpBC': 'bc', 'BinOpBS': 'bs', 'BoolOp': 'bl', 'Compare': 'cp', 'CompareIn': 'cn', 'CompareIs': 'cs', 'If': 'if', 'Index': 'ix', 'NameConstant': 'nc', 'SliceUS': 'su', 'SliceRC': 'sr'}
+    Valid codes: {'AugAssign': 'aa', 'BinOp': 'bn', 'BinOpBC': 'bc', 'BinOpBS': 'bs', 'BoolOp': 'bl', 'Compare': 'cp', 'CompareIn': 'cn', 'CompareIs': 'cs', 'If': 'if', 'Index': 'ix', 'NameConstant': 'nc', 'SliceUS': 'su'}
 
 
 .. code:: ipython3
@@ -410,7 +412,7 @@ covered targets to only ``BinOp`` class operations.
 
 .. parsed-literal::
 
-    {LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>)}
+    {LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>, end_lineno=6, end_col_offset=16)}
 
 
 
@@ -423,7 +425,7 @@ covered targets to only ``BinOp`` class operations.
 
 .. parsed-literal::
 
-    {LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>)}
+    {LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>, end_lineno=6, end_col_offset=16)}
 
 
 
@@ -443,8 +445,8 @@ covered targets to only ``BinOp`` class operations.
 
 .. parsed-literal::
 
-    {LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>),
-     LocIndex(ast_class='Compare', lineno=10, col_offset=11, op_type=<class '_ast.Gt'>)}
+    {LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>, end_lineno=6, end_col_offset=16),
+     LocIndex(ast_class='Compare', lineno=10, col_offset=11, op_type=<class '_ast.Gt'>, end_lineno=10, end_col_offset=16)}
 
 
 
@@ -477,7 +479,7 @@ Coverage Filter
 
 .. parsed-literal::
 
-    {LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>)}
+    {LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>, end_lineno=6, end_col_offset=16)}
 
 
 
@@ -495,7 +497,7 @@ Coverage Filter
 
 .. parsed-literal::
 
-    {LocIndex(ast_class='Compare', lineno=10, col_offset=11, op_type=<class '_ast.Gt'>)}
+    {LocIndex(ast_class='Compare', lineno=10, col_offset=11, op_type=<class '_ast.Gt'>, end_lineno=10, end_col_offset=16)}
 
 
 
@@ -520,7 +522,7 @@ Category Code Filter
 
 .. parsed-literal::
 
-    dict_values(['aa', 'bn', 'bc', 'bs', 'bl', 'cp', 'cn', 'cs', 'if', 'ix', 'nc', 'su', 'sr'])
+    dict_values(['aa', 'bn', 'bc', 'bs', 'bl', 'cp', 'cn', 'cs', 'if', 'ix', 'nc', 'su'])
 
 
 
@@ -546,8 +548,7 @@ Category Code Filter
      'If': 'if',
      'Index': 'ix',
      'NameConstant': 'nc',
-     'SliceUS': 'su',
-     'SliceRC': 'sr'}
+     'SliceUS': 'su'}
 
 
 
@@ -633,7 +634,7 @@ Category Code Filter
 
 .. parsed-literal::
 
-    {LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>)}
+    {LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>, end_lineno=6, end_col_offset=16)}
 
 
 
@@ -650,7 +651,7 @@ Category Code Filter
 
 .. parsed-literal::
 
-    {LocIndex(ast_class='Compare', lineno=10, col_offset=11, op_type=<class '_ast.Gt'>)}
+    {LocIndex(ast_class='Compare', lineno=10, col_offset=11, op_type=<class '_ast.Gt'>, end_lineno=10, end_col_offset=16)}
 
 
 
@@ -674,7 +675,7 @@ includes targets, covered targets, and AST.
 
 .. parsed-literal::
 
-    {LocIndex(ast_class='CompareIs', lineno=6, col_offset=11, op_type=<class '_ast.Is'>)}
+    {LocIndex(ast_class='CompareIs', lineno=6, col_offset=11, op_type=<class '_ast.Is'>, end_lineno=6, end_col_offset=17)}
 
 
 
@@ -687,7 +688,7 @@ includes targets, covered targets, and AST.
 
 .. parsed-literal::
 
-    {LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>)}
+    {LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>, end_lineno=6, end_col_offset=16)}
 
 
 
@@ -723,7 +724,7 @@ mutation creates ``5 * 5``.
 
 .. parsed-literal::
 
-    LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>)
+    LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>, end_lineno=6, end_col_offset=16)
 
 
 
@@ -749,7 +750,7 @@ mutation creates ``5 * 5``.
 .. parsed-literal::
 
     <class '_ast.IsNot'> is not a member of mutation category bn.
-    Valid mutations for bn: {<class '_ast.Sub'>, <class '_ast.Add'>, <class '_ast.Pow'>, <class '_ast.FloorDiv'>, <class '_ast.Mod'>, <class '_ast.Div'>, <class '_ast.Mult'>}.
+    Valid mutations for bn: {<class '_ast.Mult'>, <class '_ast.Sub'>, <class '_ast.Add'>, <class '_ast.Pow'>, <class '_ast.FloorDiv'>, <class '_ast.Mod'>, <class '_ast.Div'>}.
 
 
 .. code:: ipython3
@@ -764,7 +765,7 @@ mutation creates ``5 * 5``.
 
 .. parsed-literal::
 
-    Mutant(mutant_code=<code object <module> at 0x7f0d800ceae0, file "example/a.py", line 2>, src_file=PosixPath('example/a.py'), cfile=PosixPath('example/__pycache__/a.cpython-37.pyc'), loader=<_frozen_importlib_external.SourceFileLoader object at 0x7f0d6bd3bbe0>, source_stats={'mtime': 1571245955.1276326, 'size': 118}, mode=33204, src_idx=LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>), mutation=<class '_ast.Mult'>)
+    Mutant(mutant_code=<code object <module> at 0x7f68a4040b30, file "example/a.py", line 1>, src_file=PosixPath('example/a.py'), cfile=PosixPath('example/__pycache__/a.cpython-38.pyc'), loader=<_frozen_importlib_external.SourceFileLoader object at 0x7f689cfbd310>, source_stats={'mtime': 1571346690.5703905, 'size': 118}, mode=33188, src_idx=LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>, end_lineno=6, end_col_offset=16), mutation=<class '_ast.Mult'>)
 
 
 
@@ -795,7 +796,7 @@ mutation creates ``5 * 5``.
     # and return the result
 
     mutant_trial_result = run.create_mutation_run_trial(
-        genome, mutation_target, ast.Mult, ["pytest"]
+        genome, mutation_target, ast.Mult, ["pytest"], max_runtime=5
     )
 
 .. code:: ipython3
@@ -822,7 +823,7 @@ mutation creates ``5 * 5``.
     # since the test will fail.
 
     mutant_trial_result = run.create_mutation_run_trial(
-        genome, mutation_target, ast.Div, ["pytest"]
+        genome, mutation_target, ast.Div, ["pytest"], max_runtime=5
     )
 
     mutant_trial_result.status
@@ -863,8 +864,8 @@ across an entire collection of ``Genomes``.
 
 .. parsed-literal::
 
-    example/a.py <mutatest.api.Genome object at 0x7f0d6bd4b518>
-    example/b.py <mutatest.api.Genome object at 0x7f0d6bd4b4e0>
+    example/a.py <mutatest.api.Genome object at 0x7f689cfc8c10>
+    example/b.py <mutatest.api.Genome object at 0x7f689cfc8f70>
 
 
 .. code:: ipython3
@@ -882,9 +883,9 @@ across an entire collection of ``Genomes``.
 
 .. parsed-literal::
 
-    example/a.py LocIndex(ast_class='Compare', lineno=10, col_offset=11, op_type=<class '_ast.Gt'>)
-    example/b.py LocIndex(ast_class='CompareIs', lineno=6, col_offset=11, op_type=<class '_ast.Is'>)
-    example/a.py LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>)
+    example/b.py LocIndex(ast_class='CompareIs', lineno=6, col_offset=11, op_type=<class '_ast.Is'>, end_lineno=6, end_col_offset=17)
+    example/a.py LocIndex(ast_class='Compare', lineno=10, col_offset=11, op_type=<class '_ast.Gt'>, end_lineno=10, end_col_offset=16)
+    example/a.py LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>, end_lineno=6, end_col_offset=16)
 
 
 .. code:: ipython3
@@ -903,8 +904,8 @@ across an entire collection of ``Genomes``.
 
 .. parsed-literal::
 
-    example/a.py LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>)
-    example/b.py LocIndex(ast_class='CompareIs', lineno=6, col_offset=11, op_type=<class '_ast.Is'>)
+    example/b.py LocIndex(ast_class='CompareIs', lineno=6, col_offset=11, op_type=<class '_ast.Is'>, end_lineno=6, end_col_offset=17)
+    example/a.py LocIndex(ast_class='BinOp', lineno=6, col_offset=11, op_type=<class '_ast.Add'>, end_lineno=6, end_col_offset=16)
 
 
 .. code:: ipython3
@@ -920,7 +921,7 @@ across an entire collection of ``Genomes``.
 
 .. parsed-literal::
 
-    {GenomeGroupTarget(source_path=PosixPath('example/b.py'), loc_idx=LocIndex(ast_class='CompareIs', lineno=6, col_offset=11, op_type=<class '_ast.Is'>))}
+    {GenomeGroupTarget(source_path=PosixPath('example/b.py'), loc_idx=LocIndex(ast_class='CompareIs', lineno=6, col_offset=11, op_type=<class '_ast.Is'>, end_lineno=6, end_col_offset=17))}
 
 
 
@@ -948,7 +949,7 @@ across an entire collection of ``Genomes``.
 
 .. parsed-literal::
 
-    dict_values([<mutatest.api.Genome object at 0x7f0d6bd4b518>, <mutatest.api.Genome object at 0x7f0d6bd4b4e0>])
+    dict_values([<mutatest.api.Genome object at 0x7f689cfc8c10>, <mutatest.api.Genome object at 0x7f689cfc8f70>])
 
 
 
@@ -977,7 +978,7 @@ across an entire collection of ``Genomes``.
 
 .. parsed-literal::
 
-    {PosixPath('example/b.py'): <mutatest.api.Genome object at 0x7f0d6bd4b4e0>}
+    {PosixPath('example/b.py'): <mutatest.api.Genome object at 0x7f689cfc8f70>}
 
 
 
@@ -993,7 +994,7 @@ across an entire collection of ``Genomes``.
 
 .. parsed-literal::
 
-    {PosixPath('example/b.py'): <mutatest.api.Genome object at 0x7f0d6bd4b4e0>, PosixPath('example/a.py'): <mutatest.api.Genome object at 0x7f0d6bd4b518>}
+    {PosixPath('example/b.py'): <mutatest.api.Genome object at 0x7f689cfc8f70>, PosixPath('example/a.py'): <mutatest.api.Genome object at 0x7f689cfc8c10>}
 
 
 
@@ -1014,6 +1015,6 @@ across an entire collection of ``Genomes``.
 
 .. parsed-literal::
 
-    example/a.py <mutatest.api.Genome object at 0x7f0d6bd5e160>
-    example/test_ab.py <mutatest.api.Genome object at 0x7f0d6bd5e198>
-    example/b.py <mutatest.api.Genome object at 0x7f0d6bd5e1d0>
+    example/a.py <mutatest.api.Genome object at 0x7f68a4044700>
+    example/test_ab.py <mutatest.api.Genome object at 0x7f689cfd7340>
+    example/b.py <mutatest.api.Genome object at 0x7f689cfd74f0>

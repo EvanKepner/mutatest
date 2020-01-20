@@ -17,9 +17,8 @@ The top level priorities for the project are:
 
 Open questions I'm working through on the design:
 
-1. Multi-processing? Running individual tests is an embarrassingly parallel problem that is currently
-   executed in series by ``mutatest``. This would likely involve creative use of ``__pycache__``
-   and potentially local copying of files.
+1. Fancy test selection? If there is a way to not only test coverage, but only select tests based
+   on the mutation location (a form of "who tests what") that could make trials more efficient.
 
 2. Local database? Keeping a local database of mutations and trial results would allow for re-running
    failed mutations quickly. Providing the ability to log false positives to skip on future samples
