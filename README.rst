@@ -22,7 +22,7 @@ Features
     - Uses ``coverage`` to create `only meaningful mutants <https://mutatest.readthedocs.io/en/latest/commandline.html#coverage-filtering>`_.
     - Built for efficiency with `multiple running modes <https://mutatest.readthedocs.io/en/latest/commandline.html#selecting-a-running-mode>`_
       and `random sampling of mutation targets <https://mutatest.readthedocs.io/en/latest/commandline.html#controlling-randomization-behavior-and-trial-number>`_.
-    - Capable of running `parallel mutation trials <https://mutatest.readthedocs.io/en/latest/commandline.html#parallelization>`_.
+    - Capable of running `parallel mutation trials <https://mutatest.readthedocs.io/en/latest/commandline.html#parallelization>`_
       with multiprocessing on Python 3.8.
     - Flexible enough to run on a `whole package <https://mutatest.readthedocs.io/en/latest/commandline.html#auto-detected-package-structures>`_
       or a `single file <https://mutatest.readthedocs.io/en/latest/commandline.html#specifying-source-files-and-test-commands>`_.
