@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Dict, List, NamedTuple, Tuple, Union
 
 from mutatest import run
-from mutatest.api import Mutant
+from mutatest.run import MutantReport
 from mutatest.run import MutantTrialResult
 
 
@@ -24,7 +24,7 @@ class ReportedMutants(NamedTuple):
     """Container for reported mutants to pair status with the list of mutants."""
 
     status: str
-    mutants: List[Mutant]
+    mutants: List[MutantReport]
 
 
 class DisplayResults(NamedTuple):
@@ -145,7 +145,7 @@ def analyze_mutant_trials(trial_results: List[MutantTrialResult]) -> Tuple[str, 
     )
 
 
-def build_report_section(title: str, mutants: List[Mutant]) -> str:
+def build_report_section(title: str, mutants: List[MutantReport]) -> str:
     """Build a readable mutation report section from the list of mutants.
 
     It will look like:

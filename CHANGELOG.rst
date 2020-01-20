@@ -1,17 +1,33 @@
 Changelog
 =========
 
-Beta Releases
--------------
+Stable Releases
+---------------
 
-2.2.1
+3.0.0
 ~~~~~
+
+    - ``Mutatest`` has reached a level of maturity to warrant a stable release.
+      With the addition of the multiprocessing capabilities, support for ``coverage`` versions
+      4.x and 5.x, support for Python 3.7 and 3.8, being installable through ``pip`` or
+      ``conda``, and with Azure Pipelines CI for platform tests, the tool and API are
+      unlikely to change in a major way without moving to ``4.0.0``.
+
+    New in this release:
+
+    - Multiprocessing support on Python 3.8!
+        - The new ``--parallel`` command argument will instruct ``mutatest`` to use
+          multiprocessing for mutation trials. See the documentation for complete details.
 
     - Bug fix in ``mutatest.cache.create_cache_dirs()`` where the cache directory did not
       include "parents" in case of packages with nested directories without existing pycache.
-    - Deprecation fix in the API to remove the ``sr`` subcategory of slice mutations.
+    - Removal of the ``sr`` subcategory of slice mutations (``Slice_RC`` for range changes).
       These were rare, and supporting both Python 3.7 and 3.8 required excessive complexity.
       The ``su`` category remains valid as the primary slice mutation set.
+
+
+Beta Releases
+-------------
 
 2.2.0
 ~~~~~

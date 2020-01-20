@@ -19,8 +19,7 @@ PROJECT_URLS = {
 }
 
 CLASSIFIERS = [
-    "Development Status :: 4 - Beta",
-    "Intended Audience :: Developers",
+    "Development Status :: 5 - Production/Stable" "Intended Audience :: Developers",
     "Natural Language :: English",
     "Environment :: Console",
     "Framework :: Pytest",

@@ -430,8 +430,14 @@ def create_mutation_run_parallelcache_trial(
     Raises:
         EnvironmentError: if Python version is less than 3.8
     """
+
     if sys.version_info < (3, 8):
         raise EnvironmentError("Python 3.8 is required to use PYTHONPYCACHEPREFIX.")
+
+    # Note in coverage reports this shows as untested code due to the subprocess dispatching
+    # the 'slow' tests in `test_run.py` cover this.
+    cache.check_cache_invalidation_mode()
+
     # create the mutant without writing the cache
     mutant = genome.mutate(target_idx, mutation_op, write_cache=False)
 
@@ -576,9 +582,6 @@ def run_mutation_trials(src_loc: Path, test_cmds: List[str], config: Config) -> 
     results: List[MutantTrialResult] = []
 
     if sys.version_info >= (3, 8) and config.multi_processing:
-        # parallel processing uses a separate cache writing mechanism without this check
-        # so run it separately first (included in Mutant.write already)
-        cache.check_cache_invalidation_mode()
 
         LOGGER.info("Running parallel (multi-processor) dispatch mode. CPUs: %s", os.cpu_count())
 
