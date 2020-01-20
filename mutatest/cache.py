@@ -5,7 +5,7 @@ Cache
 These functions are used to manipulate the ``__pycache__`` when writing mutations to disk for
 detection by the test runners.
 Many functions are encapsulated in the ``Mutant.write_cache()`` method.
-Note that the parallel pycache controls are in the ``run.create_mutation_run_parallelcache_trial()`
+Note that the parallel pycache controls are in the ``run.create_mutation_run_parallelcache_trial()``
 function for multiprocessing.
 """
 import importlib
