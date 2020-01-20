@@ -259,7 +259,9 @@ def cli_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--nocov", action="store_true", help="Ignore coverage files for optimization."
     )
-    parser.add_argument("--parallel", action="store_true", help="Run with multiprocessing.")
+    parser.add_argument(
+        "--parallel", action="store_true", help="Run with multiprocessing (Py3.8 only)."
+    )
     parser.add_argument(
         "--timeout_factor",
         help="If a mutation trial running time is beyond this factor multiplied by the "

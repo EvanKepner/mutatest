@@ -302,6 +302,30 @@ a ``TIMEOUT`` is 10 seconds (2 seconds * 5).
 Note that if you set the ``--timeout_factor`` to be exactly 1 you will likely get timeout trials
 by natural variance in logging success vs. failure.
 
+Parallelization
+---------------
+
+.. versionadded:: 3.0.0
+    Support for multiprocessing parallelization in Python 3.8.
+
+The ``--parallel`` flag can be set if you are running with Python 3.8 to enable multiprocessing
+of mutation trials. This flag has no effect if you are running Python 3.7.
+Parallelism is achieved by creating parallel cache directories in a ``.mutatest_cache/`` folder
+in the current working directory. Unique folders for each trial are created and the subprocess
+command sets ``PYTHONPYCACHEPREFIX`` per trial. These subfolders, and the top level
+``.mutatest_cache/`` directory, are removed when the trials are complete.
+Multiprocessing uses all CPUs detected by ``os.cpu_count()`` in the pool.
+
+The parallel cache adds some IO overhead to the trial process. You will get the most benefit
+from multiprocessing if you are running a longer test suite or a high number of trials.
+All trials get an additional 10 seconds added to the maximum timeout calculation as a buffer
+for gathering results. If you notice excessive false positive timeouts try running without
+parallelization (more likely with very fast tests).
+
+.. code-block:: bash
+
+    $ mutatest --parallel
+
 
 Putting it all together
 -----------------------
@@ -360,6 +384,7 @@ Run ``mutatest --help`` to see command line arguments and supported operations:
                             Count of survivors to raise Mutation Exception for system exit.
       --debug               Turn on DEBUG level logging output.
       --nocov               Ignore coverage files for optimization.
+      --parallel            Run with multiprocessing.
       --timeout_factor FLOAT > 1
                             If a mutation trial running time is beyond this factor multiplied by the first
                             clean trial running time then that mutation trial is aborted and logged as a timeout.
