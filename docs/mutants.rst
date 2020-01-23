@@ -290,7 +290,7 @@ Example:
 Slices - "su"
 -------------
 
-Slice mutations to swap lower/upper values, or change range e.g. ``x[2:] to x[:2]`.
+Slice mutations to swap lower/upper values, or change range e.g. ``x[2:] to x[:2]``.
 This is a unique mutation. If the upper or lower bound is set to
 ``None`` then the bound values are swapped. This is represented by the operations of
 ``Slice_UnboundedUpper`` for swap None to the "upper" value  from "lower". The category code
