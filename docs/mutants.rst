@@ -237,7 +237,7 @@ Index - "ix"
 ------------
 
 Index values for iterables e.g. ``i[-1], i[0], i[0][1]``. It is worth noting that this is a
-unique mutation form in that any index value that is positive will be marked as ``Index_NumPos`
+unique mutation form in that any index value that is positive will be marked as ``Index_NumPos``
 and the same relative behavior will happen for negative index values to ``Index_NumNeg``. During
 the mutation process there are three possible outcomes: the index is set to 0, -1 or 1.
 The alternate values are chosen as potential mutations e.g. if the original operation is classified
