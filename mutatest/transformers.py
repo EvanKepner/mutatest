@@ -256,12 +256,24 @@ class MutateBase(ast.NodeTransformer):
         self.generic_visit(node)
         log_header = f"visit_BinOp: {self.src_file}:"
 
+        # default case for this node, can be BinOpBC or BinOpBS
+        ast_class = "BinOp"
+        op_type = type(node.op)
+
+        # binop_bit_cmp_types: Set[type] = {ast.BitAnd, ast.BitOr, ast.BitXor}
+        if op_type in {ast.BitAnd, ast.BitOr, ast.BitXor}:
+            ast_class = "BinOpBC"
+
+        # binop_bit_shift_types: Set[type] = {ast.LShift, ast.RShift}
+        if op_type in {ast.LShift, ast.RShift}:
+            ast_class = "BinOpBS"
+
         node_span = NodeSpan(node)
         idx = LocIndex(
-            ast_class="BinOp",
+            ast_class=ast_class,
             lineno=node_span.lineno,
             col_offset=node_span.col_offset,
-            op_type=type(node.op),
+            op_type=op_type,
             end_lineno=node_span.end_lineno,
             end_col_offset=node_span.end_col_offset,
         )
