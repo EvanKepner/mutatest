@@ -4,6 +4,14 @@ Changelog
 Stable Releases
 ---------------
 
+3.0.1
+~~~~~
+
+    - `Bug fix #24 <https://github.com/EvanKepner/mutatest/issues/24>`_ where the bit-shift
+      operators where not being applied during mutation trials and raised ``KeyError``.
+    - A new ``test_all_op_types.py`` ensures all mutation substitutions work as intended.
+
+
 3.0.0
 ~~~~~
 
