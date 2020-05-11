@@ -656,7 +656,7 @@ def selected_categories(whitelist: List[str], blacklist: List[str]) -> List[str]
     w_set = set(whitelist)
     b_set = set(blacklist)
 
-    if len(w_set) > 0:
+    if w_set:
         return list(w_set - b_set)
 
     return list(all_mutations - b_set)
