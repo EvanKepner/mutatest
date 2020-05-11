@@ -177,19 +177,19 @@ def build_report_section(title: str, mutants: List[MutantReport]) -> str:
     mutants.sort(key=mutant_sort_keys)
 
     for mutant in mutants:
-        summary = {}
-        summary["src_file"] = str(mutant.src_file)
-        summary["lineno"] = str(mutant.src_idx.lineno)
-        summary["col_offset"] = str(mutant.src_idx.col_offset)
-        summary["op_type"] = str(mutant.src_idx.op_type)
-        summary["mutation"] = str(mutant.mutation)
+        summary = {
+            'src_file': str(mutant.src_file),
+            'lineno': str(mutant.src_idx.lineno),
+            'col_offset': str(mutant.src_idx.col_offset),
+            'op_type': str(mutant.src_idx.op_type),
+            'mutation': str(mutant.mutation),
+        }
 
         fmt_list.append(fmt_template.format_map(summary))
 
     report = "\n".join(["\n", title, "-" * len(title)] + [s for s in fmt_list])
 
     return report
-
 
 def write_report(report: str, location: Path) -> None:
     """Write the report to a file.
