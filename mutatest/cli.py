@@ -513,25 +513,27 @@ def parse_ini_config_with_cli(
     for k in ini_config.keys():
         arg_key = f"--{k}"
 
-        if arg_key in action_maps.actions.values():
-            if arg_key not in final_args_list:
+        if (
+            arg_key in action_maps.actions.values()
+            and arg_key not in final_args_list
+        ):
 
-                if k in action_maps.action_types[mutatest.cli.ValidCategoryAction]:
-                    values = ws_proc(ini_config[k])
-                    final_args_list.extend([arg_key] + values)
+            if k in action_maps.action_types[mutatest.cli.ValidCategoryAction]:
+                values = ws_proc(ini_config[k])
+                final_args_list.extend([arg_key] + values)
 
-                elif k in action_maps.action_types[argparse._StoreTrueAction]:
-                    if ini_config.getboolean(k):
-                        final_args_list.append(arg_key)
+            elif k in action_maps.action_types[argparse._StoreTrueAction]:
+                if ini_config.getboolean(k):
+                    final_args_list.append(arg_key)
 
-                elif k in action_maps.action_types[argparse._AppendAction]:
-                    values = ws_proc(ini_config[k])
-                    final_args_list.extend(
-                        [i for j in list(itertools.product([arg_key], values)) for i in j]
-                    )
+            elif k in action_maps.action_types[argparse._AppendAction]:
+                values = ws_proc(ini_config[k])
+                final_args_list.extend(
+                    [i for j in list(itertools.product([arg_key], values)) for i in j]
+                )
 
-                else:
-                    final_args_list.extend([arg_key, ini_config[k]])
+            else:
+                final_args_list.extend([arg_key, ini_config[k]])
 
     return final_args_list
 
