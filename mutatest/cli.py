@@ -513,10 +513,7 @@ def parse_ini_config_with_cli(
     for k in ini_config.keys():
         arg_key = f"--{k}"
 
-        if (
-            arg_key in action_maps.actions.values()
-            and arg_key not in final_args_list
-        ):
+        if arg_key in action_maps.actions.values() and arg_key not in final_args_list:
 
             if k in action_maps.action_types[mutatest.cli.ValidCategoryAction]:
                 values = ws_proc(ini_config[k])

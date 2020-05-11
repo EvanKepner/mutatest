@@ -178,11 +178,11 @@ def build_report_section(title: str, mutants: List[MutantReport]) -> str:
 
     for mutant in mutants:
         summary = {
-            'src_file': str(mutant.src_file),
-            'lineno': str(mutant.src_idx.lineno),
-            'col_offset': str(mutant.src_idx.col_offset),
-            'op_type': str(mutant.src_idx.op_type),
-            'mutation': str(mutant.mutation),
+            "src_file": str(mutant.src_file),
+            "lineno": str(mutant.src_idx.lineno),
+            "col_offset": str(mutant.src_idx.col_offset),
+            "op_type": str(mutant.src_idx.op_type),
+            "mutation": str(mutant.mutation),
         }
 
         fmt_list.append(fmt_template.format_map(summary))
@@ -190,6 +190,7 @@ def build_report_section(title: str, mutants: List[MutantReport]) -> str:
     report = "\n".join(["\n", title, "-" * len(title)] + [s for s in fmt_list])
 
     return report
+
 
 def write_report(report: str, location: Path) -> None:
     """Write the report to a file.
