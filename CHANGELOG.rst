@@ -8,7 +8,7 @@ Stable Releases
 ~~~~~
 
     - `Maintenance patch #27 <https://github.com/EvanKepner/mutatest/pull/27>`_ updating source
-       code conditional logic in the CLI argument parsing.
+      code conditional logic in the CLI argument parsing.
     - Minor fixes for the most updated CI checks.
 
 
