@@ -574,7 +574,7 @@ def run_mutation_trials(src_loc: Path, test_cmds: List[str], config: Config) -> 
     LOGGER.info("Setting random.seed to: %s", config.random_seed)
     random.seed(a=config.random_seed)
     sample_space = get_sample(ggrp, config.ignore_coverage)
-    LOGGER.info(f"Total sample space size: %s", len(sample_space))
+    LOGGER.info("Total sample space size: %s", len(sample_space))
     mutation_sample = get_mutation_sample_locations(sample_space, config.n_locations)
 
     # Run trials through mutations

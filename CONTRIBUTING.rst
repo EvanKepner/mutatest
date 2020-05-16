@@ -1,8 +1,8 @@
 Contributing
 ============
 
-Up top, thanks for considering a contribution! ``mutatest`` is in active development and
-new features that align to the vision are welcome.
+Up top, thanks for considering a contribution!
+New features that align to the vision are welcome.
 You can either open an issue to discuss the idea first, or if you have working code,
 submit a pull-request.
 

@@ -8,11 +8,11 @@ from pathlib import Path
 from textwrap import dedent
 from typing import List, NamedTuple
 
-import hypothesis.strategies as st
+import hypothesis.strategies as st  # type: ignore
 import pytest
 
 from freezegun import freeze_time
-from hypothesis import given
+from hypothesis import given  # type: ignore
 
 import mutatest.cli
 

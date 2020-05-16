@@ -64,14 +64,14 @@ def test_MutateAST_visit_augassign(augassign_file, augassign_expected_locs):
 
     assert len(mast.locs) == 4
 
-    for l in mast.locs:
+    for loc in mast.locs:
         # spot check on mutation from Add tp Div
-        if l.lineno == 1 and l.col_offset == 4:
-            assert l.op_type == test_mutation
+        if loc.lineno == 1 and loc.col_offset == 4:
+            assert loc.op_type == test_mutation
 
         # spot check on not-mutated location still being Mult
-        if l.lineno == 5 and l.col_offset == 4:
-            assert l.op_type == "AugAssign_Mult"
+        if loc.lineno == 5 and loc.col_offset == 4:
+            assert loc.op_type == "AugAssign_Mult"
 
 
 def test_MutateAST_visit_binop_37(binop_file):
@@ -104,14 +104,14 @@ def test_MutateAST_visit_binop_37(binop_file):
     assert len(mast.locs) == 4
 
     # locs is an unordered set, cycle through to thd target and check the mutation
-    for l in mast.locs:
+    for loc in mast.locs:
         if (
-            l.lineno == 6
-            and l.col_offset == 11
-            and l.end_lineno == end_lineno
-            and l.end_col_offset == end_col_offset
+            loc.lineno == 6
+            and loc.col_offset == 11
+            and loc.end_lineno == end_lineno
+            and loc.end_col_offset == end_col_offset
         ):
-            assert l.op_type == test_mutation
+            assert loc.op_type == test_mutation
 
 
 def test_MutateAST_visit_boolop(boolop_file, boolop_expected_loc):
@@ -134,9 +134,9 @@ def test_MutateAST_visit_boolop(boolop_file, boolop_expected_loc):
 
     # there will only be one loc, but this still works
     # basedon the col and line offset in the fixture for compare_expected_loc
-    for l in mast.locs:
-        if l.lineno == 2 and l.col_offset == 11:
-            assert l.op_type == test_mutation
+    for loc in mast.locs:
+        if loc.lineno == 2 and loc.col_offset == 11:
+            assert loc.op_type == test_mutation
 
 
 @pytest.mark.parametrize(  # based on the fixture definitions for compare_file and expected_locs
@@ -162,11 +162,11 @@ def test_MutateAST_visit_compare(idx, mut_op, lineno, compare_file, compare_expe
 
     # check that the lineno marked for mutation is changed, otherwise original ops should
     # still be present without modification
-    for l in mast.locs:
-        if l.lineno == lineno and l.col_offset == 11:
-            assert l.op_type == mut_op
+    for loc in mast.locs:
+        if loc.lineno == lineno and loc.col_offset == 11:
+            assert loc.op_type == mut_op
         else:
-            assert l.op_type in {ast.Eq, ast.Is, ast.In}  # based on compare_file fixture
+            assert loc.op_type in {ast.Eq, ast.Is, ast.In}  # based on compare_file fixture
 
 
 def test_MutateAST_visit_if(if_file, if_expected_locs):
@@ -184,18 +184,17 @@ def test_MutateAST_visit_if(if_file, if_expected_locs):
     mast.visit(mutated_tree)
 
     # named constants will also be picked up, filter just to if_ operations
-    if_locs = [l for l in mast.locs if l.ast_class == "If"]
+    if_locs = [loc for loc in mast.locs if loc.ast_class == "If"]
     assert len(if_locs) == 4
 
-    for l in if_locs:
+    for loc in if_locs:
         # spot check on mutation from True to False
-        if l.lineno == 2 and l.col_offset == 4:
-            print(l)
-            assert l.op_type == test_mutation
+        if loc.lineno == 2 and loc.col_offset == 4:
+            assert loc.op_type == test_mutation
 
         # spot check on not-mutated location still being None
-        if l.lineno == 13 and l.col_offset == 4:
-            assert l.op_type == "If_False"
+        if loc.lineno == 13 and loc.col_offset == 4:
+            assert loc.op_type == "If_False"
 
 
 INDEX_SETS = [
@@ -241,14 +240,14 @@ def test_MutateAST_visit_index_neg(
 
     assert len(mast.locs) == 4
 
-    for l in mast.locs:
+    for loc in mast.locs:
         # spot check on mutation from Index_NumNeg to Index_NumPos
-        if l.lineno == lineno and l.col_offset == col_offset:
-            assert l.op_type == test_mutation
+        if loc.lineno == lineno and loc.col_offset == col_offset:
+            assert loc.op_type == test_mutation
 
         # spot check on not-mutated location still being None
-        if l.lineno == 4 and l.col_offset == 23:
-            assert l.op_type == "Index_NumPos"
+        if loc.lineno == 4 and loc.col_offset == 23:
+            assert loc.op_type == "Index_NumPos"
 
 
 def test_MutateAST_visit_nameconst(nameconst_file, nameconst_expected_locs):
@@ -265,17 +264,17 @@ def test_MutateAST_visit_nameconst(nameconst_file, nameconst_expected_locs):
     mast.visit(mutated_tree)
 
     # if statement is included with this file that will be picked up
-    nc_locs = [l for l in mast.locs if l.ast_class == "NameConstant"]
+    nc_locs = [loc for loc in mast.locs if loc.ast_class == "NameConstant"]
     assert len(nc_locs) == 4
 
-    for l in nc_locs:
+    for loc in nc_locs:
         # spot check on mutation from True to False
-        if l.lineno == 1 and l.col_offset == 14:
-            assert l.op_type == test_mutation
+        if loc.lineno == 1 and loc.col_offset == 14:
+            assert loc.op_type == test_mutation
 
         # spot check on not-mutated location still being None
-        if l.lineno == 7 and l.col_offset == 22:
-            assert l.op_type is None
+        if loc.lineno == 7 and loc.col_offset == 22:
+            assert loc.op_type is None
 
 
 def test_MutateAST_visit_subscript(slice_file, slice_expected_locs):
@@ -292,11 +291,11 @@ def test_MutateAST_visit_subscript(slice_file, slice_expected_locs):
     mast.visit(mutated_tree)
     assert len(mast.locs) == len(slice_expected_locs)
 
-    for l in mast.locs:
+    for loc in mast.locs:
 
-        if l.lineno == 5 and l.col_offset == 15:
-            assert l.op_type == test_mutation
+        if loc.lineno == 5 and loc.col_offset == 15:
+            assert loc.op_type == test_mutation
 
         # test one unmodified location
-        if l.lineno == 4 and l.col_offset == 14:
-            assert l.op_type == "Slice_UnboundUpper"
+        if loc.lineno == 4 and loc.col_offset == 14:
+            assert loc.op_type == "Slice_UnboundUpper"

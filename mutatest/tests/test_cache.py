@@ -6,10 +6,10 @@ import sys
 from pathlib import Path
 from py_compile import PycInvalidationMode  # type: ignore
 
-import hypothesis.strategies as st
+import hypothesis.strategies as st  # type: ignore
 import pytest
 
-from hypothesis import example, given
+from hypothesis import example, given  # type: ignore
 
 from mutatest.cache import (
     check_cache_invalidation_mode,

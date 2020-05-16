@@ -8,10 +8,10 @@ from datetime import timedelta
 from pathlib import Path
 from subprocess import CompletedProcess
 
-import hypothesis.strategies as st
+import hypothesis.strategies as st  # type: ignore
 import pytest
 
-from hypothesis import assume, given
+from hypothesis import assume, given  # type: ignore
 
 from mutatest import run
 from mutatest.api import Genome, GenomeGroup, GenomeGroupTarget

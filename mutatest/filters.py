@@ -154,8 +154,8 @@ class CoverageFilter(Filter):
         covered_lines = self.coverage_data.lines(measured_file) or list()
 
         if invert:
-            return {l for l in loc_idxs if l.lineno not in covered_lines}
-        return {l for l in loc_idxs if l.lineno in covered_lines}
+            return {loc for loc in loc_idxs if loc.lineno not in covered_lines}
+        return {loc for loc in loc_idxs if loc.lineno in covered_lines}
 
 
 class CategoryCodeFilter(Filter):
@@ -282,6 +282,6 @@ class CategoryCodeFilter(Filter):
             return loc_idxs
 
         if invert:
-            return {l for l in loc_idxs if l.op_type not in self.valid_mutations}
+            return {loc for loc in loc_idxs if loc.op_type not in self.valid_mutations}
 
-        return {l for l in loc_idxs if l.op_type in self.valid_mutations}
+        return {loc for loc in loc_idxs if loc.op_type in self.valid_mutations}
