@@ -12,3 +12,4 @@ Contributors
 ------------
 
 * David Li-Bland
+* Alireza Aghamohammadi
