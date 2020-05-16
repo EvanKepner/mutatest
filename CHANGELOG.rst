@@ -4,6 +4,14 @@ Changelog
 Stable Releases
 ---------------
 
+3.0.2
+~~~~~
+
+    - `Maintenance patch #27 <https://github.com/EvanKepner/mutatest/pull/27>`_ updating source
+       code conditional logic in the CLI argument parsing.
+    - Minor fixes for the most updated CI checks.
+
+
 3.0.1
 ~~~~~
 
