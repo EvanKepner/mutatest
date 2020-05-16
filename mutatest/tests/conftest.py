@@ -9,7 +9,7 @@ from io import StringIO
 from operator import attrgetter
 from pathlib import Path
 from textwrap import dedent
-from typing import Dict, List, NamedTuple, Set
+from typing import Dict, List, NamedTuple, Set, Optional
 
 import coverage
 import pytest
@@ -105,6 +105,54 @@ def write_cov_file(line_data: Dict[str, List[int]], fname: str) -> None:
         covdata = coverage.CoverageData(basename=fname)
         covdata.add_lines(line_data)
         covdata.write()
+
+
+####################################################################################################
+# CLI: MOCK ARGS
+####################################################################################################
+
+
+class MockArgs(NamedTuple):
+    """Container for mocks of the cli arguments."""
+
+    blacklist: Optional[List[str]]
+    exclude: Optional[List[str]]
+    mode: Optional[str]
+    nlocations: Optional[int]
+    output: Optional[Path]
+    rseed: Optional[int]
+    src: Optional[Path]
+    testcmds: Optional[List[str]]
+    whitelist: Optional[List[str]]
+    exception: Optional[int]
+    debug: Optional[bool]
+    nocov: Optional[bool]
+    parallel: Optional[bool]
+    timeout_factor: Optional[int]
+
+
+@pytest.fixture(scope="session")
+def mock_args(tmp_path_factory, binop_file):
+    """Basic fixture with default settings using existing binop_file fixture."""
+
+    folder = tmp_path_factory.mktemp("output")
+
+    return MockArgs(
+        blacklist=[],
+        exclude=["__init__.py"],
+        mode="s",
+        nlocations=10,
+        output=folder / "mock_mutation_report.rst",
+        rseed=314,
+        src=binop_file,
+        testcmds=["pytest"],
+        whitelist=[],
+        exception=None,
+        debug=False,
+        nocov=True,
+        parallel=False,
+        timeout_factor=2,
+    )
 
 
 ####################################################################################################

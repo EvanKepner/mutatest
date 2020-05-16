@@ -6,7 +6,7 @@ import argparse
 from datetime import timedelta
 from pathlib import Path
 from textwrap import dedent
-from typing import List, NamedTuple, Optional
+from typing import List, NamedTuple
 
 import hypothesis.strategies as st
 import pytest
@@ -20,47 +20,7 @@ from mutatest import cli
 from mutatest.cli import RunMode, SurvivingMutantException, TrialTimes
 
 
-class MockArgs(NamedTuple):
-    """Container for mocks of the cli arguments."""
-
-    blacklist: Optional[List[str]]
-    exclude: Optional[List[str]]
-    mode: Optional[str]
-    nlocations: Optional[int]
-    output: Optional[Path]
-    rseed: Optional[int]
-    src: Optional[Path]
-    testcmds: Optional[List[str]]
-    whitelist: Optional[List[str]]
-    exception: Optional[int]
-    debug: Optional[bool]
-    nocov: Optional[bool]
-    parallel: Optional[bool]
-    timeout_factor: Optional[int]
-
-
-@pytest.fixture
-def mock_args(tmp_path, binop_file):
-    """Basic fixture with default settings using existing binop_file fixture."""
-    return MockArgs(
-        blacklist=[],
-        exclude=["__init__.py"],
-        mode="s",
-        nlocations=10,
-        output=tmp_path / "mock_mutation_report.rst",
-        rseed=314,
-        src=binop_file,
-        testcmds=["pytest"],
-        whitelist=[],
-        exception=None,
-        debug=False,
-        nocov=True,
-        parallel=False,
-        timeout_factor=2,
-    )
-
-
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def mock_TrialTimes():
     """Mock Trial Time fixture for the CLI."""
     return TrialTimes(
