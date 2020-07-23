@@ -221,6 +221,13 @@ class Genome:
 
             with open(self.source_file, "rb") as src_stream:
                 self._ast = ast.parse(src_stream.read())
+
+                # add parent linkage to all nodes
+                self._ast.parent = None
+                for parent in ast.walk(self._ast):
+                    for child in ast.iter_child_nodes(parent):
+                        child.parent = parent
+
         return self._ast
 
     @property

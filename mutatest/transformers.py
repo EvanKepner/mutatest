@@ -196,6 +196,18 @@ class MutateBase(ast.NodeTransformer):
         """Overridden using the MixinClasses for NameConstant(3.7) vs. Constant(3.8)."""
         raise NotImplementedError
 
+    def _check_for_no_assert_parents(self, node: ast.AST) -> bool:
+        """Looks for Assert node in parentage."""
+
+        parent = node
+        while parent is not None and not isinstance(parent, ast.Assert):
+            if not hasattr(node, "parent"):
+                return True
+
+            parent = parent.parent
+
+        return not isinstance(parent, ast.Assert)
+
     def visit_AugAssign(self, node: ast.AugAssign) -> ast.AST:
         """AugAssign is ``-=, +=, /=, *=`` for augmented assignment."""
         self.generic_visit(node)
@@ -235,7 +247,8 @@ class MutateBase(ast.NodeTransformer):
             end_col_offset=node_span.end_col_offset,
         )
 
-        self.locs.add(idx)
+        if self._check_for_no_assert_parents(node):
+            self.locs.add(idx)
 
         if idx == self.target_idx and self.mutation in aug_mappings and not self.readonly:
             LOGGER.debug("%s mutating idx: %s with %s", log_header, self.target_idx, self.mutation)
@@ -278,7 +291,8 @@ class MutateBase(ast.NodeTransformer):
             end_col_offset=node_span.end_col_offset,
         )
 
-        self.locs.add(idx)
+        if self._check_for_no_assert_parents(node):
+            self.locs.add(idx)
 
         if idx == self.target_idx and self.mutation and not self.readonly:
             LOGGER.debug("%s mutating idx: %s with %s", log_header, self.target_idx, self.mutation)
@@ -303,7 +317,9 @@ class MutateBase(ast.NodeTransformer):
             end_lineno=node_span.end_lineno,
             end_col_offset=node_span.end_col_offset,
         )
-        self.locs.add(idx)
+
+        if self._check_for_no_assert_parents(node):
+            self.locs.add(idx)
 
         if idx == self.target_idx and self.mutation and not self.readonly:
             LOGGER.debug("%s mutating idx: %s with %s", log_header, self.target_idx, self.mutation)
@@ -342,7 +358,8 @@ class MutateBase(ast.NodeTransformer):
         else:
             idx = LocIndex(ast_class="Compare", **locidx_kwargs)  # type: ignore
 
-        self.locs.add(idx)
+        if self._check_for_no_assert_parents(node):
+            self.locs.add(idx)
 
         if idx == self.target_idx and self.mutation and not self.readonly:
             LOGGER.debug("%s mutating idx: %s with %s", log_header, self.target_idx, self.mutation)
@@ -401,7 +418,9 @@ class MutateBase(ast.NodeTransformer):
             end_lineno=node_span.end_lineno,
             end_col_offset=node_span.end_col_offset,
         )
-        self.locs.add(idx)
+
+        if self._check_for_no_assert_parents(node):
+            self.locs.add(idx)
 
         if idx == self.target_idx and self.mutation and not self.readonly:
             LOGGER.debug("%s mutating idx: %s with %s", log_header, self.target_idx, self.mutation)
@@ -445,17 +464,23 @@ class MutateBase(ast.NodeTransformer):
             # positive integer case
             if n_value.n != 0:
                 idx = LocIndex(op_type="Index_NumPos", **locidx_kwargs)  # type: ignore
-                self.locs.add(idx)
+
+                if self._check_for_no_assert_parents(node):
+                    self.locs.add(idx)
 
             # zero value case
             else:
                 idx = LocIndex(op_type="Index_NumZero", **locidx_kwargs)  # type: ignore
-                self.locs.add(idx)
+
+                if self._check_for_no_assert_parents(node):
+                    self.locs.add(idx)
 
         # index is a negative number e.g. i[-1]
         if isinstance(n_value, ast.UnaryOp):
             idx = LocIndex(op_type="Index_NumNeg", **locidx_kwargs)  # type: ignore
-            self.locs.add(idx)
+
+            if self._check_for_no_assert_parents(node):
+                self.locs.add(idx)
 
         if idx == self.target_idx and self.mutation and not self.readonly:
             LOGGER.debug("%s mutating idx: %s with %s", log_header, self.target_idx, self.mutation)
@@ -488,7 +513,9 @@ class MutateBase(ast.NodeTransformer):
             end_lineno=node_span.end_lineno,
             end_col_offset=node_span.end_col_offset,
         )
-        self.locs.add(idx)
+
+        if self._check_for_no_assert_parents(node):
+            self.locs.add(idx)
 
         if idx == self.target_idx and not self.readonly:
             LOGGER.debug("%s mutating idx: %s with %s", log_header, self.target_idx, self.mutation)
@@ -532,14 +559,18 @@ class MutateBase(ast.NodeTransformer):
             idx = LocIndex(
                 ast_class="SliceUS", op_type="Slice_UnboundLower", **locidx_kwargs  # type: ignore
             )
-            self.locs.add(idx)
+
+            if self._check_for_no_assert_parents(node):
+                self.locs.add(idx)
 
         # lower slice range e.g. x[1:] will become x[:1]
         if slice.upper is None and slice.lower is not None:
             idx = LocIndex(
                 ast_class="SliceUS", op_type="Slice_UnboundUpper", **locidx_kwargs  # type: ignore
             )
-            self.locs.add(idx)
+
+            if self._check_for_no_assert_parents(node):
+                self.locs.add(idx)
 
         # Apply Mutation
         if idx == self.target_idx and not self.readonly:

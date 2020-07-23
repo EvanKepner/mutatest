@@ -874,3 +874,53 @@ def slice_expected_locs():
         LocIndex(ast_class="Slice_Swap", lineno=4, col_offset=14, op_type="Slice_UnboundUpper"),
         LocIndex(ast_class="Slice_Swap", lineno=6, col_offset=14, op_type="Slice_UnboundUpper"),
     ]
+
+
+####################################################################################################
+# TRANSFORMERS: ASSERT FIXTURES
+####################################################################################################
+
+
+@pytest.fixture(scope="session")
+def assert_file(tmp_path_factory):
+    """A simple python file with the slice attributes."""
+    contents = dedent(
+        """\
+    def my_func(a, b, c):
+        assert a == b
+        assert (a == b) == c
+        d = a == b
+
+        return a, b, c
+    """
+    )
+
+    fn = tmp_path_factory.mktemp("assert") / "assert.py"
+
+    with open(fn, "w") as output_fn:
+        output_fn.write(contents)
+
+    yield fn
+
+    fn.unlink()
+
+
+@pytest.fixture(scope="session")
+def assert_expected_locs():
+    """The assert expected locations based on the fixture."""
+    # Py 3.7
+    if sys.version_info < (3, 8):
+        return {
+            LocIndex(ast_class="Compare", lineno=4, col_offset=8, op_type=ast.Eq),
+        }
+    # Py 3.8
+    return {
+        LocIndex(
+            ast_class="Compare",
+            lineno=4,
+            col_offset=8,
+            op_type=ast.Eq,
+            end_lineno=4,
+            end_col_offset=14,
+        )
+    }

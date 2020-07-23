@@ -22,6 +22,28 @@ def test_genome_ast(binop_file, binop_expected_locs):
     assert genome.targets == binop_expected_locs
 
 
+def test_genome_ast_parentage(assert_file):
+    """Test that the AST builds correctly with parents."""
+    genome = Genome(source_file=assert_file)
+
+    for node in ast.walk(genome.ast):
+        if isinstance(node, ast.Module):
+            assert node.parent is None
+
+        else:
+            assert node.parent is not None
+
+
+def test_genome_assert_exclusion(assert_file, assert_expected_locs):
+    """Test that the LocIndexes are only output for non-assert statements."""
+    genome = Genome(source_file=assert_file)
+
+    print(genome.targets)
+
+    assert len(genome.targets) == 1
+    assert genome.targets == assert_expected_locs
+
+
 def test_create_mutant_with_cache(binop_file, stdoutIO):
     """Change ast.Add to ast.Mult in a mutation including pycache changes."""
     genome = Genome(source_file=binop_file)
