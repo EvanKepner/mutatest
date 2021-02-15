@@ -198,7 +198,7 @@ def cli_parser() -> argparse.ArgumentParser:
         metavar="INT",
         help=(
             "Number of locations in code to randomly select for mutation from possible targets. "
-            "(default: 10)"
+            "(default: 10; a value of 0 will consider all targets without selection)"
         ),
     )
     parser.add_argument(

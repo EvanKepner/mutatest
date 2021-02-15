@@ -147,7 +147,7 @@ def test_generate_sample_FileNotFoundError(binop_file, sorted_binop_expected_loc
     assert list(gt.loc_idx for gt in sample) == sorted_binop_expected_locs
 
 
-@pytest.mark.parametrize("popsize, nlocs, nexp", [(3, 1, 1), (3, 2, 2), (3, 5, 3)])
+@pytest.mark.parametrize("popsize, nlocs, nexp", [(3, 1, 1), (3, 2, 2), (3, 5, 3), (3, 0, 3)])
 def test_get_mutation_sample_locations(popsize, nlocs, nexp, mock_LocIdx):
     """Test sample size draws for the mutation sample."""
     mock_src_file = Path("source.py")
@@ -157,13 +157,12 @@ def test_get_mutation_sample_locations(popsize, nlocs, nexp, mock_LocIdx):
     assert len(result) == nexp
 
 
-@pytest.mark.parametrize("nloc", [0, -1], ids=["zero", "negative integer"])
-def test_get_mutation_sample_locations_ValueError(nloc, mock_LocIdx):
-    """Zero and negative integer sample sizes raise a value error."""
+def test_get_mutation_sample_locations_ValueError(mock_LocIdx):
+    """Negative integer sample sizes raise a value error."""
     ggt = [GenomeGroupTarget(Path("src.py"), mock_LocIdx)]
 
     with pytest.raises(ValueError):
-        _ = run.get_mutation_sample_locations(ggt, nloc)
+        _ = run.get_mutation_sample_locations(ggt, -1)
 
 
 def test_get_genome_group_folder_and_file(tmp_path):

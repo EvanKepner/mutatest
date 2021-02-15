@@ -13,3 +13,4 @@ Contributors
 
 * David Li-Bland
 * Alireza Aghamohammadi
+* Stephan Lukasczyk

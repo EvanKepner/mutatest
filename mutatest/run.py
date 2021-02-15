@@ -230,10 +230,10 @@ def get_mutation_sample_locations(
     mutation_sample = sample_space
 
     # natural Falsey evaluation of n_locations=0 requires exact None check
-    if n_locations <= 0:
+    if n_locations < 0:
         raise ValueError("n_locations must be greater or equal to zero.")
 
-    if n_locations <= len(sample_space):
+    if 0 < n_locations <= len(sample_space):
         LOGGER.info(
             "%s",
             colorize_output(
