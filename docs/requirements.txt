@@ -1,4 +1,4 @@
 coverage==4.5.4
-ipython==7.8.0
+ipython==7.16.3
 Sphinx==2.2.0
 typing-extensions
