@@ -198,7 +198,7 @@ Selecting categories of mutations
 
 ``mutatest`` categorizes families of mutations with two-letter category codes (available in
 the help output and in the mutants section below). You can use these category codes in the
-``--whitelist`` and ``--blacklist`` arguments to opt-in or opt-out of types of mutations
+``--only`` and ``--skip`` arguments to opt-in or opt-out of types of mutations
 for your trials. This impacts the pool of potential locations to draw from for the sample, but the
 number of mutations specified in ``--nlocations`` still determines the final sample size.
 You will see the categories used in the output during the trial. Categories are space delimited
@@ -207,7 +207,7 @@ as an input list on the CLI.
 .. code-block::
 
     # selects only the categories "aa" (AugAssign), "bn" (BinOp), and "ix" (Index) mutations
-    $ mutatest --whitelist aa bn ix
+    $ mutatest --only aa bn ix
 
     ... prior output...
 
@@ -220,13 +220,13 @@ as an input list on the CLI.
     ... continued output...
 
     # using shorthand
-    $ mutatest -w aa bn ix
+    $ mutatest -y aa bn ix
 
-    # using the blacklist instead, selects all categories except "aa", "bn", and "ix"
-    $ mutatest --blacklist aa bn ix
+    # using the skip list instead, selects all categories except "aa", "bn", and "ix"
+    $ mutatest --skip aa bn ix
 
     # with shorthand
-    $ mutatest -b aa bn ix
+    $ mutatest -k aa bn ix
 
 
 Setting the output location
@@ -366,8 +366,8 @@ Run ``mutatest --help`` to see command line arguments and supported operations:
 
     optional arguments:
       -h, --help            show this help message and exit
-      -b [STR [STR ...]], --blacklist [STR [STR ...]]
-                            Blacklisted mutation categories for trials. (default: empty list)
+      -k [STR [STR ...]], --skip [STR [STR ...]]
+                            Mutation categories to skip for trials. (default: empty list)
       -e PATH, --exclude PATH
                             Path to .py file to exclude, multiple -e entries supported. (default: None)
       -m {f,s,d,sd}, --mode {f,s,d,sd}
@@ -380,8 +380,8 @@ Run ``mutatest --help`` to see command line arguments and supported operations:
       -s PATH, --src PATH   Source code (file or directory) for mutation testing. (default: auto-detection attempt).
       -t STR_CMDS, --testcmds STR_CMDS
                             Test command string to execute. (default: 'pytest')
-      -w [STR [STR ...]], --whitelist [STR [STR ...]]
-                            Whitelisted mutation categories for trials. (default: empty list)
+      -y [STR [STR ...]], --only [STR [STR ...]]
+                            Only mutation categories to use for trials. (default: empty list)
       -x INT, --exception INT
                             Count of survivors to raise Mutation Exception for system exit.
       --debug               Turn on DEBUG level logging output.
@@ -423,7 +423,7 @@ The contents of an example ``mutatest.ini`` or entry in ``setup.cfg``:
 
    [mutatest]
 
-   blacklist = nc su ix
+   skip = nc su ix
    exclude =
        mutatest/__init__.py
        mutatest/_devtools.py

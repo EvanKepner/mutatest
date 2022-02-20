@@ -1,4 +1,5 @@
 # custom
+.vscode/
 .idea/
 htmlcov/
 pip-wheel-metadata/

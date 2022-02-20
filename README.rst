@@ -1,7 +1,7 @@
 ``mutatest``: Python mutation testing
 ==========================================
 
-|  |py-versions| |license| |ci-azure| |ci-travis| |docs| |coverage| |black|
+|  |py-versions| |license| |ci-azure| |docs| |coverage| |black|
 |  |pypi-version| |pypi-status| |pypi-format| |pypi-downloads|
 |  |conda-version| |conda-recipe| |conda-platform| |conda-downloads|
 

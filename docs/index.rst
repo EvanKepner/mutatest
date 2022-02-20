@@ -93,8 +93,8 @@ Run ``mutatest --help`` to see command line arguments and supported operations:
 
     optional arguments:
       -h, --help            show this help message and exit
-      -b [STR [STR ...]], --blacklist [STR [STR ...]]
-                            Blacklisted mutation categories for trials. (default: empty list)
+      -k [STR [STR ...]], --skip [STR [STR ...]]
+                            Mutation categories to skip for trials. (default: empty list)
       -e PATH, --exclude PATH
                             Path to .py file to exclude, multiple -e entries supported. (default: None)
       -m {f,s,d,sd}, --mode {f,s,d,sd}
@@ -107,8 +107,8 @@ Run ``mutatest --help`` to see command line arguments and supported operations:
       -s PATH, --src PATH   Source code (file or directory) for mutation testing. (default: auto-detection attempt).
       -t STR_CMDS, --testcmds STR_CMDS
                             Test command string to execute. (default: 'pytest')
-      -w [STR [STR ...]], --whitelist [STR [STR ...]]
-                            Whitelisted mutation categories for trials. (default: empty list)
+      -y [STR [STR ...]], --only [STR [STR ...]]
+                            Only mutation categories to use for trials. (default: empty list)
       -x INT, --exception INT
                             Count of survivors to raise Mutation Exception for system exit.
       --debug               Turn on DEBUG level logging output.

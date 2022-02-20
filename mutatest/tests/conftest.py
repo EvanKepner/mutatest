@@ -115,7 +115,7 @@ def write_cov_file(line_data: Dict[str, List[int]], fname: str) -> None:
 class MockArgs(NamedTuple):
     """Container for mocks of the cli arguments."""
 
-    blacklist: Optional[List[str]]
+    skip: Optional[List[str]]
     exclude: Optional[List[str]]
     mode: Optional[str]
     nlocations: Optional[int]
@@ -123,7 +123,7 @@ class MockArgs(NamedTuple):
     rseed: Optional[int]
     src: Optional[Path]
     testcmds: Optional[List[str]]
-    whitelist: Optional[List[str]]
+    only: Optional[List[str]]
     exception: Optional[int]
     debug: Optional[bool]
     nocov: Optional[bool]
@@ -138,7 +138,7 @@ def mock_args(tmp_path_factory, binop_file):
     folder = tmp_path_factory.mktemp("output")
 
     return MockArgs(
-        blacklist=[],
+        skip=[],
         exclude=["__init__.py"],
         mode="s",
         nlocations=10,
@@ -146,7 +146,7 @@ def mock_args(tmp_path_factory, binop_file):
         rseed=314,
         src=binop_file,
         testcmds=["pytest"],
-        whitelist=[],
+        only=[],
         exception=None,
         debug=False,
         nocov=True,

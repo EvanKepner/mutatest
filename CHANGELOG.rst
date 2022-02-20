@@ -4,6 +4,11 @@ Changelog
 Stable Releases
 ---------------
 
+3.1.0
+~~~~~
+
+  - Maintenance patches and API changes to skip/only category selection.
+
 3.0.2
 ~~~~~
 
@@ -156,7 +161,7 @@ Alpha Releases
 0.9.1
 ~~~~~
 
-    - Added ``--whitelist`` and ``--blacklist`` with category codes for mutation families.
+    - Added ``--only`` and ``--skip`` with category codes for mutation families.
     - Provides CLI selection of mutation types to be used during the trials.
 
 

@@ -116,32 +116,32 @@ def test_selected_categories_empty_lists(mock_get_compatible_sets):
 
 
 def test_selected_categories_wlist(mock_get_compatible_sets):
-    """Whitelisted categories are only selections."""
-    wl = ["a", "b"]
-    result = cli.selected_categories(wl, [])
-    assert sorted(result) == sorted(wl)
+    """Only categories are only selections."""
+    only = ["a", "b"]
+    result = cli.selected_categories(only, [])
+    assert sorted(result) == sorted(only)
 
 
 def test_selected_categories_blist(mock_get_compatible_sets):
-    """Blacklisted categories are the inverse selection."""
-    bl = ["a", "b", "c"]
-    result = cli.selected_categories([], bl)
+    """Skipped categories are the inverse selection."""
+    skipped = ["a", "b", "c"]
+    result = cli.selected_categories([], skipped)
     assert sorted(result) == sorted(["d", "e"])
 
 
 def test_selected_categories_wblist(mock_get_compatible_sets):
-    """Mixing white/black list results in the differentiated set."""
-    wl = ["a", "b"]
-    bl = ["a"]
-    result = cli.selected_categories(wl, bl)
+    """Mixing skip/only list results in the differentiated set."""
+    only = ["a", "b"]
+    skip = ["a"]
+    result = cli.selected_categories(only, skip)
     assert result == ["b"]
 
 
 def test_selected_categories_wblist_long(mock_get_compatible_sets):
-    """Mixing white/black list results in the differentiated set if blist is longer."""
-    wl = ["a", "b"]
-    bl = ["a", "d", "e"]
-    result = cli.selected_categories(wl, bl)
+    """Mixing skip/only list results in the differentiated set if blist is longer."""
+    only = ["a", "b"]
+    skip = ["a", "d", "e"]
+    result = cli.selected_categories(only, skip)
     assert result == ["b"]
 
 
@@ -268,7 +268,7 @@ def mock_parser():
     """Mock parser."""
     parser = argparse.ArgumentParser(prog="mock_parser", description=("Mock parser"))
     parser.add_argument("-e", "--exclude", action="append", default=[], help="Append")
-    parser.add_argument("-b", "--blacklist", nargs="*", default=[], help="Nargs")
+    parser.add_argument("-k", "--skip", nargs="*", default=[], help="Nargs")
     parser.add_argument("--debug", action="store_true", help="Store True.")
 
     return parser
@@ -279,13 +279,13 @@ def test_get_parser_actions(mock_parser):
     expected_actions = {
         "-h": "--help",
         "-e": "--exclude",
-        "-b": "--blacklist",
+        "-k": "--skip",
         "--debug": "--debug",
     }
     expected_types = {
         argparse._HelpAction: ["help"],
         argparse._AppendAction: ["exclude"],
-        argparse._StoreAction: ["blacklist"],
+        argparse._StoreAction: ["skip"],
         argparse._StoreTrueAction: ["debug"],
     }
 
@@ -307,7 +307,7 @@ def mock_ini_file(tmp_path):
     ini_contents = dedent(
         """\
     [mutatest]
-    blacklist = nc su ix
+    skip = nc su ix
     exclude =
         mutatest/__init__.py
         mutatest/_devtools.py
@@ -324,7 +324,7 @@ def mock_ini_file(tmp_path):
         fstream.write(ini_contents)
 
     default_args = [
-        "--blacklist",
+        "--skip",
         "nc",
         "su",
         "ix",
@@ -355,7 +355,7 @@ def test_read_setup_cfg_missing_mutatest_ini(tmp_path, section, monkeypatch):
     ini_contents = dedent(
         f"""\
     [{section}]
-    whitelist = nc su ix"""
+    only = nc su ix"""
     )
 
     expected = ["nc", "su", "ix"]
@@ -367,8 +367,8 @@ def test_read_setup_cfg_missing_mutatest_ini(tmp_path, section, monkeypatch):
     result = cli.cli_args([])
     print(result.__dict__)
 
-    assert len(result.whitelist) == 3
-    for r, e in zip(result.whitelist, expected):
+    assert len(result.only) == 3
+    for r, e in zip(result.only, expected):
         assert r == e
 
 
@@ -395,7 +395,7 @@ def test_search_file_order_bad_key_mutatest_ini(tmp_path, section, monkeypatch):
 def test_read_ini_config_keys(mock_ini_file):
     """Ensure the keys align to the mock from reading the file."""
     section = cli.read_ini_config(mock_ini_file.ini_file)
-    expected_keys = ["blacklist", "exclude", "mode", "rseed", "testcmds", "debug", "nocov"]
+    expected_keys = ["skip", "exclude", "mode", "rseed", "testcmds", "debug", "nocov"]
     result = [k for k in section.keys()]
     assert result == expected_keys
 
@@ -410,9 +410,9 @@ def test_parse_ini_config_with_cli_empty(mock_ini_file):
 
 def test_parse_ini_config_with_cli_overrides(mock_ini_file):
     """Input from the CLI will override the values from the ini file."""
-    override = ["--blacklist", "aa", "-m", "s", "-r", "314", "--debug"]
+    override = ["--skip", "aa", "-m", "s", "-r", "314", "--debug"]
     expected = [
-        "--blacklist",
+        "--skip",
         "aa",
         "--mode",
         "s",
@@ -440,7 +440,7 @@ def test_parse_ini_config_with_cli_overrides(mock_ini_file):
 # no arguments, so no given assumption
 def test_cli_epilog_invariant():
     """Property:
-        1. cli-epilog always returns a string value for screen printing
+    1. cli-epilog always returns a string value for screen printing
     """
     result = cli.cli_epilog()
     assert isinstance(result, str)
@@ -450,8 +450,8 @@ def test_cli_epilog_invariant():
 @given(st.integers(), st.integers())
 def test_cli_summary_report_invariant(mock_args, mock_TrialTimes, lm, li):
     """Property:
-        1. cli_summary report returns a valid string without errors given any set of integers for
-        locs_mutated and locs_identified.
+    1. cli_summary report returns a valid string without errors given any set of integers for
+    locs_mutated and locs_identified.
     """
 
     results = cli.cli_summary_report(
@@ -470,7 +470,7 @@ def test_cli_summary_report_invariant(mock_args, mock_TrialTimes, lm, li):
 @given(st.integers(max_value=-1))
 def test_syserror_negative_n_and_rseed(n, i):
     """Property:
-        1. Given a negative n-value a SystemExit is raised.
+    1. Given a negative n-value a SystemExit is raised.
     """
     with pytest.raises(SystemExit):
         _ = cli.cli_args([n, f"{i}"])

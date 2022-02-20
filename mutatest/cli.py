@@ -33,8 +33,7 @@ DEBUG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
 
 class SettingsFile(NamedTuple):
-    """Container for settings file in ini or cfg parsing format.
-    """
+    """Container for settings file in ini or cfg parsing format."""
 
     path: Path
     sections: List[str]  # hierarchy of keys to search
@@ -48,8 +47,7 @@ SETTINGS_FILES = [
 
 
 class RunMode(NamedTuple):
-    """Running mode choices. This translate the ``-m`` argument into valid ``Config`` options.
-    """
+    """Running mode choices. This translate the ``-m`` argument into valid ``Config`` options."""
 
     mode: str
 
@@ -113,7 +111,7 @@ def get_constrained_float_action(
 
 
 class ValidCategoryAction(argparse.Action):
-    """Custom action to ensure only valid categories are used for white/black listing."""
+    """Custom action to ensure only valid categories are used for only/skip listing."""
 
     def __call__(self, parser, namespace, values, option_string=None):  # type: ignore
         if len(values) > 0:
@@ -163,14 +161,14 @@ def cli_parser() -> argparse.ArgumentParser:
         epilog=cli_epilog(),
     )
     parser.add_argument(
-        "-b",
-        "--blacklist",
+        "-k",
+        "--skip",
         type=str,
         action=ValidCategoryAction,
         nargs="*",
         default=[],
         metavar="STR",
-        help="Blacklisted mutation categories for trials. (default: empty list)",
+        help="Mutation categories to skip for trials. (default: empty list)",
     )
     parser.add_argument(
         "-e",
@@ -238,14 +236,14 @@ def cli_parser() -> argparse.ArgumentParser:
         help="Test command string to execute. (default: 'pytest')",
     )
     parser.add_argument(
-        "-w",
-        "--whitelist",
+        "-y",
+        "--only",
         type=str,
         action=ValidCategoryAction,
         nargs="*",
         default=[],
         metavar="STR",
-        help="Whitelisted mutation categories for trials. (default: empty list)",
+        help="Only use these mutation categories for trials. (default: empty list)",
     )
     parser.add_argument(
         "-x",
@@ -284,12 +282,12 @@ def cli_epilog() -> str:
     Additional command argument information:
     ========================================
 
-    Black/White List:
-    -----------------
-     - Use -b and -w to set black/white lists of mutation categories. If -w categories are set then
-       all mutation categories except those specified are skipped during trials. If -b categories
+    Skip/Only Category Lists:
+    -------------------------
+     - Use -k and -y to set skip/only lists of mutation categories. If -y categories are set then
+       all mutation categories except those specified are skipped during trials. If -k categories
        are set then all mutations categories except those specified are considered. If you set both
-       -w and -b then the whitelisted categories are selected first, and then the blacklisted
+       -k and -y then the only categories are selected first, and then the skipped
        categories are removed from the candidate set.
 
     Exclude:
@@ -355,7 +353,7 @@ def cli_epilog() -> str:
     header = "Supported mutation sets"
     description = (
         "These are the current operations that are mutated as compatible sets. "
-        "Use the category code for whitelist/blacklist selections."
+        "Use the category code for only/skip selections."
     )
     mutation_epilog = [header, "=" * len(header), description, "\n"]
     for mutop in transformers.get_compatible_operation_sets():
@@ -406,7 +404,7 @@ def get_parser_actions(parser: argparse.ArgumentParser) -> ParserActionMap:
         # action-types:
 
         {argparse._HelpAction: ['help'],
-         mutatest.cli.ValidCategoryAction: ['blacklist', 'whitelist'],
+         mutatest.cli.ValidCategoryAction: ['skip', 'only'],
          argparse._AppendAction: ['exclude'],
          argparse._StoreAction: ['mode', 'output', 'src', 'testcmds'],
          mutatest.cli.PositiveIntegerAction: ['nlocations', 'rseed', 'exception'],
@@ -415,7 +413,7 @@ def get_parser_actions(parser: argparse.ArgumentParser) -> ParserActionMap:
         # actions:
 
         {'-h': '--help',
-         '-b': '--blacklist',
+         '-k': '--skip',
          '-e': '--exclude',
          '-m': '--mode',
          '-n': '--nlocations',
@@ -423,8 +421,8 @@ def get_parser_actions(parser: argparse.ArgumentParser) -> ParserActionMap:
          '-r': '--rseed',
          '-s': '--src',
          '-t': '--testcmds',
-         '-w': '--whitelist',
          '-x': '--exception',
+         '-y': '--only',
          '--debug': '--debug',
          '--parallel': '--parallel',
          '--nocov': '--nocov'}
@@ -641,19 +639,19 @@ def get_src_location(src_loc: Optional[Path] = None) -> Path:
     )
 
 
-def selected_categories(whitelist: List[str], blacklist: List[str]) -> List[str]:
-    """Create the selected categories from the whitelist/blacklist set to use in filtering.
+def selected_categories(only: List[str], skip: List[str]) -> List[str]:
+    """Create the selected categories from the skip/only set to use in filtering.
 
     Args:
-        whitelist: list of categories
-        blacklist: list of categories
+        only: list of categories
+        skip: list of categories
 
     Returns:
         Selection set of mutation categories
     """
     all_mutations = {m.category for m in transformers.get_compatible_operation_sets()}
-    w_set = set(whitelist)
-    b_set = set(blacklist)
+    w_set = set(only)
+    b_set = set(skip)
 
     if w_set:
         return list(w_set - b_set)
@@ -757,8 +755,8 @@ def main(args: argparse.Namespace) -> None:
     # Run the mutation trials based on the input argument
     # set categories if present
     filter_codes: List[str] = list()
-    if len(args.whitelist) > 0 or len(args.blacklist) > 0:
-        filter_codes = selected_categories(whitelist=args.whitelist, blacklist=args.blacklist)
+    if len(args.only) > 0 or len(args.skip) > 0:
+        filter_codes = selected_categories(only=args.only, skip=args.skip)
 
     # Build the running configuration for the mutation trials
     run_mode = RunMode(args.mode)
