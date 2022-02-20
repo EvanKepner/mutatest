@@ -5,7 +5,6 @@
 ####################################################################################################
 trigger:
   - master
-  - dev
 
 ####################################################################################################
 # PLATFORM AND VERSION TESTS
@@ -42,48 +41,3 @@ jobs:
         python.version: '3.7'
       Python38:
         python.version: '3.8'
-
-####################################################################################################
-# CODE QUALITY
-# Run tox code quality checks
-####################################################################################################
-
-- job: 'CodeQuality'
-  pool:
-    vmImage: 'ubuntu-latest'
-  strategy:
-    matrix:
-      # pre-commit config is based on 3.7, local runs using 3.8 should still pass
-      Python37:
-        python.version: '3.7'
-
-  steps:
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '$(python.version)'
-
-  - script: |
-      python -m pip install --upgrade pip setuptools wheel
-      pip install .[dev]
-    displayName: 'Install all development dependencies'
-
-  - script: tox -e lint
-    displayName: 'Tox: pre-commit linting'
-
-  # This is a pre-commit hook, running directly on files because already committed
-  - script: |
-      pip install flake8
-      flake8 mutatest/
-    displayName: 'Flake8 linting'
-
-  - script: tox -e typing
-    displayName: 'Tox: static typing'
-
-  - script: tox -e docs
-    displayName: 'Tox: documentation build'
-
-  - script: tox -e pypi-description
-    displayName: 'Tox: PyPI description'
-
-  - script: tox -e manifest
-    displayName: 'Tox: check manifest'
